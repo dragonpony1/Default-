@@ -5,6 +5,7 @@ import { SYSTEMS, screenItems } from './formConfig';
 import type { CustomChoices } from './choices';
 import AddEntry from './AddEntry';
 import ProcedurePicker from './ProcedurePicker';
+import MedList from './MedList';
 
 interface Props {
   d: PreopEval;
@@ -109,9 +110,15 @@ export default function Intake({ d, set, customChoices }: Props) {
     d.npo && `NPO ${d.npo}`,
   ]);
 
+  const medsSummary = d.currentMedicationsNone
+    ? 'Meds: none'
+    : d.meds.length || d.currentMedications
+      ? `Meds: ${[...d.meds.map((x) => x.name), d.currentMedications].filter(Boolean).join(', ')}`
+      : '';
+
   const historySummary = joinBits([
     noneableSummary('Anesth hx', 'previousAnesthesia', 'previousAnesthesiaNone'),
-    noneableSummary('Meds', 'currentMedications', 'currentMedicationsNone'),
+    medsSummary,
     noneableSummary('Fam hx', 'familyHistory', 'familyHistoryNone'),
     noneableSummary('Allergies', 'allergies', 'allergiesNone'),
   ]);
@@ -180,7 +187,11 @@ export default function Intake({ d, set, customChoices }: Props) {
       {sec('history', 'History', historySummary, (
         <>
           {noneable('Previous anesthesia / operations', 'previousAnesthesia', 'previousAnesthesiaNone')}
-          {noneable('Current medications', 'currentMedications', 'currentMedicationsNone')}
+          <div className="igroup">
+            <span>Current medications</span>
+            <MedList d={d} set={set} customChoices={customChoices} />
+          </div>
+          {noneable('Other meds / notes', 'currentMedications', 'currentMedicationsNone')}
           {noneable('Family history of anesthesia complications', 'familyHistory', 'familyHistoryNone')}
           {noneable('Allergies', 'allergies', 'allergiesNone')}
           <div className="igroup">

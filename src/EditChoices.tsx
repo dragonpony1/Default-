@@ -70,6 +70,27 @@ export default function EditChoices({ choices, setChoices }: Props) {
         </div>
         <AddEntry onAdd={(label) => add(procKey(svc), label)} placeholder={`Add a ${svc} procedure…`} />
       </section>
+      <section className="icard">
+        <h2>Medication Dictionary</h2>
+        <p className="fbf-hint">
+          The med search already knows a few hundred common medications. Add anything it misses
+          here and it will show up in the type-ahead suggestions on this device.
+        </p>
+        <div className="chips wrap">
+          {(choices.meds ?? []).map((label) => (
+            <button
+              type="button"
+              className="chip on"
+              key={`med:${label}`}
+              title="Remove this medication"
+              onClick={() => remove('meds', label)}
+            >
+              {label} ✕
+            </button>
+          ))}
+        </div>
+        <AddEntry onAdd={(label) => add('meds', label)} placeholder="Add a medication…" />
+      </section>
       {SYSTEMS.map((s) => {
         const custom = choices[s.key] ?? [];
         return (

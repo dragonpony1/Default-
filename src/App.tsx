@@ -270,7 +270,14 @@ export default function App() {
             <div className="cell grow half pair">
               <div className="pair-main">
                 <span className="lbl">Current Medications</span>
-                {ta('currentMedications', 2)}
+                {d.meds.map((med) => (
+                  <div className="detline" key={med.name}>
+                    {med.name}
+                    {med.dose ? ` ${med.dose}` : ''}
+                    {med.lastDose ? ` — last dose ${med.lastDose}` : ''}
+                  </div>
+                ))}
+                {ta('currentMedications', d.meds.length ? 1 : 2)}
               </div>
               <div className="none-box">{bx('currentMedicationsNone', 'None')}</div>
             </div>

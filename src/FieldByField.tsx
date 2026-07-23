@@ -5,6 +5,7 @@ import { SYSTEMS, screenItems, type SystemBand } from './formConfig';
 import type { CustomChoices } from './choices';
 import AddEntry from './AddEntry';
 import ProcedurePicker from './ProcedurePicker';
+import MedList from './MedList';
 
 interface Props {
   d: PreopEval;
@@ -227,7 +228,37 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     textStep('Temperature', 't', 'Pre-procedure vital signs'),
     textStep('NPO since', 'npo'),
     noneableStep('Previous anesthesia / operations', 'previousAnesthesia', 'previousAnesthesiaNone'),
-    noneableStep('Current medications', 'currentMedications', 'currentMedicationsNone'),
+    {
+      title: 'Current medications',
+      hint: 'Type to search — tap a suggestion to add it. Anticoagulants, GLP-1s, and insulin ask for the last dose.',
+      render: () => (
+        <>
+          <MedList d={d} set={set} customChoices={customChoices} />
+          <div className="chips">
+            {boolChip('currentMedicationsNone', 'None')}
+          </div>
+          <label className="ifield">
+            <span>Other meds / notes</span>
+            <textarea
+              {...noAuto}
+              rows={2}
+              value={d.currentMedications}
+              disabled={d.currentMedicationsNone}
+              onChange={(e) => set('currentMedications', e.target.value)}
+            />
+          </label>
+        </>
+      ),
+      summary: () =>
+        d.currentMedicationsNone
+          ? 'None'
+          : [
+              ...d.meds.map((x) => (x.dose ? `${x.name} ${x.dose}` : x.name)),
+              d.currentMedications,
+            ]
+              .filter(Boolean)
+              .join(', '),
+    },
     noneableStep('Family history of anesthesia complications', 'familyHistory', 'familyHistoryNone'),
     noneableStep('Allergies', 'allergies', 'allergiesNone'),
     {

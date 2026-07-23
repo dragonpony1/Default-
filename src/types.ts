@@ -1,5 +1,11 @@
 export type YesNo = '' | 'yes' | 'no';
 
+export interface MedEntry {
+  name: string;
+  dose: string;
+  lastDose: string;
+}
+
 export interface PreopEval {
   // Header
   age: string;
@@ -15,6 +21,7 @@ export interface PreopEval {
   t: string;
   previousAnesthesia: string;
   previousAnesthesiaNone: boolean;
+  meds: MedEntry[];
   currentMedications: string;
   currentMedicationsNone: boolean;
   familyHistory: string;
@@ -115,6 +122,7 @@ export const emptyPreopEval: PreopEval = {
   t: '',
   previousAnesthesia: '',
   previousAnesthesiaNone: false,
+  meds: [],
   currentMedications: '',
   currentMedicationsNone: false,
   familyHistory: '',

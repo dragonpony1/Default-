@@ -1115,3 +1115,87 @@ input[type='checkbox']:checked::after {
   font-size: 0.85rem;
   margin-right: 0.2rem;
 }
+
+/* Structured med list */
+
+.medlist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.medrow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border: 1px solid #dbe1ea;
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+  background: #fafbfd;
+}
+
+.medrow.flagged {
+  border-color: #b0762a;
+  background: #fdf9f3;
+}
+
+.medrow-main {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.medname {
+  font-weight: 600;
+}
+
+.medclass {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  color: #fff;
+  background: #b0762a;
+}
+
+.medclass.insulin,
+.medclass.glp1 {
+  background: #7c5cb0;
+}
+
+.meddose {
+  font: inherit;
+  flex: 1;
+  min-width: 8rem;
+  padding: 0.35rem 0.6rem;
+  border: 1.5px solid #98a3b3;
+  border-radius: 6px;
+  min-height: 40px;
+}
+
+.meddose:focus {
+  outline: none;
+  border-color: #2a5db0;
+}
+
+.chip.medremove {
+  min-height: 36px;
+  padding: 0.2rem 0.7rem;
+  color: #b02a2a;
+  border-color: #b02a2a;
+}
+
+.medlast {
+  margin-left: 0.25rem;
+}
+
+.medlast > span {
+  color: #b0762a;
+}
+
+.medsuggest {
+  padding: 0.25rem 0;
+}
