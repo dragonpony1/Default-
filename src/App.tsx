@@ -5,13 +5,21 @@ import { clearDraft, loadDraft, saveDraft } from './storage';
 import Barcode39 from './Barcode39';
 import Intake from './Intake';
 import FieldByField from './FieldByField';
+import EditChoices from './EditChoices';
+import { loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 
 type StringKeys = { [K in keyof PreopEval]: PreopEval[K] extends string ? K : never }[keyof PreopEval];
 type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : never }[keyof PreopEval];
 
 export default function App() {
   const [d, setD] = useState<PreopEval>(loadDraft);
-  const [view, setView] = useState<'gather' | 'fields' | 'form'>('gather');
+  const [view, setView] = useState<'gather' | 'fields' | 'form' | 'choices'>('gather');
+  const [choices, setChoicesState] = useState<CustomChoices>(loadCustomChoices);
+
+  const setChoices = (c: CustomChoices) => {
+    saveCustomChoices(c);
+    setChoicesState(c);
+  };
 
   useEffect(() => {
     saveDraft(d);
@@ -124,12 +132,15 @@ export default function App() {
               <span className="b">{l}:</span> {d.checkDetails[`${s.key}:${l}`]}
             </div>
           ))}
-        {(d.customConditions[s.key] ?? []).map((l) => (
-          <div className="detline" key={`custom:${l}`}>
-            <span className="b">{l}{d.checkDetails[`${s.key}:${l}`] ? ':' : ''}</span>{' '}
-            {d.checkDetails[`${s.key}:${l}`] ?? ''}
-          </div>
-        ))}
+        {(choices[s.key] ?? [])
+          .filter((l) => d.checks[`${s.key}:${l}`])
+          .concat(d.customConditions[s.key] ?? [])
+          .map((l) => (
+            <div className="detline" key={`custom:${l}`}>
+              <span className="b">{l}{d.checkDetails[`${s.key}:${l}`] ? ':' : ''}</span>{' '}
+              {d.checkDetails[`${s.key}:${l}`] ?? ''}
+            </div>
+          ))}
         {bandComments(s.key, commentRows)}
       </div>
     </div>
@@ -177,6 +188,9 @@ export default function App() {
           <button className={view === 'form' ? 'on' : ''} onClick={() => setView('form')}>
             Paper Form
           </button>
+          <button className={view === 'choices' ? 'on' : ''} onClick={() => setView('choices')}>
+            Edit Choices
+          </button>
         </div>
         <div className="toolbar-actions">
           <button onClick={() => window.print()}>Print</button>
@@ -188,8 +202,11 @@ export default function App() {
         </p>
       </header>
 
-      {view === 'gather' && <Intake d={d} set={set} />}
-      {view === 'fields' && <FieldByField d={d} set={set} onFinish={() => setView('form')} />}
+      {view === 'gather' && <Intake d={d} set={set} customChoices={choices} />}
+      {view === 'fields' && (
+        <FieldByField d={d} set={set} customChoices={choices} onFinish={() => setView('form')} />
+      )}
+      {view === 'choices' && <EditChoices choices={choices} setChoices={setChoices} />}
 
       <div className={`page${view === 'form' ? '' : ' print-only-block'}`}>
         <div className="page-top">

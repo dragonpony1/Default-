@@ -1,11 +1,13 @@
 import { useState, type ReactNode } from 'react';
 import type { PreopEval, YesNo } from './types';
 import { SYSTEMS, type SystemBand } from './formConfig';
+import type { CustomChoices } from './choices';
 import AddEntry from './AddEntry';
 
 interface Props {
   d: PreopEval;
   set: <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => void;
+  customChoices: CustomChoices;
   onFinish: () => void;
 }
 
@@ -14,7 +16,7 @@ type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : nev
 
 const STEP_KEY = 'preop-fbf-step';
 
-export default function FieldByField({ d, set, onFinish }: Props) {
+export default function FieldByField({ d, set, customChoices, onFinish }: Props) {
   const [step, setStep] = useState(() => {
     const saved = Number(localStorage.getItem(STEP_KEY));
     return Number.isInteger(saved) && saved >= 0 ? saved : 0;
@@ -124,7 +126,7 @@ export default function FieldByField({ d, set, onFinish }: Props) {
   });
 
   const systemStep = (s: SystemBand): Step => {
-    const items = s.col1.concat(s.col2 ?? []);
+    const items = s.col1.concat(s.col2 ?? [], customChoices[s.key] ?? []);
     return {
       title: s.title,
       hint: 'Tap every condition that applies, or WNL if the system is normal. Type anything not listed below.',

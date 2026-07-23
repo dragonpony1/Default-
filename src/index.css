@@ -1010,3 +1010,13 @@ input[type='checkbox']:checked::after {
 .fbf-revvalue.empty {
   color: #98a3b3;
 }
+
+/* Read-only built-in option chips on the Edit Choices tab */
+.chip.fixed {
+  display: inline-flex;
+  align-items: center;
+  cursor: default;
+  color: #6b7482;
+  background: #f4f6f9;
+  border-style: dashed;
+}

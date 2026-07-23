@@ -1,16 +1,18 @@
 import type { PreopEval, YesNo } from './types';
 import { SYSTEMS } from './formConfig';
+import type { CustomChoices } from './choices';
 import AddEntry from './AddEntry';
 
 interface Props {
   d: PreopEval;
   set: <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => void;
+  customChoices: CustomChoices;
 }
 
 type StringKeys = { [K in keyof PreopEval]: PreopEval[K] extends string ? K : never }[keyof PreopEval];
 type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : never }[keyof PreopEval];
 
-export default function Intake({ d, set }: Props) {
+export default function Intake({ d, set, customChoices }: Props) {
   const chip = (active: boolean, onClick: () => void, label: string, key?: string) => (
     <button key={key ?? label} type="button" className={`chip${active ? ' on' : ''}`} onClick={onClick}>
       {label}
@@ -122,7 +124,7 @@ export default function Intake({ d, set }: Props) {
       </section>
 
       {SYSTEMS.map((s) => {
-        const items = s.col1.concat(s.col2 ?? []);
+        const items = s.col1.concat(s.col2 ?? [], customChoices[s.key] ?? []);
         const custom = d.customConditions[s.key] ?? [];
         const removeCustom = (label: string) => {
           const rest = { ...d.checkDetails };
