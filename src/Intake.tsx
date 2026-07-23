@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { noAuto } from './inputProps';
 import type { PreopEval, YesNo } from './types';
 import { SYSTEMS, screenItems } from './formConfig';
 import type { CustomChoices } from './choices';
@@ -52,14 +53,14 @@ export default function Intake({ d, set, customChoices }: Props) {
   const field = (label: string, k: StringKeys, opts: { small?: boolean; placeholder?: string } = {}) => (
     <label className={`ifield${opts.small ? ' small' : ''}`}>
       <span>{label}</span>
-      <input value={d[k]} placeholder={opts.placeholder ?? ''} onChange={(e) => set(k, e.target.value)} />
+      <input {...noAuto} value={d[k]} placeholder={opts.placeholder ?? ''} onChange={(e) => set(k, e.target.value)} />
     </label>
   );
 
   const areaField = (label: string, k: StringKeys, rows = 2) => (
     <label className="ifield">
       <span>{label}</span>
-      <textarea rows={rows} value={d[k]} onChange={(e) => set(k, e.target.value)} />
+      <textarea {...noAuto} rows={rows} value={d[k]} onChange={(e) => set(k, e.target.value)} />
     </label>
   );
 
@@ -68,6 +69,7 @@ export default function Intake({ d, set, customChoices }: Props) {
       <label className="ifield">
         <span>{label}</span>
         <textarea
+        {...noAuto}
           rows={2}
           value={d[textKey]}
           disabled={d[noneKey]}
@@ -233,6 +235,7 @@ export default function Intake({ d, set, customChoices }: Props) {
             <label className="ifield detail" key={id}>
               <span>{label} — details</span>
               <input
+        {...noAuto}
                 value={d.checkDetails[id] ?? ''}
                 placeholder="onset, severity, treatment…"
                 onChange={(e) => set('checkDetails', { ...d.checkDetails, [id]: e.target.value })}
@@ -300,6 +303,7 @@ export default function Intake({ d, set, customChoices }: Props) {
             <label className="ifield">
               <span>Comments</span>
               <textarea
+        {...noAuto}
                 rows={2}
                 value={d.comments[s.key] ?? ''}
                 onChange={(e) => set('comments', { ...d.comments, [s.key]: e.target.value })}

@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { noAuto } from './inputProps';
 import type { PreopEval, YesNo } from './types';
 import { SYSTEMS, screenItems, type SystemBand } from './formConfig';
 import type { CustomChoices } from './choices';
@@ -56,6 +57,7 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
 
   const input = (k: StringKeys, placeholder = '') => (
     <input
+        {...noAuto}
       className="fbf-input"
       value={d[k]}
       placeholder={placeholder}
@@ -65,6 +67,7 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
 
   const area = (k: StringKeys, disabled = false) => (
     <textarea
+        {...noAuto}
       className="fbf-input"
       rows={3}
       value={d[k]}
@@ -77,6 +80,7 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     <label className="ifield detail" key={id}>
       <span>{label} &mdash; details</span>
       <input
+        {...noAuto}
         value={d.checkDetails[id] ?? ''}
         placeholder="onset, severity, treatment&hellip;"
         onChange={(e) => set('checkDetails', { ...d.checkDetails, [id]: e.target.value })}
@@ -157,6 +161,7 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
             <label className="ifield">
               <span>Comments</span>
               <textarea
+        {...noAuto}
                 rows={2}
                 value={d.comments[s.key] ?? ''}
                 onChange={(e) => set('comments', { ...d.comments, [s.key]: e.target.value })}
@@ -283,11 +288,11 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
             <>
               <label className="ifield">
                 <span>Packs / day</span>
-                <input value={d.tobaccoPacksDay} onChange={(e) => set('tobaccoPacksDay', e.target.value)} />
+                <input {...noAuto} value={d.tobaccoPacksDay} onChange={(e) => set('tobaccoPacksDay', e.target.value)} />
               </label>
               <label className="ifield">
                 <span>For how many years</span>
-                <input value={d.tobaccoYears} onChange={(e) => set('tobaccoYears', e.target.value)} />
+                <input {...noAuto} value={d.tobaccoYears} onChange={(e) => set('tobaccoYears', e.target.value)} />
               </label>
             </>
           )}
@@ -312,7 +317,7 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
           {d.homeO2 && (
             <label className="ifield">
               <span>Liters / min</span>
-              <input value={d.homeO2Liters} onChange={(e) => set('homeO2Liters', e.target.value)} />
+              <input {...noAuto} value={d.homeO2Liters} onChange={(e) => set('homeO2Liters', e.target.value)} />
             </label>
           )}
         </>
@@ -332,7 +337,7 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
           {d.ethanol === 'yes' && (
             <label className="ifield">
               <span>Frequency</span>
-              <input value={d.ethanolFreq} onChange={(e) => set('ethanolFreq', e.target.value)} />
+              <input {...noAuto} value={d.ethanolFreq} onChange={(e) => set('ethanolFreq', e.target.value)} />
             </label>
           )}
         </>
@@ -348,7 +353,7 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
           {d.streetDrug === 'yes' && (
             <label className="ifield">
               <span>Frequency</span>
-              <input value={d.streetDrugFreq} onChange={(e) => set('streetDrugFreq', e.target.value)} />
+              <input {...noAuto} value={d.streetDrugFreq} onChange={(e) => set('streetDrugFreq', e.target.value)} />
             </label>
           )}
         </>

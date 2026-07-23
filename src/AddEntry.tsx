@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { noAuto } from './inputProps';
 
 // Inline "add a custom condition" input used by the intake views for entries
 // that aren't on the paper form's checkbox lists.
@@ -21,6 +22,7 @@ export default function AddEntry({
   return (
     <div className="addentry">
       <input
+        {...noAuto}
         value={text}
         placeholder={placeholder}
         onChange={(e) => setText(e.target.value)}

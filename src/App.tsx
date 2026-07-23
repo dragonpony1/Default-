@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { noAuto } from './inputProps';
 import { emptyPreopEval, type PreopEval, type YesNo } from './types';
 import { SYSTEMS, type SystemBand } from './formConfig';
 import { clearDraft, loadDraft, saveDraft } from './storage';
@@ -36,11 +37,11 @@ export default function App() {
 
   // Borderless inline text input
   const txt = (k: StringKeys, cls = '') => (
-    <input className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
+    <input {...noAuto} className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
   );
 
   const ta = (k: StringKeys, rows = 2) => (
-    <textarea className="a" rows={rows} value={d[k]} onChange={(e) => set(k, e.target.value)} />
+    <textarea {...noAuto} className="a" rows={rows} value={d[k]} onChange={(e) => set(k, e.target.value)} />
   );
 
   // Plain boolean checkbox
@@ -72,7 +73,7 @@ export default function App() {
       {(['yes', 'no'] as YesNo[]).map((v) => (
         <label className="ck" key={v}>
           <input
-            type="checkbox"
+        type="checkbox"
             checked={d[k] === v}
             onChange={(e) => set(k, e.target.checked ? v : '')}
           />
@@ -92,7 +93,7 @@ export default function App() {
     return (
       <label className="ck" key={id}>
         <input
-          type="checkbox"
+        type="checkbox"
           checked={!!d.checks[id] || derived}
           onChange={(e) => set('checks', { ...d.checks, [id]: e.target.checked })}
         />
@@ -103,6 +104,7 @@ export default function App() {
 
   const bandComments = (key: string, rows: number) => (
     <textarea
+        {...noAuto}
       className="a"
       rows={rows}
       value={d.comments[key] ?? ''}
@@ -121,7 +123,7 @@ export default function App() {
       </div>
       <div className="cell wnlc">
         <input
-          type="checkbox"
+        type="checkbox"
           checked={!!d.wnl[s.key]}
           onChange={(e) => set('wnl', { ...d.wnl, [s.key]: e.target.checked })}
         />
