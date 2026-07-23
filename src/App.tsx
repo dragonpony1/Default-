@@ -172,7 +172,10 @@ export default function App() {
           <button onClick={() => window.print()}>Print</button>
           <button className="danger" onClick={handleClear}>Clear form</button>
         </div>
-        <p className="privacy-note">All data stays on this device only. Clear the form after printing.</p>
+        <p className="privacy-note">
+          No patient name or identifiers are entered here &mdash; apply the patient label sticker after
+          printing. All data stays on this device only; clear the form after printing.
+        </p>
       </header>
 
       {view === 'gather' && <Intake d={d} set={set} />}
