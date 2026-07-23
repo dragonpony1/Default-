@@ -1,0 +1,190 @@
+:root {
+  font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+  color: #1a1a1a;
+  background: #e8eaed;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.app {
+  max-width: 8.5in;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* ---- Toolbar (screen only) ---- */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.toolbar h1 {
+  font-size: 1.25rem;
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toolbar button {
+  font: inherit;
+  padding: 0.4rem 1rem;
+  border: 1px solid #2a5db0;
+  border-radius: 4px;
+  background: #2a5db0;
+  color: #fff;
+  cursor: pointer;
+}
+
+.toolbar button.danger {
+  background: #fff;
+  color: #b02a2a;
+  border-color: #b02a2a;
+}
+
+.privacy-note {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+/* ---- Form sheet ---- */
+
+.sheet {
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 0.5in;
+}
+
+.sheet-header h2 {
+  text-align: center;
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+section {
+  margin-bottom: 0.75rem;
+  break-inside: avoid;
+}
+
+section h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.35rem;
+  padding-bottom: 2px;
+  border-bottom: 1.5px solid #1a1a1a;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.4rem 0.75rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.75rem;
+}
+
+.field.wide {
+  grid-column: 1 / -1;
+}
+
+.field > span {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.field input,
+.field textarea,
+.field select {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 3px 5px;
+  border: none;
+  border-bottom: 1px solid #888;
+  background: transparent;
+  resize: vertical;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: none;
+  border-bottom-color: #2a5db0;
+  background: #f0f5ff;
+}
+
+.field.checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.field.checkbox span {
+  margin-bottom: 0;
+}
+
+.signature-line {
+  border-bottom: 1px solid #1a1a1a;
+  height: 2.25rem;
+}
+
+.print-only {
+  display: none;
+}
+
+/* ---- Print: US Letter ---- */
+
+@page {
+  size: letter;
+  margin: 0.5in;
+}
+
+@media print {
+  :root {
+    background: #fff;
+  }
+
+  .app {
+    max-width: none;
+    padding: 0;
+  }
+
+  .screen-only {
+    display: none;
+  }
+
+  .print-only {
+    display: block;
+  }
+
+  .sheet {
+    border: none;
+    padding: 0;
+  }
+
+  .field input,
+  .field textarea,
+  .field select {
+    border-bottom: 1px solid #1a1a1a;
+  }
+}
