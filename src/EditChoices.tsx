@@ -33,6 +33,27 @@ export default function EditChoices({ choices, setChoices }: Props) {
           (sex, Mallampati class, ASA physical status) are not editable.
         </p>
       </section>
+      <section className="icard">
+        <h2>Proposed Procedure</h2>
+        <p className="fbf-hint">
+          Add the procedures you do most. They become one-tap choices on the procedure question;
+          anything else can still be typed in free text.
+        </p>
+        <div className="chips wrap">
+          {(choices.procedure ?? []).map((label) => (
+            <button
+              type="button"
+              className="chip on"
+              key={`proc:${label}`}
+              title="Remove this option"
+              onClick={() => remove('procedure', label)}
+            >
+              {label} ✕
+            </button>
+          ))}
+        </div>
+        <AddEntry onAdd={(label) => add('procedure', label)} placeholder="Add a procedure…" />
+      </section>
       {SYSTEMS.map((s) => {
         const custom = choices[s.key] ?? [];
         return (

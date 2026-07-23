@@ -2,7 +2,13 @@ import { useState } from 'react';
 
 // Inline "add a custom condition" input used by the intake views for entries
 // that aren't on the paper form's checkbox lists.
-export default function AddEntry({ onAdd }: { onAdd: (label: string) => void }) {
+export default function AddEntry({
+  onAdd,
+  placeholder = 'Other condition not listed…',
+}: {
+  onAdd: (label: string) => void;
+  placeholder?: string;
+}) {
   const [text, setText] = useState('');
 
   const commit = () => {
@@ -16,7 +22,7 @@ export default function AddEntry({ onAdd }: { onAdd: (label: string) => void }) 
     <div className="addentry">
       <input
         value={text}
-        placeholder="Other condition not listed&hellip;"
+        placeholder={placeholder}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {

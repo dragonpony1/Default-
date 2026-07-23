@@ -204,7 +204,31 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       ),
       summary: () => (d.weight ? `${d.weight} ${d.weightUnit}`.trim() : ''),
     },
-    textStep('Proposed procedure', 'proposedProcedure'),
+    {
+      title: 'Proposed procedure',
+      hint:
+        (customChoices.procedure ?? []).length > 0
+          ? 'Tap a procedure or type one below. Manage this list on the Edit Choices tab.'
+          : 'Add your common procedures on the Edit Choices tab for one-tap entry here.',
+      render: () => (
+        <>
+          {(customChoices.procedure ?? []).length > 0 && (
+            <div className="chips wrap">
+              {(customChoices.procedure ?? []).map((label) =>
+                chip(
+                  d.proposedProcedure === label,
+                  () => set('proposedProcedure', d.proposedProcedure === label ? '' : label),
+                  label,
+                  `proc:${label}`,
+                ),
+              )}
+            </div>
+          )}
+          {input('proposedProcedure')}
+        </>
+      ),
+      summary: () => d.proposedProcedure,
+    },
     textStep('Blood pressure', 'bp', 'Pre-procedure vital signs'),
     textStep('Pulse', 'p', 'Pre-procedure vital signs'),
     textStep('Respirations', 'r', 'Pre-procedure vital signs'),

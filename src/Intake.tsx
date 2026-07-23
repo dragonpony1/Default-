@@ -85,6 +85,18 @@ export default function Intake({ d, set, customChoices }: Props) {
             {oneOf('weightUnit', ['lb', 'kg'])}
           </div>
         </div>
+        {(customChoices.procedure ?? []).length > 0 && (
+          <div className="chips wrap">
+            {(customChoices.procedure ?? []).map((label) =>
+              chip(
+                d.proposedProcedure === label,
+                () => set('proposedProcedure', d.proposedProcedure === label ? '' : label),
+                label,
+                `proc:${label}`,
+              ),
+            )}
+          </div>
+        )}
         {field('Proposed procedure', 'proposedProcedure')}
         <div className="irow">
           {field('BP', 'bp', { small: true })}
