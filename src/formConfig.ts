@@ -8,6 +8,13 @@ export interface SystemBand {
   col2?: string[];
 }
 
+// On-screen entry splits the paper form's combined "OSA/CPAP" box into
+// separate OSA and CPAP choices; the printed checkbox stays combined, and
+// checking either one checks it.
+export function screenItems(s: SystemBand): string[] {
+  return s.col1.concat(s.col2 ?? []).flatMap((l) => (l === 'OSA/CPAP' ? ['OSA', 'CPAP'] : [l]));
+}
+
 export const SYSTEMS: SystemBand[] = [
   {
     key: 'resp',

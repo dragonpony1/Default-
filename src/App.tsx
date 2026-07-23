@@ -82,14 +82,18 @@ export default function App() {
     </>
   );
 
-  // Condition checkbox inside a system band
+  // Condition checkbox inside a system band. The printed OSA/CPAP box stays
+  // combined; on-screen entry records OSA and CPAP separately, and either
+  // one checks the combined box.
   const cond = (band: string, label: string) => {
     const id = `${band}:${label}`;
+    const derived =
+      label === 'OSA/CPAP' && (!!d.checks[`${band}:OSA`] || !!d.checks[`${band}:CPAP`]);
     return (
       <label className="ck" key={id}>
         <input
           type="checkbox"
-          checked={!!d.checks[id]}
+          checked={!!d.checks[id] || derived}
           onChange={(e) => set('checks', { ...d.checks, [id]: e.target.checked })}
         />
         <span>{label}</span>
@@ -132,9 +136,11 @@ export default function App() {
               <span className="b">{l}:</span> {d.checkDetails[`${s.key}:${l}`]}
             </div>
           ))}
-        {(choices[s.key] ?? [])
-          .filter((l) => d.checks[`${s.key}:${l}`])
-          .concat(d.customConditions[s.key] ?? [])
+        {(s.key === 'resp' ? ['OSA', 'CPAP'].filter((l) => d.checks[`resp:${l}`]) : [])
+          .concat(
+            (choices[s.key] ?? []).filter((l) => d.checks[`${s.key}:${l}`]),
+            d.customConditions[s.key] ?? [],
+          )
           .map((l) => (
             <div className="detline" key={`custom:${l}`}>
               <span className="b">{l}{d.checkDetails[`${s.key}:${l}`] ? ':' : ''}</span>{' '}
@@ -320,11 +326,20 @@ export default function App() {
 
               {band(
                 SYSTEMS[0],
-                <div className="inlinerow">
-                  <span className="b">Tobacco Use:</span> {yn('tobacco')}
-                  {txt('tobaccoPacksDay', 'u short')} <span>Packs / Day for</span>
-                  {txt('tobaccoYears', 'u short')} <span>Years</span>
-                </div>,
+                <>
+                  <div className="inlinerow">
+                    <span className="b">Tobacco Use:</span> {yn('tobacco')}
+                    {txt('tobaccoPacksDay', 'u short')} <span>Packs / Day for</span>
+                    {txt('tobaccoYears', 'u short')} <span>Years</span>
+                  </div>
+                  {d.homeO2 && (
+                    <div className="detline">
+                      <span className="b">Home O&#8322;:</span>{' '}
+                      {d.homeO2 === 'night' ? 'at night' : '24/7'}
+                      {d.homeO2Liters ? `, ${d.homeO2Liters} L/min` : ''}
+                    </div>
+                  )}
+                </>,
                 2,
               )}
               {band(SYSTEMS[1])}

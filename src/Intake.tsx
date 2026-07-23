@@ -1,5 +1,5 @@
 import type { PreopEval, YesNo } from './types';
-import { SYSTEMS } from './formConfig';
+import { SYSTEMS, screenItems } from './formConfig';
 import type { CustomChoices } from './choices';
 import AddEntry from './AddEntry';
 
@@ -124,7 +124,7 @@ export default function Intake({ d, set, customChoices }: Props) {
       </section>
 
       {SYSTEMS.map((s) => {
-        const items = s.col1.concat(s.col2 ?? [], customChoices[s.key] ?? []);
+        const items = screenItems(s).concat(customChoices[s.key] ?? []);
         const custom = d.customConditions[s.key] ?? [];
         const removeCustom = (label: string) => {
           const rest = { ...d.checkDetails };
@@ -174,15 +174,27 @@ export default function Intake({ d, set, customChoices }: Props) {
             {items.filter((label) => d.checks[`${s.key}:${label}`]).map(detailField)}
             {custom.map(detailField)}
             {s.key === 'resp' && (
-              <div className="irow social">
-                <div className="igroup"><span>Tobacco use</span>{ynChips('tobacco')}</div>
-                {d.tobacco === 'yes' && (
-                  <>
-                    {field('Packs / day', 'tobaccoPacksDay', { small: true })}
-                    {field('For how many years', 'tobaccoYears', { small: true })}
-                  </>
-                )}
-              </div>
+              <>
+                <div className="irow social">
+                  <div className="igroup"><span>Tobacco use</span>{ynChips('tobacco')}</div>
+                  {d.tobacco === 'yes' && (
+                    <>
+                      {field('Packs / day', 'tobaccoPacksDay', { small: true })}
+                      {field('For how many years', 'tobaccoYears', { small: true })}
+                    </>
+                  )}
+                </div>
+                <div className="irow social">
+                  <div className="igroup">
+                    <span>Home O&#8322;</span>
+                    <div className="chips">
+                      {chip(d.homeO2 === 'night', () => set('homeO2', d.homeO2 === 'night' ? '' : 'night'), 'At night')}
+                      {chip(d.homeO2 === '24/7', () => set('homeO2', d.homeO2 === '24/7' ? '' : '24/7'), '24/7')}
+                    </div>
+                  </div>
+                  {d.homeO2 && field('Liters / min', 'homeO2Liters', { small: true })}
+                </div>
+              </>
             )}
             {s.key === 'gi' && (
               <>

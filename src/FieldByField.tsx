@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import type { PreopEval, YesNo } from './types';
-import { SYSTEMS, type SystemBand } from './formConfig';
+import { SYSTEMS, screenItems, type SystemBand } from './formConfig';
 import type { CustomChoices } from './choices';
 import AddEntry from './AddEntry';
 
@@ -126,7 +126,7 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
   });
 
   const systemStep = (s: SystemBand): Step => {
-    const items = s.col1.concat(s.col2 ?? [], customChoices[s.key] ?? []);
+    const items = screenItems(s).concat(customChoices[s.key] ?? []);
     return {
       title: s.title,
       hint: 'Tap every condition that applies, or WNL if the system is normal. Type anything not listed below.',
@@ -275,6 +275,28 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
           : d.tobacco === 'no'
             ? 'No'
             : '',
+    },
+    {
+      title: 'Home O₂',
+      hint: 'Oxygen use at home.',
+      render: () => (
+        <>
+          <div className="chips">
+            {chip(d.homeO2 === 'night', () => set('homeO2', d.homeO2 === 'night' ? '' : 'night'), 'At night')}
+            {chip(d.homeO2 === '24/7', () => set('homeO2', d.homeO2 === '24/7' ? '' : '24/7'), '24/7')}
+          </div>
+          {d.homeO2 && (
+            <label className="ifield">
+              <span>Liters / min</span>
+              <input value={d.homeO2Liters} onChange={(e) => set('homeO2Liters', e.target.value)} />
+            </label>
+          )}
+        </>
+      ),
+      summary: () =>
+        d.homeO2
+          ? `${d.homeO2 === 'night' ? 'At night' : '24/7'}${d.homeO2Liters ? `, ${d.homeO2Liters} L/min` : ''}`
+          : '',
     },
     systemStep(bySystem.cardio),
     systemStep(bySystem.gi),

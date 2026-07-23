@@ -45,6 +45,8 @@ export interface PreopEval {
   tobacco: YesNo;
   tobaccoPacksDay: string;
   tobaccoYears: string;
+  homeO2: '' | 'night' | '24/7';
+  homeO2Liters: string;
   ethanol: YesNo;
   ethanolFreq: string;
   streetDrug: YesNo;
@@ -137,6 +139,8 @@ export const emptyPreopEval: PreopEval = {
   tobacco: '',
   tobaccoPacksDay: '',
   tobaccoYears: '',
+  homeO2: '',
+  homeO2Liters: '',
   ethanol: '',
   ethanolFreq: '',
   streetDrug: '',
