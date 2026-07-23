@@ -40,6 +40,7 @@ export interface PreopEval {
   wnl: Record<string, boolean>;
   checks: Record<string, boolean>;
   checkDetails: Record<string, string>;
+  customConditions: Record<string, string[]>;
   comments: Record<string, string>;
   tobacco: YesNo;
   tobaccoPacksDay: string;
@@ -131,6 +132,7 @@ export const emptyPreopEval: PreopEval = {
   wnl: {},
   checks: {},
   checkDetails: {},
+  customConditions: {},
   comments: {},
   tobacco: '',
   tobaccoPacksDay: '',

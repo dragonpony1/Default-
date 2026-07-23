@@ -1,5 +1,6 @@
 import type { PreopEval, YesNo } from './types';
 import { SYSTEMS } from './formConfig';
+import AddEntry from './AddEntry';
 
 interface Props {
   d: PreopEval;
@@ -122,6 +123,29 @@ export default function Intake({ d, set }: Props) {
 
       {SYSTEMS.map((s) => {
         const items = s.col1.concat(s.col2 ?? []);
+        const custom = d.customConditions[s.key] ?? [];
+        const removeCustom = (label: string) => {
+          const rest = { ...d.checkDetails };
+          delete rest[`${s.key}:${label}`];
+          set('checkDetails', rest);
+          set('customConditions', {
+            ...d.customConditions,
+            [s.key]: custom.filter((l) => l !== label),
+          });
+        };
+        const detailField = (label: string) => {
+          const id = `${s.key}:${label}`;
+          return (
+            <label className="ifield detail" key={id}>
+              <span>{label} — details</span>
+              <input
+                value={d.checkDetails[id] ?? ''}
+                placeholder="onset, severity, treatment…"
+                onChange={(e) => set('checkDetails', { ...d.checkDetails, [id]: e.target.value })}
+              />
+            </label>
+          );
+        };
         return (
           <section className="icard" key={s.key}>
             <div className="ihead">
@@ -138,22 +162,15 @@ export default function Intake({ d, set }: Props) {
                   id,
                 );
               })}
+              {custom.map((label) => chip(true, () => removeCustom(label), `${label} ✕`, `custom:${label}`))}
             </div>
-            {items
-              .filter((label) => d.checks[`${s.key}:${label}`])
-              .map((label) => {
-                const id = `${s.key}:${label}`;
-                return (
-                  <label className="ifield detail" key={id}>
-                    <span>{label} — details</span>
-                    <input
-                      value={d.checkDetails[id] ?? ''}
-                      placeholder="onset, severity, treatment…"
-                      onChange={(e) => set('checkDetails', { ...d.checkDetails, [id]: e.target.value })}
-                    />
-                  </label>
-                );
-              })}
+            <AddEntry onAdd={(label) => {
+              if (!custom.includes(label)) {
+                set('customConditions', { ...d.customConditions, [s.key]: [...custom, label] });
+              }
+            }} />
+            {items.filter((label) => d.checks[`${s.key}:${label}`]).map(detailField)}
+            {custom.map(detailField)}
             {s.key === 'resp' && (
               <div className="irow social">
                 <div className="igroup"><span>Tobacco use</span>{ynChips('tobacco')}</div>

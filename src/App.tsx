@@ -124,6 +124,12 @@ export default function App() {
               <span className="b">{l}:</span> {d.checkDetails[`${s.key}:${l}`]}
             </div>
           ))}
+        {(d.customConditions[s.key] ?? []).map((l) => (
+          <div className="detline" key={`custom:${l}`}>
+            <span className="b">{l}{d.checkDetails[`${s.key}:${l}`] ? ':' : ''}</span>{' '}
+            {d.checkDetails[`${s.key}:${l}`] ?? ''}
+          </div>
+        ))}
         {bandComments(s.key, commentRows)}
       </div>
     </div>

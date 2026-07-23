@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import type { PreopEval, YesNo } from './types';
 import { SYSTEMS, type SystemBand } from './formConfig';
+import AddEntry from './AddEntry';
 
 interface Props {
   d: PreopEval;
@@ -70,16 +71,45 @@ export default function FieldByField({ d, set, onFinish }: Props) {
     />
   );
 
+  const detailField = (id: string, label: string) => (
+    <label className="ifield detail" key={id}>
+      <span>{label} &mdash; details</span>
+      <input
+        value={d.checkDetails[id] ?? ''}
+        placeholder="onset, severity, treatment&hellip;"
+        onChange={(e) => set('checkDetails', { ...d.checkDetails, [id]: e.target.value })}
+      />
+    </label>
+  );
+
+  const addCustom = (sysKey: string, label: string) => {
+    const existing = d.customConditions[sysKey] ?? [];
+    if (existing.includes(label)) return;
+    set('customConditions', { ...d.customConditions, [sysKey]: [...existing, label] });
+  };
+
+  const removeCustom = (sysKey: string, label: string) => {
+    const rest = { ...d.checkDetails };
+    delete rest[`${sysKey}:${label}`];
+    set('checkDetails', rest);
+    set('customConditions', {
+      ...d.customConditions,
+      [sysKey]: (d.customConditions[sysKey] ?? []).filter((l) => l !== label),
+    });
+  };
+
   interface Step {
     title: string;
     hint?: string;
     render: () => ReactNode;
+    summary: () => string;
   }
 
   const textStep = (title: string, k: StringKeys, hint?: string): Step => ({
     title,
     hint,
     render: () => input(k),
+    summary: () => d[k],
   });
 
   const noneableStep = (title: string, textKey: StringKeys, noneKey: BoolKeys): Step => ({
@@ -90,60 +120,68 @@ export default function FieldByField({ d, set, onFinish }: Props) {
         {boolChip(noneKey, 'None')}
       </>
     ),
+    summary: () => (d[noneKey] ? 'None' : d[textKey]),
   });
 
   const systemStep = (s: SystemBand): Step => {
     const items = s.col1.concat(s.col2 ?? []);
     return {
       title: s.title,
-      hint: 'Tap every condition that applies, or WNL if the system is normal.',
-      render: () => (
-        <>
-          <div className="chips wrap">
-            {chip(!!d.wnl[s.key], () => set('wnl', { ...d.wnl, [s.key]: !d.wnl[s.key] }), 'WNL')}
-            {items.map((label) => {
-              const id = `${s.key}:${label}`;
-              return chip(
-                !!d.checks[id],
-                () => set('checks', { ...d.checks, [id]: !d.checks[id] }),
-                label,
-                id,
-              );
-            })}
-          </div>
-          {items
-            .filter((label) => d.checks[`${s.key}:${label}`])
-            .map((label) => {
-              const id = `${s.key}:${label}`;
-              return (
-                <label className="ifield detail" key={id}>
-                  <span>{label} &mdash; details</span>
-                  <input
-                    value={d.checkDetails[id] ?? ''}
-                    placeholder="onset, severity, treatment&hellip;"
-                    onChange={(e) => set('checkDetails', { ...d.checkDetails, [id]: e.target.value })}
-                  />
-                </label>
-              );
-            })}
-          <label className="ifield">
-            <span>Comments</span>
-            <textarea
-              rows={2}
-              value={d.comments[s.key] ?? ''}
-              onChange={(e) => set('comments', { ...d.comments, [s.key]: e.target.value })}
-            />
-          </label>
-        </>
-      ),
+      hint: 'Tap every condition that applies, or WNL if the system is normal. Type anything not listed below.',
+      render: () => {
+        const custom = d.customConditions[s.key] ?? [];
+        return (
+          <>
+            <div className="chips wrap">
+              {chip(!!d.wnl[s.key], () => set('wnl', { ...d.wnl, [s.key]: !d.wnl[s.key] }), 'WNL')}
+              {items.map((label) => {
+                const id = `${s.key}:${label}`;
+                return chip(
+                  !!d.checks[id],
+                  () => set('checks', { ...d.checks, [id]: !d.checks[id] }),
+                  label,
+                  id,
+                );
+              })}
+              {custom.map((label) =>
+                chip(true, () => removeCustom(s.key, label), `${label} ✕`, `custom:${label}`),
+              )}
+            </div>
+            <AddEntry onAdd={(label) => addCustom(s.key, label)} />
+            {items
+              .filter((label) => d.checks[`${s.key}:${label}`])
+              .map((label) => detailField(`${s.key}:${label}`, label))}
+            {custom.map((label) => detailField(`${s.key}:${label}`, label))}
+            <label className="ifield">
+              <span>Comments</span>
+              <textarea
+                rows={2}
+                value={d.comments[s.key] ?? ''}
+                onChange={(e) => set('comments', { ...d.comments, [s.key]: e.target.value })}
+              />
+            </label>
+          </>
+        );
+      },
+      summary: () => {
+        const parts: string[] = [];
+        if (d.wnl[s.key]) parts.push('WNL');
+        parts.push(...items.filter((l) => d.checks[`${s.key}:${l}`]));
+        parts.push(...(d.customConditions[s.key] ?? []));
+        if (d.comments[s.key]) parts.push(d.comments[s.key]);
+        return parts.join(', ');
+      },
     };
   };
 
   const bySystem = Object.fromEntries(SYSTEMS.map((s) => [s.key, s]));
 
+  const joinNonEmpty = (pairs: Array<[string, string]>) =>
+    pairs.filter(([, v]) => v).map(([l, v]) => `${l}: ${v}`).join('; ');
+
   const steps: Step[] = [
     textStep('Age', 'age'),
-    { title: 'Sex', render: () => oneOf('sex', ['M', 'F']) },
+    { title: 'Sex', render: () => oneOf('sex', ['M', 'F']), summary: () => d.sex },
     {
       title: 'Height',
       render: () => (
@@ -152,6 +190,7 @@ export default function FieldByField({ d, set, onFinish }: Props) {
           {oneOf('heightUnit', ['in', 'cm'])}
         </>
       ),
+      summary: () => (d.height ? `${d.height} ${d.heightUnit}`.trim() : ''),
     },
     {
       title: 'Weight',
@@ -161,6 +200,7 @@ export default function FieldByField({ d, set, onFinish }: Props) {
           {oneOf('weightUnit', ['lb', 'kg'])}
         </>
       ),
+      summary: () => (d.weight ? `${d.weight} ${d.weightUnit}`.trim() : ''),
     },
     textStep('Proposed procedure', 'proposedProcedure'),
     textStep('Blood pressure', 'bp', 'Pre-procedure vital signs'),
@@ -185,8 +225,26 @@ export default function FieldByField({ d, set, onFinish }: Props) {
           {boolChip('hfPoorHistorian', 'Poor Historian')}
         </div>
       ),
+      summary: () =>
+        (
+          [
+            [d.hfPatient, 'Patient'],
+            [d.hfParentGuardian, 'Parent / Guardian'],
+            [d.hfSignificantOther, 'Significant Other'],
+            [d.hfChart, 'Chart'],
+            [d.hfCommLanguage, 'Communication / Language Problems'],
+            [d.hfPoorHistorian, 'Poor Historian'],
+          ] as Array<[boolean, string]>
+        )
+          .filter(([on]) => on)
+          .map(([, l]) => l)
+          .join(', '),
     },
-    { title: 'Mallampati class', render: () => oneOf('mallampati', ['I', 'II', 'III', 'IV']) },
+    {
+      title: 'Mallampati class',
+      render: () => oneOf('mallampati', ['I', 'II', 'III', 'IV']),
+      summary: () => d.mallampati,
+    },
     textStep('TMD', 'tmd', 'Airway / teeth / head and neck'),
     textStep('ROM', 'rom', 'Airway / teeth / head and neck'),
     systemStep(bySystem.resp),
@@ -209,6 +267,12 @@ export default function FieldByField({ d, set, onFinish }: Props) {
           )}
         </>
       ),
+      summary: () =>
+        d.tobacco === 'yes'
+          ? `Yes${d.tobaccoPacksDay ? `, ${d.tobaccoPacksDay} packs/day` : ''}${d.tobaccoYears ? `, ${d.tobaccoYears} years` : ''}`
+          : d.tobacco === 'no'
+            ? 'No'
+            : '',
     },
     systemStep(bySystem.cardio),
     systemStep(bySystem.gi),
@@ -225,6 +289,8 @@ export default function FieldByField({ d, set, onFinish }: Props) {
           )}
         </>
       ),
+      summary: () =>
+        d.ethanol === 'yes' ? `Yes${d.ethanolFreq ? `, ${d.ethanolFreq}` : ''}` : d.ethanol === 'no' ? 'No' : '',
     },
     {
       title: '“Street drug” use',
@@ -239,6 +305,12 @@ export default function FieldByField({ d, set, onFinish }: Props) {
           )}
         </>
       ),
+      summary: () =>
+        d.streetDrug === 'yes'
+          ? `Yes${d.streetDrugFreq ? `, ${d.streetDrugFreq}` : ''}`
+          : d.streetDrug === 'no'
+            ? 'No'
+            : '',
     },
     systemStep(bySystem.neuro),
     systemStep(bySystem.renal),
@@ -258,6 +330,15 @@ export default function FieldByField({ d, set, onFinish }: Props) {
           )}
         </>
       ),
+      summary: () =>
+        d.dxNone
+          ? 'None'
+          : joinNonEmpty([
+              ['EKG', d.dxEkg],
+              ['CXR', d.dxCxr],
+              ['Pulmonary', d.dxPulm],
+              ['Other', d.dxOther],
+            ]),
     },
     {
       title: 'Laboratory studies',
@@ -269,6 +350,13 @@ export default function FieldByField({ d, set, onFinish }: Props) {
           <label className="ifield"><span>Other labs</span>{input('labOther')}</label>
         </>
       ),
+      summary: () =>
+        joinNonEmpty([
+          ['Hgb/Hct/CBC', d.labHgb],
+          ['Electrolytes', d.labElectrolytes],
+          ['Urinalysis', d.labUrinalysis],
+          ['Other', d.labOther],
+        ]),
     },
     {
       title: 'Physical status (ASA)',
@@ -278,10 +366,19 @@ export default function FieldByField({ d, set, onFinish }: Props) {
           {boolChip('physicalStatusE', 'E (Emergency)')}
         </>
       ),
+      summary: () => `${d.physicalStatus}${d.physicalStatusE ? 'E' : ''}`,
     },
-    { title: 'Problem list / diagnoses', render: () => area('problemList') },
-    { title: 'Planned anesthesia / special monitors', render: () => area('plannedAnesthesia') },
-    { title: 'Pre-anesthesia medications ordered', render: () => area('preAnesthesiaMeds') },
+    { title: 'Problem list / diagnoses', render: () => area('problemList'), summary: () => d.problemList },
+    {
+      title: 'Planned anesthesia / special monitors',
+      render: () => area('plannedAnesthesia'),
+      summary: () => d.plannedAnesthesia,
+    },
+    {
+      title: 'Pre-anesthesia medications ordered',
+      render: () => area('preAnesthesiaMeds'),
+      summary: () => d.preAnesthesiaMeds,
+    },
     textStep('Evaluation date/time', 'evalDateTime'),
   ];
 
@@ -294,9 +391,12 @@ export default function FieldByField({ d, set, onFinish }: Props) {
         <div className="fbf-bar">
           <div className="fbf-fill" style={{ width: `${(Math.min(step, steps.length) / steps.length) * 100}%` }} />
         </div>
-        <span className="fbf-count">
-          {done ? 'Done' : `${step + 1} of ${steps.length}`}
-        </span>
+        <span className="fbf-count">{done ? 'Review' : `${step + 1} of ${steps.length}`}</span>
+        {!done && (
+          <button type="button" className="chip" onClick={() => go(steps.length)}>
+            Review all
+          </button>
+        )}
       </div>
 
       {cur ? (
@@ -307,11 +407,22 @@ export default function FieldByField({ d, set, onFinish }: Props) {
         </section>
       ) : (
         <section className="icard fbf-card">
-          <h2>All questions answered</h2>
+          <h2>Review every field</h2>
           <p className="fbf-hint">
-            Review the paper form, then print it. Remember: apply the patient label sticker after
-            printing and clear the form.
+            Tap any field to open it and edit or add to the entry. When everything looks right, view
+            the paper form and print it.
           </p>
+          <div className="fbf-review">
+            {steps.map((s, i) => {
+              const v = s.summary();
+              return (
+                <button type="button" className="fbf-revrow" key={s.title + i} onClick={() => go(i)}>
+                  <span className="fbf-revlabel">{s.title}</span>
+                  <span className={`fbf-revvalue${v ? '' : ' empty'}`}>{v || '— blank —'}</span>
+                </button>
+              );
+            })}
+          </div>
           <button type="button" className="fbf-next" onClick={onFinish}>
             View paper form
           </button>
@@ -325,11 +436,6 @@ export default function FieldByField({ d, set, onFinish }: Props) {
         {!done && (
           <button type="button" className="fbf-next" onClick={() => go(step + 1)}>
             {step === steps.length - 1 ? 'Finish' : 'Next →'}
-          </button>
-        )}
-        {done && (
-          <button type="button" className="fbf-back" onClick={() => go(0)}>
-            Start over
           </button>
         )}
       </div>

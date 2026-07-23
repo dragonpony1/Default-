@@ -905,7 +905,9 @@ input[type='checkbox']:checked::after {
   gap: 0.75rem;
 }
 
-.fbf-nav button {
+.fbf-nav button,
+.fbf-back,
+.fbf-next {
   font: inherit;
   font-size: 1.1rem;
   min-height: 52px;
@@ -930,4 +932,81 @@ input[type='checkbox']:checked::after {
   border: 1.5px solid #2a5db0;
   color: #fff;
   font-weight: 600;
+}
+
+/* Custom-entry input and review list */
+
+.addentry {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.addentry input {
+  font: inherit;
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1.5px dashed #98a3b3;
+  border-radius: 999px;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.addentry input:focus {
+  outline: none;
+  border-color: #2a5db0;
+  border-style: solid;
+}
+
+.addentry .chip:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.fbf-review {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #dbe1ea;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.fbf-revrow {
+  font: inherit;
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  justify-content: space-between;
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+  background: #fff;
+  border: none;
+  border-bottom: 1px solid #eef1f5;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.fbf-revrow:last-child {
+  border-bottom: none;
+}
+
+.fbf-revrow:hover {
+  background: #f4f7fb;
+}
+
+.fbf-revlabel {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.fbf-revvalue {
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60%;
+}
+
+.fbf-revvalue.empty {
+  color: #98a3b3;
 }
