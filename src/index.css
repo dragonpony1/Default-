@@ -1109,3 +1109,9 @@ input[type='checkbox']:checked::after {
   background: #2a5db0;
   color: #fff;
 }
+
+.chips.sides .side-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-right: 0.2rem;
+}
