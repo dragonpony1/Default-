@@ -4,13 +4,14 @@ import { SYSTEMS, type SystemBand } from './formConfig';
 import { clearDraft, loadDraft, saveDraft } from './storage';
 import Barcode39 from './Barcode39';
 import Intake from './Intake';
+import FieldByField from './FieldByField';
 
 type StringKeys = { [K in keyof PreopEval]: PreopEval[K] extends string ? K : never }[keyof PreopEval];
 type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : never }[keyof PreopEval];
 
 export default function App() {
   const [d, setD] = useState<PreopEval>(loadDraft);
-  const [view, setView] = useState<'gather' | 'form'>('gather');
+  const [view, setView] = useState<'gather' | 'fields' | 'form'>('gather');
 
   useEffect(() => {
     saveDraft(d);
@@ -164,6 +165,9 @@ export default function App() {
           <button className={view === 'gather' ? 'on' : ''} onClick={() => setView('gather')}>
             Gather Info
           </button>
+          <button className={view === 'fields' ? 'on' : ''} onClick={() => setView('fields')}>
+            Field by Field
+          </button>
           <button className={view === 'form' ? 'on' : ''} onClick={() => setView('form')}>
             Paper Form
           </button>
@@ -179,6 +183,7 @@ export default function App() {
       </header>
 
       {view === 'gather' && <Intake d={d} set={set} />}
+      {view === 'fields' && <FieldByField d={d} set={set} onFinish={() => setView('form')} />}
 
       <div className={`page${view === 'form' ? '' : ' print-only-block'}`}>
         <div className="page-top">
