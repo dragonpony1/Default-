@@ -1086,3 +1086,26 @@ input[type='checkbox']:checked::after {
   gap: 0.4rem;
   justify-content: flex-end;
 }
+
+/* Service tabs in the procedure picker */
+
+.procpick {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chip.svc {
+  border-radius: 8px;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #2a5db0;
+  border-color: #2a5db0;
+}
+
+.chip.svc.on {
+  background: #2a5db0;
+  color: #fff;
+}

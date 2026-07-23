@@ -4,6 +4,7 @@ import type { PreopEval, YesNo } from './types';
 import { SYSTEMS, screenItems } from './formConfig';
 import type { CustomChoices } from './choices';
 import AddEntry from './AddEntry';
+import ProcedurePicker from './ProcedurePicker';
 
 interface Props {
   d: PreopEval;
@@ -152,18 +153,7 @@ export default function Intake({ d, set, customChoices }: Props) {
 
       {sec('patient', 'Patient & Procedure', patientSummary, (
         <>
-          {(customChoices.procedure ?? []).length > 0 && (
-            <div className="chips wrap">
-              {(customChoices.procedure ?? []).map((label) =>
-                chip(
-                  d.proposedProcedure === label,
-                  () => set('proposedProcedure', d.proposedProcedure === label ? '' : label),
-                  label,
-                  `proc:${label}`,
-                ),
-              )}
-            </div>
-          )}
+          <ProcedurePicker d={d} set={set} customChoices={customChoices} />
           {field('Proposed procedure', 'proposedProcedure')}
           <div className="irow">
             {field('Age', 'age', { small: true })}

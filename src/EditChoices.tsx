@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { SYSTEMS } from './formConfig';
-import type { CustomChoices } from './choices';
+import { SERVICES, procKey, type CustomChoices } from './choices';
 import AddEntry from './AddEntry';
 
 interface Props {
@@ -11,6 +12,8 @@ interface Props {
 // options behave like the built-in ones everywhere (chips, details, printing
 // into the Comments column) and are kept on this device across patients.
 export default function EditChoices({ choices, setChoices }: Props) {
+  const [svc, setSvc] = useState<string>('Ortho');
+
   const add = (key: string, label: string) => {
     const existing = choices[key] ?? [];
     if (existing.includes(label)) return;
@@ -36,23 +39,36 @@ export default function EditChoices({ choices, setChoices }: Props) {
       <section className="icard">
         <h2>Proposed Procedure</h2>
         <p className="fbf-hint">
-          Add the procedures you do most. They become one-tap choices on the procedure question;
-          anything else can still be typed in free text.
+          Procedures are grouped by service. Pick a service tab, then add the procedures you do
+          most &mdash; they become one-tap choices on the procedure question. Anything else can
+          still be typed in free text.
         </p>
         <div className="chips wrap">
-          {(choices.procedure ?? []).map((label) => (
+          {SERVICES.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={`chip svc${svc === s ? ' on' : ''}`}
+              onClick={() => setSvc(s)}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+        <div className="chips wrap">
+          {(choices[procKey(svc)] ?? []).map((label) => (
             <button
               type="button"
               className="chip on"
               key={`proc:${label}`}
               title="Remove this option"
-              onClick={() => remove('procedure', label)}
+              onClick={() => remove(procKey(svc), label)}
             >
               {label} ✕
             </button>
           ))}
         </div>
-        <AddEntry onAdd={(label) => add('procedure', label)} placeholder="Add a procedure…" />
+        <AddEntry onAdd={(label) => add(procKey(svc), label)} placeholder={`Add a ${svc} procedure…`} />
       </section>
       {SYSTEMS.map((s) => {
         const custom = choices[s.key] ?? [];

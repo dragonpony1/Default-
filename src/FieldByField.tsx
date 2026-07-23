@@ -4,6 +4,7 @@ import type { PreopEval, YesNo } from './types';
 import { SYSTEMS, screenItems, type SystemBand } from './formConfig';
 import type { CustomChoices } from './choices';
 import AddEntry from './AddEntry';
+import ProcedurePicker from './ProcedurePicker';
 
 interface Props {
   d: PreopEval;
@@ -189,24 +190,10 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
   const steps: Step[] = [
     {
       title: 'Proposed procedure',
-      hint:
-        (customChoices.procedure ?? []).length > 0
-          ? 'Tap a procedure or type one below. Manage this list on the Edit Choices tab.'
-          : 'Add your common procedures on the Edit Choices tab for one-tap entry here.',
+      hint: 'Pick the service, tap the procedure — or type it. Manage the lists on the Edit Choices tab.',
       render: () => (
         <>
-          {(customChoices.procedure ?? []).length > 0 && (
-            <div className="chips wrap">
-              {(customChoices.procedure ?? []).map((label) =>
-                chip(
-                  d.proposedProcedure === label,
-                  () => set('proposedProcedure', d.proposedProcedure === label ? '' : label),
-                  label,
-                  `proc:${label}`,
-                ),
-              )}
-            </div>
-          )}
+          <ProcedurePicker d={d} set={set} customChoices={customChoices} />
           {input('proposedProcedure')}
         </>
       ),
