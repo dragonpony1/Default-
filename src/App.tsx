@@ -166,7 +166,7 @@ export default function App() {
             Gather Info
           </button>
           <button className={view === 'fields' ? 'on' : ''} onClick={() => setView('fields')}>
-            Field by Field
+            Pre-Op Wizard
           </button>
           <button className={view === 'form' ? 'on' : ''} onClick={() => setView('form')}>
             Paper Form
