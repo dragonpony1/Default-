@@ -1,45 +1,149 @@
 import { useEffect, useState } from 'react';
-import { emptyPreopEval, type PreopEval } from './types';
+import { emptyPreopEval, type PreopEval, type YesNo } from './types';
+import { SYSTEMS, type SystemBand } from './formConfig';
 import { clearDraft, loadDraft, saveDraft } from './storage';
+import Barcode39 from './Barcode39';
 
-type Field = keyof PreopEval;
+type StringKeys = { [K in keyof PreopEval]: PreopEval[K] extends string ? K : never }[keyof PreopEval];
+type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : never }[keyof PreopEval];
 
 export default function App() {
-  const [data, setData] = useState<PreopEval>(loadDraft);
+  const [d, setD] = useState<PreopEval>(loadDraft);
 
   useEffect(() => {
-    saveDraft(data);
-  }, [data]);
+    saveDraft(d);
+  }, [d]);
 
-  const set = (field: Field) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
-  ) => {
-    const value =
-      e.target instanceof HTMLInputElement && e.target.type === 'checkbox'
-        ? e.target.checked
-        : e.target.value;
-    setData((d) => ({ ...d, [field]: value }));
-  };
+  const set = <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => setD((prev) => ({ ...prev, [k]: v }));
 
   const handleClear = () => {
     if (window.confirm('Clear the entire form? This removes all entered data from this device.')) {
       clearDraft();
-      setData({ ...emptyPreopEval });
+      setD({ ...emptyPreopEval });
     }
   };
 
-  const text = (label: string, field: Field, props: { wide?: boolean; type?: string } = {}) => (
-    <label className={`field${props.wide ? ' wide' : ''}`}>
-      <span>{label}</span>
-      <input type={props.type ?? 'text'} value={String(data[field])} onChange={set(field)} />
+  // Borderless inline text input
+  const txt = (k: StringKeys, cls = '') => (
+    <input className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
+  );
+
+  const ta = (k: StringKeys, rows = 2) => (
+    <textarea className="a" rows={rows} value={d[k]} onChange={(e) => set(k, e.target.value)} />
+  );
+
+  // Plain boolean checkbox
+  const bx = (k: BoolKeys, label?: string) => (
+    <label className="ck">
+      <input type="checkbox" checked={d[k]} onChange={(e) => set(k, e.target.checked)} />
+      {label && <span>{label}</span>}
     </label>
   );
 
-  const area = (label: string, field: Field, rows = 2) => (
-    <label className="field wide">
+  // Mutually-exclusive checkbox group (paper-style: check one, re-click to clear)
+  const xbx = <K extends 'sex' | 'heightUnit' | 'weightUnit' | 'physicalStatus'>(
+    k: K,
+    v: PreopEval[K],
+    label: string,
+  ) => (
+    <label className="ck">
+      <input
+        type="checkbox"
+        checked={d[k] === v}
+        onChange={(e) => set(k, (e.target.checked ? v : '') as PreopEval[K])}
+      />
       <span>{label}</span>
-      <textarea rows={rows} value={String(data[field])} onChange={set(field)} />
     </label>
+  );
+
+  const yn = (k: 'tobacco' | 'ethanol' | 'streetDrug') => (
+    <>
+      {(['yes', 'no'] as YesNo[]).map((v) => (
+        <label className="ck" key={v}>
+          <input
+            type="checkbox"
+            checked={d[k] === v}
+            onChange={(e) => set(k, e.target.checked ? v : '')}
+          />
+          <span>{v === 'yes' ? 'Yes' : 'No'}</span>
+        </label>
+      ))}
+    </>
+  );
+
+  // Condition checkbox inside a system band
+  const cond = (band: string, label: string) => {
+    const id = `${band}:${label}`;
+    return (
+      <label className="ck" key={id}>
+        <input
+          type="checkbox"
+          checked={!!d.checks[id]}
+          onChange={(e) => set('checks', { ...d.checks, [id]: e.target.checked })}
+        />
+        <span>{label}</span>
+      </label>
+    );
+  };
+
+  const bandComments = (key: string, rows: number) => (
+    <textarea
+      className="a"
+      rows={rows}
+      value={d.comments[key] ?? ''}
+      onChange={(e) => set('comments', { ...d.comments, [key]: e.target.value })}
+    />
+  );
+
+  const band = (s: SystemBand, extra?: React.ReactNode, commentRows = 3) => (
+    <div className="row band" key={s.key}>
+      <div className="cell sys">
+        <div className="syshead">{s.title}</div>
+        <div className="list2">
+          <div className="list">{s.col1.map((l) => cond(s.key, l))}</div>
+          {s.col2 && <div className="list">{s.col2.map((l) => cond(s.key, l))}</div>}
+        </div>
+      </div>
+      <div className="cell wnlc">
+        <input
+          type="checkbox"
+          checked={!!d.wnl[s.key]}
+          onChange={(e) => set('wnl', { ...d.wnl, [s.key]: e.target.checked })}
+        />
+      </div>
+      <div className="cell com grow">
+        {extra}
+        {bandComments(s.key, commentRows)}
+      </div>
+    </div>
+  );
+
+  const rslot = (label: string, k: StringKeys, rows = 2) => (
+    <div className="rslot">
+      <span className="rlabel">{label}</span>
+      {ta(k, rows)}
+    </div>
+  );
+
+  const vitalsPair = (
+    pre: 'pan' | 'inp',
+  ) => (
+    <div className="pan2">
+      <div className="pcol">
+        <div className="vrow"><span>BP</span>{txt(`${pre}Bp` as StringKeys)}</div>
+        <div className="vrow"><span>P</span>{txt(`${pre}P` as StringKeys)}</div>
+        <div className="vrow"><span>R</span>{txt(`${pre}R` as StringKeys)}</div>
+        <div className="vrow"><span>T</span>{txt(`${pre}T` as StringKeys)}</div>
+        <div className="vrow"><span>O&#8322; Sat.</span>{txt(`${pre}O2` as StringKeys)}</div>
+        <div className="vrow"><span>Pain (0&ndash;10)</span>{txt(`${pre}Pain` as StringKeys)}</div>
+      </div>
+      <div className="pcol">
+        <div className="vrow"><span>N/V</span>{txt(`${pre}NV` as StringKeys)}</div>
+        <div className="vrow u"><span>Airway Patency</span>{txt(`${pre}Airway` as StringKeys)}</div>
+        <div className="vrow u"><span>Mental Status</span>{txt(`${pre}Mental` as StringKeys)}</div>
+        {pre === 'pan' && <div className="vrow u"><span>Hydration</span>{txt('panHydration')}</div>}
+      </div>
+    </div>
   );
 
   return (
@@ -50,144 +154,236 @@ export default function App() {
           <button onClick={() => window.print()}>Print</button>
           <button className="danger" onClick={handleClear}>Clear form</button>
         </div>
-        <p className="privacy-note">
-          All data stays on this device only. Clear the form after printing.
-        </p>
+        <p className="privacy-note">All data stays on this device only. Clear the form after printing.</p>
       </header>
 
-      <main className="sheet">
-        <div className="sheet-header print-only">
-          <h2>Pre-Anesthesia Evaluation</h2>
+      <div className="page">
+        <div className="page-top">
+          <div className="bc-wrap">
+            <Barcode39 value="PRE" />
+            <div className="bc-caption">*PRE*</div>
+          </div>
         </div>
 
-        <section>
-          <h3>Patient</h3>
-          <div className="grid">
-            {text('Patient name', 'patientName', { wide: true })}
-            {text('MRN', 'mrn')}
-            {text('Date of birth', 'dob', { type: 'date' })}
-            {text('Age', 'age')}
-            {text('Sex', 'sex')}
-            {text('Height (cm)', 'heightCm')}
-            {text('Weight (kg)', 'weightKg')}
-            {text('Date', 'date', { type: 'date' })}
-          </div>
-        </section>
-
-        <section>
-          <h3>Planned Procedure</h3>
-          <div className="grid">
-            {text('Procedure', 'procedure', { wide: true })}
-            {text('Surgeon', 'surgeon')}
-            {text('Diagnosis', 'diagnosis', { wide: true })}
-          </div>
-        </section>
-
-        <section>
-          <h3>History</h3>
-          <div className="grid">
-            {area('Allergies', 'allergies', 1)}
-            {area('Current medications', 'medications')}
-            {area('Past medical history', 'pastMedicalHistory')}
-            {area('Past surgical history', 'pastSurgicalHistory')}
-            {area('Prior anesthesia history / complications', 'anesthesiaHistory', 1)}
-            {area('Family anesthesia complications', 'familyAnesthesiaHistory', 1)}
-            {text('NPO status (last intake)', 'npoStatus', { wide: true })}
-          </div>
-        </section>
-
-        <section>
-          <h3>Review of Systems</h3>
-          <div className="grid">
-            {area('Cardiac', 'cardiac', 1)}
-            {area('Pulmonary', 'pulmonary', 1)}
-            {area('Renal', 'renal', 1)}
-            {area('Hepatic / GI', 'hepaticGI', 1)}
-            {area('Neuro', 'neuro', 1)}
-            {area('Endocrine', 'endocrine', 1)}
-            {area('Other', 'other', 1)}
-          </div>
-        </section>
-
-        <section>
-          <h3>Airway Exam</h3>
-          <div className="grid">
-            <label className="field">
-              <span>Mallampati class</span>
-              <select value={data.mallampati} onChange={set('mallampati')}>
-                <option value="">—</option>
-                <option>I</option>
-                <option>II</option>
-                <option>III</option>
-                <option>IV</option>
-              </select>
-            </label>
-            {text('Thyromental distance', 'thyromentalDistance')}
-            {text('Mouth opening', 'mouthOpening')}
-            {text('Neck ROM', 'neckROM')}
-            {text('Dentition', 'dentition')}
-            {area('Airway notes', 'airwayNotes', 1)}
-          </div>
-        </section>
-
-        <section>
-          <h3>Physical Exam / Vitals</h3>
-          <div className="grid">
-            {text('BP', 'bp')}
-            {text('HR', 'hr')}
-            {text('RR', 'rr')}
-            {text('SpO₂', 'spo2')}
-            {text('Temp', 'temp')}
-            {area('Heart', 'heartExam', 1)}
-            {area('Lungs', 'lungExam', 1)}
-          </div>
-        </section>
-
-        <section>
-          <h3>Labs / Studies</h3>
-          <div className="grid">
-            {area('Labs', 'labs', 1)}
-            {area('EKG', 'ekg', 1)}
-            {area('Imaging', 'imaging', 1)}
-          </div>
-        </section>
-
-        <section>
-          <h3>Assessment &amp; Plan</h3>
-          <div className="grid">
-            <label className="field">
-              <span>ASA class</span>
-              <select value={data.asaClass} onChange={set('asaClass')}>
-                <option value="">—</option>
-                <option>I</option>
-                <option>II</option>
-                <option>III</option>
-                <option>IV</option>
-                <option>V</option>
-                <option>VI</option>
-              </select>
-            </label>
-            <label className="field checkbox">
-              <input type="checkbox" checked={data.asaEmergency} onChange={set('asaEmergency')} />
-              <span>Emergency (E)</span>
-            </label>
-            {area('Anesthetic plan', 'anestheticPlan')}
-            {area('Notes', 'assessmentNotes')}
-          </div>
-        </section>
-
-        <section>
-          <h3>Provider</h3>
-          <div className="grid">
-            {text('Provider name', 'providerName', { wide: true })}
-            {text('Date / time of evaluation', 'evalDateTime')}
-            <div className="field wide signature">
-              <span>Signature</span>
-              <div className="signature-line" />
+        <div className="form">
+          {/* Title / demographics */}
+          <div className="row">
+            <div className="cell grow c b caps">Pre Anesthesia Evaluation</div>
+            <div className="cell w9"><span className="lbl">Age</span>{txt('age')}</div>
+            <div className="cell w11">
+              <span className="lbl">Sex</span>
+              <span className="opts">{xbx('sex', 'M', 'M')}{xbx('sex', 'F', 'F')}</span>
+            </div>
+            <div className="cell w15">
+              <span className="lbl">Height</span>{txt('height', 'xshort')}
+              <span className="opts">{xbx('heightUnit', 'in', 'in')}{xbx('heightUnit', 'cm', 'cm')}</span>
+            </div>
+            <div className="cell w15">
+              <span className="lbl">Weight</span>{txt('weight', 'xshort')}
+              <span className="opts">{xbx('weightUnit', 'lb', 'lb')}{xbx('weightUnit', 'kg', 'kg')}</span>
             </div>
           </div>
-        </section>
-      </main>
+
+          <div className="row">
+            <div className="cell grow half">
+              <span className="lbl">Proposed Procedure</span>
+              {txt('proposedProcedure')}
+            </div>
+            <div className="cell grow half vitals">
+              <div className="lbl">Pre-Procedure Vital Signs</div>
+              <div className="vitline">
+                <span className="b">BP</span>{txt('bp', 'short')}
+                <span className="b">P</span>{txt('p', 'short')}
+                <span className="b">R</span>{txt('r', 'short')}
+                <span className="b">T</span>{txt('t', 'short')}
+              </div>
+            </div>
+          </div>
+
+          <div className="row">
+            <div className="cell grow half pair">
+              <div className="pair-main">
+                <span className="lbl">Previous Anesthesia / Operations</span>
+                {ta('previousAnesthesia', 2)}
+              </div>
+              <div className="none-box">{bx('previousAnesthesiaNone', 'None')}</div>
+            </div>
+            <div className="cell grow half pair">
+              <div className="pair-main">
+                <span className="lbl">Current Medications</span>
+                {ta('currentMedications', 2)}
+              </div>
+              <div className="none-box">{bx('currentMedicationsNone', 'None')}</div>
+            </div>
+          </div>
+
+          <div className="row">
+            <div className="cell grow half pair">
+              <div className="pair-main">
+                <span className="lbl">Family History of Anesthesia Complications</span>
+                {ta('familyHistory', 1)}
+              </div>
+              <div className="none-box">{bx('familyHistoryNone', 'None')}</div>
+            </div>
+            <div className="cell grow half pair">
+              <div className="pair-main">
+                <span className="lbl">Allergies</span>
+                {ta('allergies', 1)}
+              </div>
+              <div className="none-box">{bx('allergiesNone', 'None')}</div>
+            </div>
+          </div>
+
+          {/* Airway / history-from */}
+          <div className="row">
+            <div className="cell grow airway">
+              <div>
+                <span className="b caps">Airway / Teeth / Head and Neck</span>
+                <span className="b gap">Mallampati Class</span>{txt('mallampati', 'u med')}
+                <span className="b gap">NPO</span>{txt('npo', 'u med')}
+              </div>
+              <div>
+                <span className="b">TMD</span>{txt('tmd', 'u med')}
+                <span className="b gap">ROM</span>{txt('rom', 'u med')}
+              </div>
+            </div>
+            <div className="cell w36 hfrom">
+              <div className="b">History From:</div>
+              <div className="hf2">
+                <div>{bx('hfPatient', 'Patient')}{bx('hfParentGuardian', 'Parent / Guardian')}</div>
+                <div>{bx('hfSignificantOther', 'Significant Other')}{bx('hfChart', 'Chart')}</div>
+              </div>
+              {bx('hfCommLanguage', 'Communication / Language Problems')}
+              {bx('hfPoorHistorian', 'Poor Historian')}
+            </div>
+          </div>
+
+          {/* Systems review + right column */}
+          <div className="middle">
+            <div className="mleft">
+              <div className="row headr">
+                <div className="cell sys c b caps">System</div>
+                <div className="cell wnlc b">WNL</div>
+                <div className="cell com grow c b caps">Comments</div>
+              </div>
+
+              {band(
+                SYSTEMS[0],
+                <div className="inlinerow">
+                  <span className="b">Tobacco Use:</span> {yn('tobacco')}
+                  {txt('tobaccoPacksDay', 'u short')} <span>Packs / Day for</span>
+                  {txt('tobaccoYears', 'u short')} <span>Years</span>
+                </div>,
+                2,
+              )}
+              {band(SYSTEMS[1])}
+              {band(
+                SYSTEMS[2],
+                <>
+                  <div className="inlinerow">
+                    <span className="b">Ethanol Use:</span> {yn('ethanol')}
+                    <span>Frequency</span>{txt('ethanolFreq', 'u med')}
+                  </div>
+                  <div className="inlinerow">
+                    <span className="b">&ldquo;Street Drug&rdquo; Use:</span> {yn('streetDrug')}
+                    <span>Frequency</span>{txt('streetDrugFreq', 'u med')}
+                  </div>
+                </>,
+                1,
+              )}
+              {band(SYSTEMS[3])}
+              {band(SYSTEMS[4])}
+              {band(SYSTEMS[5])}
+            </div>
+
+            <div className="mright">
+              <div className="rbox">
+                <div className="rhead">{bx('dxNone')} <span className="b caps">Diagnostics Studies</span></div>
+                {rslot('EKG', 'dxEkg')}
+                {rslot('Chest X-Ray', 'dxCxr')}
+                {rslot('Pulmonary Studies', 'dxPulm')}
+                {rslot('Other', 'dxOther')}
+              </div>
+              <div className="rbox">
+                <div className="rhead c"><span className="b caps">Laboratory Studies</span></div>
+                {rslot('Hgb / Hct / CBC', 'labHgb')}
+                {rslot('Electrolytes', 'labElectrolytes')}
+                {rslot('Urinalysis', 'labUrinalysis')}
+                {rslot('Other', 'labOther')}
+              </div>
+              <div className="rbox last">
+                <div className="rhead c"><span className="b caps">Post-Anesthesia Note</span></div>
+                {vitalsPair('pan')}
+                <div className="noteslot"><span className="b">NOTES:</span>{ta('panNotes', 2)}</div>
+                <div className="sigrow">
+                  <div className="sigcell grow"><span className="lbl">Signed</span></div>
+                  <div className="sigcell w40"><span className="lbl">Date/Time</span>{txt('panDateTime')}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom */}
+          <div className="bottom">
+            <div className="bl grow">
+              <div className="blrow">
+                <div className="blmain grow">
+                  <div className="cellrow">
+                    <span className="lbl">Problem List / Diagnoses</span>
+                    {ta('problemList', 2)}
+                  </div>
+                  <div className="cellrow last">
+                    <span className="lbl">Planned Anesthesia / Special Monitors</span>
+                    {ta('plannedAnesthesia', 2)}
+                  </div>
+                </div>
+                <div className="psstrip">
+                  <span className="pslabel">Physical Status</span>
+                  <div className="psnums">
+                    {(['1', '2', '3', '4', '5'] as const).map((n) => (
+                      <span key={n} className="psnum">
+                        {xbx('physicalStatus', n, n)}
+                      </span>
+                    ))}
+                    <span className="psnum">{bx('physicalStatusE', 'E')}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="cellrow topline">
+                <span className="lbl">Pre-Anesthesia Medications Ordered</span>
+                {ta('preAnesthesiaMeds', 3)}
+              </div>
+              <div className="sigrow topline">
+                <div className="sigcell grow tall"><span className="lbl">Evaluator Signature</span></div>
+                <div className="sigcell w40 tall"><span className="lbl">Date/Time</span>{txt('evalDateTime')}</div>
+              </div>
+            </div>
+
+            <div className="br">
+              <div className="rhead c"><span className="b caps">Inpatient Note Post-Anesthesia</span></div>
+              {vitalsPair('inp')}
+              <div className="noteslot grow"><span className="b">NOTES:</span>{ta('inpNotes', 3)}</div>
+              <div className="sigrow topline">
+                <div className="sigcell grow tall"><span className="lbl">Signed</span></div>
+                <div className="sigcell w40 tall"><span className="lbl">Date/Time</span>{txt('inpDateTime')}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="page-foot">
+          <div className="foot-id">
+            <div className="foot-title">Pre-Anesthesia Evaluation</div>
+            <div>170-165-90061 <span className="gap">Page 1 of 1</span></div>
+            <div>03/12 (Rev. 06/15, 09/20, 03/21, 03/22)</div>
+            <div className="foot-org">Mountain West Medical Center</div>
+          </div>
+          <div className="plabel">
+            <span>Patient Label</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

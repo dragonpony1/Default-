@@ -2,7 +2,7 @@ import { emptyPreopEval, type PreopEval } from './types';
 
 // All data stays in this browser via localStorage. Nothing ever leaves the
 // device; "Clear form" removes the draft entirely.
-const KEY = 'preop-eval-draft';
+const KEY = 'preop-eval-draft-v2';
 
 export function loadDraft(): PreopEval {
   try {

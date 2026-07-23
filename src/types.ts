@@ -1,116 +1,178 @@
+export type YesNo = '' | 'yes' | 'no';
+
 export interface PreopEval {
-  // Patient identification
-  patientName: string;
-  mrn: string;
-  dob: string;
+  // Header
   age: string;
-  sex: string;
-  heightCm: string;
-  weightKg: string;
-  date: string;
-
-  // Procedure
-  procedure: string;
-  surgeon: string;
-  diagnosis: string;
-
-  // History
-  allergies: string;
-  medications: string;
-  pastMedicalHistory: string;
-  pastSurgicalHistory: string;
-  anesthesiaHistory: string;
-  familyAnesthesiaHistory: string;
-  npoStatus: string;
-
-  // Review of systems
-  cardiac: string;
-  pulmonary: string;
-  renal: string;
-  hepaticGI: string;
-  neuro: string;
-  endocrine: string;
-  other: string;
-
-  // Airway exam
-  mallampati: string;
-  thyromentalDistance: string;
-  mouthOpening: string;
-  neckROM: string;
-  dentition: string;
-  airwayNotes: string;
-
-  // Physical exam
+  sex: '' | 'M' | 'F';
+  height: string;
+  heightUnit: '' | 'in' | 'cm';
+  weight: string;
+  weightUnit: '' | 'lb' | 'kg';
+  proposedProcedure: string;
   bp: string;
-  hr: string;
-  rr: string;
-  spo2: string;
-  temp: string;
-  heartExam: string;
-  lungExam: string;
+  p: string;
+  r: string;
+  t: string;
+  previousAnesthesia: string;
+  previousAnesthesiaNone: boolean;
+  currentMedications: string;
+  currentMedicationsNone: boolean;
+  familyHistory: string;
+  familyHistoryNone: boolean;
+  allergies: string;
+  allergiesNone: boolean;
 
-  // Labs / studies
-  labs: string;
-  ekg: string;
-  imaging: string;
+  // Airway / Teeth / Head and Neck
+  mallampati: string;
+  npo: string;
+  tmd: string;
+  rom: string;
 
-  // Assessment
-  asaClass: string;
-  asaEmergency: boolean;
-  anestheticPlan: string;
-  assessmentNotes: string;
+  // History From
+  hfPatient: boolean;
+  hfParentGuardian: boolean;
+  hfSignificantOther: boolean;
+  hfChart: boolean;
+  hfCommLanguage: boolean;
+  hfPoorHistorian: boolean;
 
-  // Sign-off
-  providerName: string;
+  // Systems review
+  wnl: Record<string, boolean>;
+  checks: Record<string, boolean>;
+  comments: Record<string, string>;
+  tobacco: YesNo;
+  tobaccoPacksDay: string;
+  tobaccoYears: string;
+  ethanol: YesNo;
+  ethanolFreq: string;
+  streetDrug: YesNo;
+  streetDrugFreq: string;
+
+  // Diagnostics studies
+  dxNone: boolean;
+  dxEkg: string;
+  dxCxr: string;
+  dxPulm: string;
+  dxOther: string;
+
+  // Laboratory studies
+  labHgb: string;
+  labElectrolytes: string;
+  labUrinalysis: string;
+  labOther: string;
+
+  // Post-anesthesia note
+  panBp: string;
+  panP: string;
+  panR: string;
+  panT: string;
+  panO2: string;
+  panPain: string;
+  panNV: string;
+  panAirway: string;
+  panMental: string;
+  panHydration: string;
+  panNotes: string;
+  panDateTime: string;
+
+  // Bottom-left
+  problemList: string;
+  plannedAnesthesia: string;
+  physicalStatus: '' | '1' | '2' | '3' | '4' | '5';
+  physicalStatusE: boolean;
+  preAnesthesiaMeds: string;
   evalDateTime: string;
+
+  // Inpatient note post-anesthesia
+  inpBp: string;
+  inpP: string;
+  inpR: string;
+  inpT: string;
+  inpO2: string;
+  inpPain: string;
+  inpNV: string;
+  inpAirway: string;
+  inpMental: string;
+  inpNotes: string;
+  inpDateTime: string;
 }
 
 export const emptyPreopEval: PreopEval = {
-  patientName: '',
-  mrn: '',
-  dob: '',
   age: '',
   sex: '',
-  heightCm: '',
-  weightKg: '',
-  date: '',
-  procedure: '',
-  surgeon: '',
-  diagnosis: '',
-  allergies: '',
-  medications: '',
-  pastMedicalHistory: '',
-  pastSurgicalHistory: '',
-  anesthesiaHistory: '',
-  familyAnesthesiaHistory: '',
-  npoStatus: '',
-  cardiac: '',
-  pulmonary: '',
-  renal: '',
-  hepaticGI: '',
-  neuro: '',
-  endocrine: '',
-  other: '',
-  mallampati: '',
-  thyromentalDistance: '',
-  mouthOpening: '',
-  neckROM: '',
-  dentition: '',
-  airwayNotes: '',
+  height: '',
+  heightUnit: '',
+  weight: '',
+  weightUnit: '',
+  proposedProcedure: '',
   bp: '',
-  hr: '',
-  rr: '',
-  spo2: '',
-  temp: '',
-  heartExam: '',
-  lungExam: '',
-  labs: '',
-  ekg: '',
-  imaging: '',
-  asaClass: '',
-  asaEmergency: false,
-  anestheticPlan: '',
-  assessmentNotes: '',
-  providerName: '',
+  p: '',
+  r: '',
+  t: '',
+  previousAnesthesia: '',
+  previousAnesthesiaNone: false,
+  currentMedications: '',
+  currentMedicationsNone: false,
+  familyHistory: '',
+  familyHistoryNone: false,
+  allergies: '',
+  allergiesNone: false,
+  mallampati: '',
+  npo: '',
+  tmd: '',
+  rom: '',
+  hfPatient: false,
+  hfParentGuardian: false,
+  hfSignificantOther: false,
+  hfChart: false,
+  hfCommLanguage: false,
+  hfPoorHistorian: false,
+  wnl: {},
+  checks: {},
+  comments: {},
+  tobacco: '',
+  tobaccoPacksDay: '',
+  tobaccoYears: '',
+  ethanol: '',
+  ethanolFreq: '',
+  streetDrug: '',
+  streetDrugFreq: '',
+  dxNone: false,
+  dxEkg: '',
+  dxCxr: '',
+  dxPulm: '',
+  dxOther: '',
+  labHgb: '',
+  labElectrolytes: '',
+  labUrinalysis: '',
+  labOther: '',
+  panBp: '',
+  panP: '',
+  panR: '',
+  panT: '',
+  panO2: '',
+  panPain: '',
+  panNV: '',
+  panAirway: '',
+  panMental: '',
+  panHydration: '',
+  panNotes: '',
+  panDateTime: '',
+  problemList: '',
+  plannedAnesthesia: '',
+  physicalStatus: '',
+  physicalStatusE: false,
+  preAnesthesiaMeds: '',
   evalDateTime: '',
+  inpBp: '',
+  inpP: '',
+  inpR: '',
+  inpT: '',
+  inpO2: '',
+  inpPain: '',
+  inpNV: '',
+  inpAirway: '',
+  inpMental: '',
+  inpNotes: '',
+  inpDateTime: '',
 };
