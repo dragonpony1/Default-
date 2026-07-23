@@ -182,28 +182,6 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     pairs.filter(([, v]) => v).map(([l, v]) => `${l}: ${v}`).join('; ');
 
   const steps: Step[] = [
-    textStep('Age', 'age'),
-    { title: 'Sex', render: () => oneOf('sex', ['M', 'F']), summary: () => d.sex },
-    {
-      title: 'Height',
-      render: () => (
-        <>
-          {input('height')}
-          {oneOf('heightUnit', ['in', 'cm'])}
-        </>
-      ),
-      summary: () => (d.height ? `${d.height} ${d.heightUnit}`.trim() : ''),
-    },
-    {
-      title: 'Weight',
-      render: () => (
-        <>
-          {input('weight')}
-          {oneOf('weightUnit', ['lb', 'kg'])}
-        </>
-      ),
-      summary: () => (d.weight ? `${d.weight} ${d.weightUnit}`.trim() : ''),
-    },
     {
       title: 'Proposed procedure',
       hint:
@@ -228,6 +206,28 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
         </>
       ),
       summary: () => d.proposedProcedure,
+    },
+    textStep('Age', 'age'),
+    { title: 'Sex', render: () => oneOf('sex', ['M', 'F']), summary: () => d.sex },
+    {
+      title: 'Height',
+      render: () => (
+        <>
+          {input('height')}
+          {oneOf('heightUnit', ['in', 'cm'])}
+        </>
+      ),
+      summary: () => (d.height ? `${d.height} ${d.heightUnit}`.trim() : ''),
+    },
+    {
+      title: 'Weight',
+      render: () => (
+        <>
+          {input('weight')}
+          {oneOf('weightUnit', ['lb', 'kg'])}
+        </>
+      ),
+      summary: () => (d.weight ? `${d.weight} ${d.weightUnit}`.trim() : ''),
     },
     textStep('Blood pressure', 'bp', 'Pre-procedure vital signs'),
     textStep('Pulse', 'p', 'Pre-procedure vital signs'),
@@ -441,9 +441,16 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
         </div>
         <span className="fbf-count">{done ? 'Review' : `${step + 1} of ${steps.length}`}</span>
         {!done && (
-          <button type="button" className="chip" onClick={() => go(steps.length)}>
-            Review all
-          </button>
+          <>
+            {step > 0 && (
+              <button type="button" className="chip" onClick={() => go(0)}>
+                Restart
+              </button>
+            )}
+            <button type="button" className="chip" onClick={() => go(steps.length)}>
+              Review all
+            </button>
+          </>
         )}
       </div>
 
