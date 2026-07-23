@@ -3,12 +3,14 @@ import { emptyPreopEval, type PreopEval, type YesNo } from './types';
 import { SYSTEMS, type SystemBand } from './formConfig';
 import { clearDraft, loadDraft, saveDraft } from './storage';
 import Barcode39 from './Barcode39';
+import Intake from './Intake';
 
 type StringKeys = { [K in keyof PreopEval]: PreopEval[K] extends string ? K : never }[keyof PreopEval];
 type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : never }[keyof PreopEval];
 
 export default function App() {
   const [d, setD] = useState<PreopEval>(loadDraft);
+  const [view, setView] = useState<'gather' | 'form'>('gather');
 
   useEffect(() => {
     saveDraft(d);
@@ -113,6 +115,14 @@ export default function App() {
       </div>
       <div className="cell com grow">
         {extra}
+        {s.col1
+          .concat(s.col2 ?? [])
+          .filter((l) => d.checks[`${s.key}:${l}`] && d.checkDetails[`${s.key}:${l}`])
+          .map((l) => (
+            <div className="detline" key={l}>
+              <span className="b">{l}:</span> {d.checkDetails[`${s.key}:${l}`]}
+            </div>
+          ))}
         {bandComments(s.key, commentRows)}
       </div>
     </div>
@@ -150,6 +160,14 @@ export default function App() {
     <div className="app">
       <header className="toolbar screen-only">
         <h1>Pre-Anesthesia Evaluation</h1>
+        <div className="tabs">
+          <button className={view === 'gather' ? 'on' : ''} onClick={() => setView('gather')}>
+            Gather Info
+          </button>
+          <button className={view === 'form' ? 'on' : ''} onClick={() => setView('form')}>
+            Paper Form
+          </button>
+        </div>
         <div className="toolbar-actions">
           <button onClick={() => window.print()}>Print</button>
           <button className="danger" onClick={handleClear}>Clear form</button>
@@ -157,7 +175,9 @@ export default function App() {
         <p className="privacy-note">All data stays on this device only. Clear the form after printing.</p>
       </header>
 
-      <div className="page">
+      {view === 'gather' && <Intake d={d} set={set} />}
+
+      <div className={`page${view === 'form' ? '' : ' print-only-block'}`}>
         <div className="page-top">
           <div className="bc-wrap">
             <Barcode39 value="PRE" />

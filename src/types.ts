@@ -39,6 +39,7 @@ export interface PreopEval {
   // Systems review
   wnl: Record<string, boolean>;
   checks: Record<string, boolean>;
+  checkDetails: Record<string, string>;
   comments: Record<string, string>;
   tobacco: YesNo;
   tobaccoPacksDay: string;
@@ -129,6 +130,7 @@ export const emptyPreopEval: PreopEval = {
   hfPoorHistorian: false,
   wnl: {},
   checks: {},
+  checkDetails: {},
   comments: {},
   tobacco: '',
   tobaccoPacksDay: '',
