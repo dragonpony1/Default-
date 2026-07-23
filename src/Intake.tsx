@@ -1,3 +1,4 @@
+import { useState, type ReactNode } from 'react';
 import type { PreopEval, YesNo } from './types';
 import { SYSTEMS, screenItems } from './formConfig';
 import type { CustomChoices } from './choices';
@@ -13,6 +14,14 @@ type StringKeys = { [K in keyof PreopEval]: PreopEval[K] extends string ? K : ne
 type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : never }[keyof PreopEval];
 
 export default function Intake({ d, set, customChoices }: Props) {
+  const [open, setOpen] = useState<Record<string, boolean>>({ patient: true });
+
+  const toggle = (id: string) => setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+  const setAll = (v: boolean) => {
+    const ids = ['patient', 'history', 'airway', ...SYSTEMS.map((s) => s.key), 'studies', 'plan'];
+    setOpen(Object.fromEntries(ids.map((id) => [id, v])));
+  };
+
   const chip = (active: boolean, onClick: () => void, label: string, key?: string) => (
     <button key={key ?? label} type="button" className={`chip${active ? ' on' : ''}`} onClick={onClick}>
       {label}
@@ -69,71 +78,142 @@ export default function Intake({ d, set, customChoices }: Props) {
     </div>
   );
 
+  // Collapsible section: the header shows a one-line summary of what has
+  // been entered so the whole intake reads as a checklist when collapsed.
+  const sec = (id: string, title: string, summary: string, children: ReactNode) => (
+    <section className={`icard isec${open[id] ? ' open' : ''}`} key={id}>
+      <button type="button" className="isec-head" onClick={() => toggle(id)}>
+        <span className="isec-arrow">{open[id] ? '▾' : '▸'}</span>
+        <span className="isec-title">{title}</span>
+        <span className={`isec-summary${summary ? '' : ' empty'}`}>{summary || '— blank —'}</span>
+      </button>
+      {open[id] && <div className="isec-body">{children}</div>}
+    </section>
+  );
+
+  const joinBits = (bits: Array<string | false | undefined>) => bits.filter(Boolean).join(', ');
+
+  const noneableSummary = (label: string, textKey: StringKeys, noneKey: BoolKeys) =>
+    d[noneKey] ? `${label}: none` : d[textKey] ? `${label}: ${d[textKey]}` : '';
+
+  const patientSummary = joinBits([
+    d.proposedProcedure,
+    d.age && `${d.age} y`,
+    d.sex,
+    d.height && `${d.height} ${d.heightUnit}`.trim(),
+    d.weight && `${d.weight} ${d.weightUnit}`.trim(),
+    d.bp && `BP ${d.bp}`,
+    d.npo && `NPO ${d.npo}`,
+  ]);
+
+  const historySummary = joinBits([
+    noneableSummary('Anesth hx', 'previousAnesthesia', 'previousAnesthesiaNone'),
+    noneableSummary('Meds', 'currentMedications', 'currentMedicationsNone'),
+    noneableSummary('Fam hx', 'familyHistory', 'familyHistoryNone'),
+    noneableSummary('Allergies', 'allergies', 'allergiesNone'),
+  ]);
+
+  const airwaySummary = joinBits([
+    d.mallampati && `Mallampati ${d.mallampati}`,
+    d.tmd && `TMD ${d.tmd}`,
+    d.rom && `ROM ${d.rom}`,
+  ]);
+
+  const systemSummary = (key: string, items: string[]) =>
+    joinBits([
+      d.wnl[key] && 'WNL',
+      ...items.filter((l) => d.checks[`${key}:${l}`]),
+      ...(d.customConditions[key] ?? []),
+      key === 'resp' && d.tobacco === 'yes' && 'tobacco',
+      key === 'resp' && d.homeO2 && 'home O₂',
+      key === 'gi' && d.ethanol === 'yes' && 'ethanol',
+      key === 'gi' && d.streetDrug === 'yes' && 'street drugs',
+      d.comments[key],
+    ]);
+
+  const studiesSummary = d.dxNone
+    ? joinBits(['no diagnostics', d.labHgb, d.labElectrolytes, d.labUrinalysis, d.labOther])
+    : joinBits([d.dxEkg, d.dxCxr, d.dxPulm, d.dxOther, d.labHgb, d.labElectrolytes, d.labUrinalysis, d.labOther]);
+
+  const planSummary = joinBits([
+    d.physicalStatus && `ASA ${d.physicalStatus}${d.physicalStatusE ? 'E' : ''}`,
+    d.problemList,
+    d.plannedAnesthesia,
+  ]);
+
   return (
     <div className="intake screen-only">
-      <section className="icard">
-        <h2>Patient &amp; Procedure</h2>
-        <div className="irow">
-          {field('Age', 'age', { small: true })}
-          <div className="igroup"><span>Sex</span>{oneOf('sex', ['M', 'F'])}</div>
-          <div className="igroup">
-            {field('Height', 'height', { small: true })}
-            {oneOf('heightUnit', ['in', 'cm'])}
-          </div>
-          <div className="igroup">
-            {field('Weight', 'weight', { small: true })}
-            {oneOf('weightUnit', ['lb', 'kg'])}
-          </div>
-        </div>
-        {(customChoices.procedure ?? []).length > 0 && (
-          <div className="chips wrap">
-            {(customChoices.procedure ?? []).map((label) =>
-              chip(
-                d.proposedProcedure === label,
-                () => set('proposedProcedure', d.proposedProcedure === label ? '' : label),
-                label,
-                `proc:${label}`,
-              ),
-            )}
-          </div>
-        )}
-        {field('Proposed procedure', 'proposedProcedure')}
-        <div className="irow">
-          {field('BP', 'bp', { small: true })}
-          {field('P', 'p', { small: true })}
-          {field('R', 'r', { small: true })}
-          {field('T', 't', { small: true })}
-          {field('NPO since', 'npo', { small: true })}
-        </div>
-      </section>
+      <div className="isec-controls">
+        <button type="button" className="chip" onClick={() => setAll(true)}>Expand all</button>
+        <button type="button" className="chip" onClick={() => setAll(false)}>Collapse all</button>
+      </div>
 
-      <section className="icard">
-        <h2>History</h2>
-        {noneable('Previous anesthesia / operations', 'previousAnesthesia', 'previousAnesthesiaNone')}
-        {noneable('Current medications', 'currentMedications', 'currentMedicationsNone')}
-        {noneable('Family history of anesthesia complications', 'familyHistory', 'familyHistoryNone')}
-        {noneable('Allergies', 'allergies', 'allergiesNone')}
-        <div className="igroup">
-          <span>History from</span>
-          <div className="chips">
-            {boolChip('hfPatient', 'Patient')}
-            {boolChip('hfParentGuardian', 'Parent / Guardian')}
-            {boolChip('hfSignificantOther', 'Significant Other')}
-            {boolChip('hfChart', 'Chart')}
-            {boolChip('hfCommLanguage', 'Communication / Language Problems')}
-            {boolChip('hfPoorHistorian', 'Poor Historian')}
+      {sec('patient', 'Patient & Procedure', patientSummary, (
+        <>
+          {(customChoices.procedure ?? []).length > 0 && (
+            <div className="chips wrap">
+              {(customChoices.procedure ?? []).map((label) =>
+                chip(
+                  d.proposedProcedure === label,
+                  () => set('proposedProcedure', d.proposedProcedure === label ? '' : label),
+                  label,
+                  `proc:${label}`,
+                ),
+              )}
+            </div>
+          )}
+          {field('Proposed procedure', 'proposedProcedure')}
+          <div className="irow">
+            {field('Age', 'age', { small: true })}
+            <div className="igroup"><span>Sex</span>{oneOf('sex', ['M', 'F'])}</div>
+            <div className="igroup">
+              {field('Height', 'height', { small: true })}
+              {oneOf('heightUnit', ['in', 'cm'])}
+            </div>
+            <div className="igroup">
+              {field('Weight', 'weight', { small: true })}
+              {oneOf('weightUnit', ['lb', 'kg'])}
+            </div>
           </div>
-        </div>
-      </section>
+          <div className="irow">
+            {field('BP', 'bp', { small: true })}
+            {field('P', 'p', { small: true })}
+            {field('R', 'r', { small: true })}
+            {field('T', 't', { small: true })}
+            {field('NPO since', 'npo', { small: true })}
+          </div>
+        </>
+      ))}
 
-      <section className="icard">
-        <h2>Airway / Teeth / Head and Neck</h2>
-        <div className="igroup"><span>Mallampati class</span>{oneOf('mallampati', ['I', 'II', 'III', 'IV'])}</div>
-        <div className="irow">
-          {field('TMD', 'tmd', { small: true })}
-          {field('ROM', 'rom', { small: true })}
-        </div>
-      </section>
+      {sec('history', 'History', historySummary, (
+        <>
+          {noneable('Previous anesthesia / operations', 'previousAnesthesia', 'previousAnesthesiaNone')}
+          {noneable('Current medications', 'currentMedications', 'currentMedicationsNone')}
+          {noneable('Family history of anesthesia complications', 'familyHistory', 'familyHistoryNone')}
+          {noneable('Allergies', 'allergies', 'allergiesNone')}
+          <div className="igroup">
+            <span>History from</span>
+            <div className="chips wrap">
+              {boolChip('hfPatient', 'Patient')}
+              {boolChip('hfParentGuardian', 'Parent / Guardian')}
+              {boolChip('hfSignificantOther', 'Significant Other')}
+              {boolChip('hfChart', 'Chart')}
+              {boolChip('hfCommLanguage', 'Communication / Language Problems')}
+              {boolChip('hfPoorHistorian', 'Poor Historian')}
+            </div>
+          </div>
+        </>
+      ))}
+
+      {sec('airway', 'Airway / Teeth / Head and Neck', airwaySummary, (
+        <>
+          <div className="igroup"><span>Mallampati class</span>{oneOf('mallampati', ['I', 'II', 'III', 'IV'])}</div>
+          <div className="irow">
+            {field('TMD', 'tmd', { small: true })}
+            {field('ROM', 'rom', { small: true })}
+          </div>
+        </>
+      ))}
 
       {SYSTEMS.map((s) => {
         const items = screenItems(s).concat(customChoices[s.key] ?? []);
@@ -160,13 +240,10 @@ export default function Intake({ d, set, customChoices }: Props) {
             </label>
           );
         };
-        return (
-          <section className="icard" key={s.key}>
-            <div className="ihead">
-              <h2>{s.title}</h2>
-              {chip(!!d.wnl[s.key], () => set('wnl', { ...d.wnl, [s.key]: !d.wnl[s.key] }), 'WNL')}
-            </div>
+        return sec(s.key, s.title, systemSummary(s.key, items), (
+          <>
             <div className="chips wrap">
+              {chip(!!d.wnl[s.key], () => set('wnl', { ...d.wnl, [s.key]: !d.wnl[s.key] }), 'WNL')}
               {items.map((label) => {
                 const id = `${s.key}:${label}`;
                 return chip(
@@ -228,39 +305,41 @@ export default function Intake({ d, set, customChoices }: Props) {
                 onChange={(e) => set('comments', { ...d.comments, [s.key]: e.target.value })}
               />
             </label>
-          </section>
-        );
+          </>
+        ));
       })}
 
-      <section className="icard">
-        <h2>Diagnostics &amp; Laboratory Studies</h2>
-        {boolChip('dxNone', 'No diagnostic studies')}
-        <div className="two">
-          {areaField('EKG', 'dxEkg', 1)}
-          {areaField('Chest X-Ray', 'dxCxr', 1)}
-          {areaField('Pulmonary studies', 'dxPulm', 1)}
-          {areaField('Other diagnostics', 'dxOther', 1)}
-          {areaField('Hgb / Hct / CBC', 'labHgb', 1)}
-          {areaField('Electrolytes', 'labElectrolytes', 1)}
-          {areaField('Urinalysis', 'labUrinalysis', 1)}
-          {areaField('Other labs', 'labOther', 1)}
-        </div>
-      </section>
+      {sec('studies', 'Diagnostics & Laboratory Studies', studiesSummary, (
+        <>
+          {boolChip('dxNone', 'No diagnostic studies')}
+          <div className="two">
+            {areaField('EKG', 'dxEkg', 1)}
+            {areaField('Chest X-Ray', 'dxCxr', 1)}
+            {areaField('Pulmonary studies', 'dxPulm', 1)}
+            {areaField('Other diagnostics', 'dxOther', 1)}
+            {areaField('Hgb / Hct / CBC', 'labHgb', 1)}
+            {areaField('Electrolytes', 'labElectrolytes', 1)}
+            {areaField('Urinalysis', 'labUrinalysis', 1)}
+            {areaField('Other labs', 'labOther', 1)}
+          </div>
+        </>
+      ))}
 
-      <section className="icard">
-        <h2>Assessment &amp; Plan</h2>
-        <div className="irow">
-          <div className="igroup"><span>Physical status (ASA)</span>{oneOf('physicalStatus', ['1', '2', '3', '4', '5'])}</div>
-          {boolChip('physicalStatusE', 'E (Emergency)')}
-        </div>
-        {areaField('Problem list / diagnoses', 'problemList')}
-        {areaField('Planned anesthesia / special monitors', 'plannedAnesthesia')}
-        {areaField('Pre-anesthesia medications ordered', 'preAnesthesiaMeds')}
-        {field('Evaluation date/time', 'evalDateTime', { small: true })}
-        <p className="ihint">
-          The post-anesthesia and inpatient note sections are completed on the printed form after the case.
-        </p>
-      </section>
+      {sec('plan', 'Assessment & Plan', planSummary, (
+        <>
+          <div className="irow">
+            <div className="igroup"><span>Physical status (ASA)</span>{oneOf('physicalStatus', ['1', '2', '3', '4', '5'])}</div>
+            {boolChip('physicalStatusE', 'E (Emergency)')}
+          </div>
+          {areaField('Problem list / diagnoses', 'problemList')}
+          {areaField('Planned anesthesia / special monitors', 'plannedAnesthesia')}
+          {areaField('Pre-anesthesia medications ordered', 'preAnesthesiaMeds')}
+          {field('Evaluation date/time', 'evalDateTime', { small: true })}
+          <p className="ihint">
+            The post-anesthesia and inpatient note sections are completed on the printed form after the case.
+          </p>
+        </>
+      ))}
     </div>
   );
 }

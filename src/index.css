@@ -1020,3 +1020,69 @@ input[type='checkbox']:checked::after {
   background: #f4f6f9;
   border-style: dashed;
 }
+
+/* Collapsible Gather Info sections */
+
+.isec {
+  padding: 0;
+  overflow: hidden;
+}
+
+.isec-head {
+  font: inherit;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.85rem 1rem;
+  min-height: 52px;
+}
+
+.isec.open .isec-head {
+  border-bottom: 1px solid #eef1f5;
+}
+
+.isec-arrow {
+  color: #2a5db0;
+  flex: none;
+  width: 1em;
+}
+
+.isec-title {
+  font-weight: 700;
+  font-size: 1.02rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex: none;
+}
+
+.isec-summary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #2a5db0;
+  font-size: 0.9rem;
+  flex: 1;
+  text-align: right;
+}
+
+.isec-summary.empty {
+  color: #98a3b3;
+}
+
+.isec-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.85rem 1rem 1rem;
+}
+
+.isec-controls {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
