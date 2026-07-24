@@ -91,7 +91,7 @@ export default function AnesRecord() {
       <div className="ar">
         <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
           <defs>
-            <pattern id="arGrid" width="9.6" height="8" patternUnits="userSpaceOnUse">
+            <pattern id="arGrid" width="19.2" height="8" patternUnits="userSpaceOnUse">
               <path d="M 0.3 0 V 8" stroke="#444" strokeWidth="0.6" />
             </pattern>
             <pattern id="arGridFine" width="7.1" height="8" patternUnits="userSpaceOnUse">

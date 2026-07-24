@@ -1475,7 +1475,7 @@ input[type='checkbox']:checked::after {
 .ar-crow {
   display: flex;
   align-items: stretch;
-  height: 0.118in;
+  height: 0.142in;
 }
 
 .ar-clabel {
@@ -1544,7 +1544,7 @@ input[type='checkbox']:checked::after {
 }
 
 .ar-ctotal {
-  width: 0.72in;
+  width: 0.42in;
   border-left: 1px solid #000;
   border-bottom: 0.5px solid #777;
   flex: none;
@@ -1558,7 +1558,7 @@ input[type='checkbox']:checked::after {
   position: absolute;
   top: -0.115in;
   right: 0;
-  width: 0.72in;
+  width: 0.42in;
   text-align: center;
   font-weight: 700;
   text-transform: uppercase;
