@@ -1629,6 +1629,8 @@ input[type='checkbox']:checked::after {
   align-items: center;
   justify-content: center;
   letter-spacing: -0.3px;
+  overflow: visible;
+  white-space: nowrap;
 }
 
 .ar-thcell:nth-child(5n) {
