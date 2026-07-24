@@ -6,6 +6,7 @@ import type { CustomChoices } from './choices';
 import AddEntry from './AddEntry';
 import ProcedurePicker from './ProcedurePicker';
 import MedList from './MedList';
+import AllergyList from './AllergyList';
 
 interface Props {
   d: PreopEval;
@@ -116,11 +117,17 @@ export default function Intake({ d, set, customChoices }: Props) {
       ? `Meds: ${[...d.meds.map((x) => x.name), d.currentMedications].filter(Boolean).join(', ')}`
       : '';
 
+  const allergySummary = d.allergiesNone
+    ? 'Allergies: none'
+    : d.allergyList.length || d.allergies
+      ? `Allergies: ${[...d.allergyList.map((x) => x.name), d.allergies].filter(Boolean).join(', ')}`
+      : '';
+
   const historySummary = joinBits([
     noneableSummary('Anesth hx', 'previousAnesthesia', 'previousAnesthesiaNone'),
     medsSummary,
     noneableSummary('Fam hx', 'familyHistory', 'familyHistoryNone'),
-    noneableSummary('Allergies', 'allergies', 'allergiesNone'),
+    allergySummary,
   ]);
 
   const airwaySummary = joinBits([
@@ -193,7 +200,11 @@ export default function Intake({ d, set, customChoices }: Props) {
           </div>
           {noneable('Other meds / notes', 'currentMedications', 'currentMedicationsNone')}
           {noneable('Family history of anesthesia complications', 'familyHistory', 'familyHistoryNone')}
-          {noneable('Allergies', 'allergies', 'allergiesNone')}
+          <div className="igroup">
+            <span>Allergies</span>
+            <AllergyList d={d} set={set} customChoices={customChoices} />
+          </div>
+          {noneable('Other allergies / notes', 'allergies', 'allergiesNone')}
           <div className="igroup">
             <span>History from</span>
             <div className="chips wrap">

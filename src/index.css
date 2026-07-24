@@ -1199,3 +1199,14 @@ input[type='checkbox']:checked::after {
 .medsuggest {
   padding: 0.25rem 0;
 }
+
+/* OR-alert allergy rows */
+
+.medrow.oralert {
+  border-color: #b02a2a;
+  background: #fdf4f4;
+}
+
+.medclass.or {
+  background: #b02a2a;
+}

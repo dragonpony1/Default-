@@ -294,6 +294,12 @@ export default function App() {
             <div className="cell grow half pair">
               <div className="pair-main">
                 <span className="lbl">Allergies</span>
+                {d.allergyList.map((al) => (
+                  <div className="detline" key={al.name}>
+                    {al.name}
+                    {al.reaction ? ` — ${al.reaction}` : ''}
+                  </div>
+                ))}
                 {ta('allergies', 1)}
               </div>
               <div className="none-box">{bx('allergiesNone', 'None')}</div>

@@ -6,6 +6,11 @@ export interface MedEntry {
   lastDose: string;
 }
 
+export interface AllergyEntry {
+  name: string;
+  reaction: string;
+}
+
 export interface PreopEval {
   // Header
   age: string;
@@ -26,6 +31,7 @@ export interface PreopEval {
   currentMedicationsNone: boolean;
   familyHistory: string;
   familyHistoryNone: boolean;
+  allergyList: AllergyEntry[];
   allergies: string;
   allergiesNone: boolean;
 
@@ -127,6 +133,7 @@ export const emptyPreopEval: PreopEval = {
   currentMedicationsNone: false,
   familyHistory: '',
   familyHistoryNone: false,
+  allergyList: [],
   allergies: '',
   allergiesNone: false,
   mallampati: '',

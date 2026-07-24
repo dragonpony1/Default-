@@ -6,6 +6,7 @@ import type { CustomChoices } from './choices';
 import AddEntry from './AddEntry';
 import ProcedurePicker from './ProcedurePicker';
 import MedList from './MedList';
+import AllergyList from './AllergyList';
 
 interface Props {
   d: PreopEval;
@@ -260,7 +261,37 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
               .join(', '),
     },
     noneableStep('Family history of anesthesia complications', 'familyHistory', 'familyHistoryNone'),
-    noneableStep('Allergies', 'allergies', 'allergiesNone'),
+    {
+      title: 'Allergies',
+      hint: 'Type to search — tap a suggestion to add it, then note the reaction. OR-critical allergens are flagged.',
+      render: () => (
+        <>
+          <AllergyList d={d} set={set} customChoices={customChoices} />
+          <div className="chips">
+            {boolChip('allergiesNone', 'None')}
+          </div>
+          <label className="ifield">
+            <span>Other allergies / notes</span>
+            <textarea
+              {...noAuto}
+              rows={2}
+              value={d.allergies}
+              disabled={d.allergiesNone}
+              onChange={(e) => set('allergies', e.target.value)}
+            />
+          </label>
+        </>
+      ),
+      summary: () =>
+        d.allergiesNone
+          ? 'None'
+          : [
+              ...d.allergyList.map((x) => (x.reaction ? `${x.name} (${x.reaction})` : x.name)),
+              d.allergies,
+            ]
+              .filter(Boolean)
+              .join(', '),
+    },
     {
       title: 'History from',
       hint: 'Tap all that apply.',

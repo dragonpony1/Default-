@@ -91,6 +91,27 @@ export default function EditChoices({ choices, setChoices }: Props) {
         </div>
         <AddEntry onAdd={(label) => add('meds', label)} placeholder="Add a medication…" />
       </section>
+      <section className="icard">
+        <h2>Allergy Dictionary</h2>
+        <p className="fbf-hint">
+          Same idea for allergies &mdash; add anything the type-ahead misses and it will be
+          suggested on this device.
+        </p>
+        <div className="chips wrap">
+          {(choices.allergens ?? []).map((label) => (
+            <button
+              type="button"
+              className="chip on"
+              key={`al:${label}`}
+              title="Remove this allergen"
+              onClick={() => remove('allergens', label)}
+            >
+              {label} ✕
+            </button>
+          ))}
+        </div>
+        <AddEntry onAdd={(label) => add('allergens', label)} placeholder="Add an allergen…" />
+      </section>
       {SYSTEMS.map((s) => {
         const custom = choices[s.key] ?? [];
         return (
