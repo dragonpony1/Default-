@@ -1849,11 +1849,20 @@ input[type='checkbox']:checked::after {
 /* Overlay spans exactly the crosshatch cells area: 1in label + 0.3in totals */
 .vg-overlay {
   position: absolute;
-  left: 1in;
-  right: 0.3in;
+  left: 0.5in;
+  right: 0;
   top: 0;
   bottom: 0;
   touch-action: none;
+}
+
+/* Vital-signs graph is stretched wider than the drug rows for readability */
+.vsband .ar-clabel.num {
+  width: 0.5in;
+}
+
+.vsband .ar-ctotal {
+  display: none;
 }
 
 .vg-series {
