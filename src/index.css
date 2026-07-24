@@ -768,7 +768,7 @@ input[type='checkbox']:checked::after {
   }
 
   .screen-only {
-    display: none;
+    display: none !important;
   }
 
   .print-only-block {
@@ -1838,4 +1838,98 @@ input[type='checkbox']:checked::after {
     padding-top: 0.25in;
   }
 
+}
+
+/* ---- Vital-signs draggable overlay (sits on the crosshatch) ---- */
+
+.vsplot {
+  position: relative;
+}
+
+/* Overlay spans exactly the crosshatch cells area: 1in label + 0.3in totals */
+.vg-overlay {
+  position: absolute;
+  left: 1in;
+  right: 0.3in;
+  top: 0;
+  bottom: 0;
+  touch-action: none;
+}
+
+.vg-series {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.vg-line {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.vg-mark {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ns-resize;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.vg-glyph {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.vg-hr .vg-glyph {
+  font-size: 8px;
+}
+
+.vg-mark:not(.explicit) .vg-glyph {
+  opacity: 0.5;
+}
+
+/* First-reading entry bar (screen only — hidden in print, no layout shift) */
+.vg-first {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 4px 6px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  background: #f4f7fb;
+  border-bottom: 1px solid #dbe1ea;
+}
+
+.vg-first-title {
+  font-weight: 700;
+}
+
+.vg-first-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vg-first-field input {
+  width: 3.2em;
+  font: inherit;
+  border: 1.5px solid #98a3b3;
+  border-radius: 4px;
+  padding: 3px 5px;
+  text-align: center;
+}
+
+.vg-first-hint {
+  color: #666;
+  font-style: italic;
+  font-size: 11px;
 }
