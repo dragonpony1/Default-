@@ -44,8 +44,8 @@ export default function App() {
     <input {...noAuto} className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
   );
 
-  const ta = (k: StringKeys, rows = 2) => (
-    <textarea {...noAuto} className="a" rows={rows} value={d[k]} onChange={(e) => set(k, e.target.value)} />
+  const ta = (k: StringKeys, rows = 2, cls = '') => (
+    <textarea {...noAuto} className={`a ${cls}`} rows={rows} value={d[k]} onChange={(e) => set(k, e.target.value)} />
   );
 
   // Plain boolean checkbox
@@ -278,7 +278,7 @@ export default function App() {
                     {item.detail ? ` — ${item.detail}` : ''}
                   </div>
                 ))}
-                {ta('previousAnesthesia', d.prevHxList.length ? 1 : 2)}
+                {ta('previousAnesthesia', d.prevHxList.length ? 1 : 2, d.prevHxList.length && !d.previousAnesthesia ? 'np' : '')}
               </div>
               <div className="none-box">{bx('previousAnesthesiaNone', 'None')}</div>
             </div>
@@ -292,7 +292,7 @@ export default function App() {
                     {med.lastDose ? ` — last dose ${med.lastDose}` : ''}
                   </div>
                 ))}
-                {ta('currentMedications', d.meds.length ? 1 : 2)}
+                {ta('currentMedications', d.meds.length ? 1 : 2, d.meds.length && !d.currentMedications ? 'np' : '')}
               </div>
               <div className="none-box">{bx('currentMedicationsNone', 'None')}</div>
             </div>
@@ -315,7 +315,7 @@ export default function App() {
                     {al.reaction ? ` — ${al.reaction}` : ''}
                   </div>
                 ))}
-                {ta('allergies', 1)}
+                {ta('allergies', 1, d.allergyList.length && !d.allergies ? 'np' : '')}
               </div>
               <div className="none-box">{bx('allergiesNone', 'None')}</div>
             </div>

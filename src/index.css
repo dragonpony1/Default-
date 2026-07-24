@@ -753,6 +753,11 @@ input[type='checkbox']:checked::after {
 }
 
 @media print {
+  @page {
+    size: letter;
+    margin: 0.25in;
+  }
+
   :root {
     background: #fff;
   }
@@ -773,7 +778,16 @@ input[type='checkbox']:checked::after {
   .page {
     border: none;
     padding: 0;
-    font-size: 7.2pt;
+    font-size: 7pt;
+    line-height: 1.12;
+  }
+
+  /* Structured entries already fill this box — drop the empty notes field */
+  .np {
+    display: none;
+  }
+
+  .detline {
     line-height: 1.15;
   }
 
