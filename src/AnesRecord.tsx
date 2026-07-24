@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { noAuto } from './inputProps';
+import VitalsGraph, { type VitalsData, type Series } from './VitalsGraph';
 
 // Intra-op Anesthesia Record replicating Mountain West Medical Center form
 // 170-165-MW250046HMS (03/08, Rev. 06/15), portrait US Letter, built from a
@@ -18,16 +19,24 @@ interface AnesDraft {
   ck: Record<string, boolean>;
   tx: Record<string, string>;
   cells: Record<string, string>;
+  vitals: VitalsData;
 }
+
+const emptyVitals = (): VitalsData => ({ sys: {}, dia: {}, hr: {} });
 
 function loadAnes(): AnesDraft {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return { ck: {}, tx: {}, cells: {} };
+    if (!raw) return { ck: {}, tx: {}, cells: {}, vitals: emptyVitals() };
     const parsed = JSON.parse(raw) as Partial<AnesDraft>;
-    return { ck: parsed.ck ?? {}, tx: parsed.tx ?? {}, cells: parsed.cells ?? {} };
+    return {
+      ck: parsed.ck ?? {},
+      tx: parsed.tx ?? {},
+      cells: parsed.cells ?? {},
+      vitals: { ...emptyVitals(), ...parsed.vitals },
+    };
   } catch {
-    return { ck: {}, tx: {}, cells: {} };
+    return { ck: {}, tx: {}, cells: {}, vitals: emptyVitals() };
   }
 }
 
@@ -84,6 +93,29 @@ export default function AnesRecord() {
 
   const setCell = (k: string, v: string) =>
     setD((p) => ({ ...p, cells: { ...p.cells, [k]: v } }));
+
+  const setVitals = (next: VitalsData) => setD((p) => ({ ...p, vitals: next }));
+
+  // First reading of a series → column 0; the overlay carries it forward.
+  const firstReading = (series: Series, label: string) => (
+    <label className="vg-first-field">
+      <span>{label}</span>
+      <input
+        {...noAuto}
+        inputMode="numeric"
+        value={d.vitals[series][0] ?? ''}
+        onChange={(e) => {
+          const raw = e.target.value.trim();
+          setD((p) => {
+            const s = { ...p.vitals[series] };
+            if (raw === '') delete s[0];
+            else s[0] = Math.max(0, Math.min(200, Math.round(Number(raw) || 0)));
+            return { ...p, vitals: { ...p.vitals, [series]: s } };
+          });
+        }}
+      />
+    </label>
+  );
 
   const times = columnTimes(d.tx.surgStart ?? '');
 
@@ -352,9 +384,22 @@ export default function AnesRecord() {
                 {crow('', 'oth5')}
               </>
             ))}
-            {band('Vital Signs', (
-              <>{[200, 180, 160, 140, 120, 100, 80, 60, 40, 20, 0].map((n) => vrow(n))}</>
-            ), 'vsband')}
+            <div className="ar-band vsband">
+              <div className="ar-vband"><span>Vital Signs</span></div>
+              <div className="ar-bandrows vsrows">
+                <div className="vg-first screen-only">
+                  <span className="vg-first-title">First reading:</span>
+                  {firstReading('sys', 'Sys ⌄')}
+                  {firstReading('dia', 'Dia ⌃')}
+                  {firstReading('hr', 'HR ●')}
+                  <span className="vg-first-hint">then drag each mark to the real value</span>
+                </div>
+                <div className="vsplot">
+                  {[200, 180, 160, 140, 120, 100, 80, 60, 40, 20, 0].map((n) => vrow(n))}
+                  <VitalsGraph cols={COLS} vitals={d.vitals} setVitals={setVitals} />
+                </div>
+              </div>
+            </div>
             {band('Vent', (
               <>
                 {crow('Rate', 'vent0')}
