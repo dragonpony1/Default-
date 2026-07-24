@@ -55,6 +55,13 @@ body {
   border-color: #b02a2a;
 }
 
+.toolbar button.danger.armed {
+  background: #b02a2a;
+  color: #fff;
+  border-color: #b02a2a;
+  font-weight: 700;
+}
+
 .privacy-note {
   flex-basis: 100%;
   margin: 0;
