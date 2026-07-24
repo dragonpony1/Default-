@@ -7,6 +7,7 @@ import AddEntry from './AddEntry';
 import ProcedurePicker from './ProcedurePicker';
 import MedList from './MedList';
 import AllergyList from './AllergyList';
+import PrevHxList from './PrevHxList';
 
 interface Props {
   d: PreopEval;
@@ -228,7 +229,37 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     textStep('Respirations', 'r', 'Pre-procedure vital signs'),
     textStep('Temperature', 't', 'Pre-procedure vital signs'),
     textStep('NPO since', 'npo'),
-    noneableStep('Previous anesthesia / operations', 'previousAnesthesia', 'previousAnesthesiaNone'),
+    {
+      title: 'Previous anesthesia / operations',
+      hint: 'Type to search — surgeries and anesthesia events. Airway, MH, and PONV history get flagged.',
+      render: () => (
+        <>
+          <PrevHxList d={d} set={set} customChoices={customChoices} />
+          <div className="chips">
+            {boolChip('previousAnesthesiaNone', 'None')}
+          </div>
+          <label className="ifield">
+            <span>Other history / notes</span>
+            <textarea
+              {...noAuto}
+              rows={2}
+              value={d.previousAnesthesia}
+              disabled={d.previousAnesthesiaNone}
+              onChange={(e) => set('previousAnesthesia', e.target.value)}
+            />
+          </label>
+        </>
+      ),
+      summary: () =>
+        d.previousAnesthesiaNone
+          ? 'None'
+          : [
+              ...d.prevHxList.map((x) => (x.detail ? `${x.name} (${x.detail})` : x.name)),
+              d.previousAnesthesia,
+            ]
+              .filter(Boolean)
+              .join(', '),
+    },
     {
       title: 'Current medications',
       hint: 'Type to search — tap a suggestion to add it. Anticoagulants, GLP-1s, and insulin ask for the last dose.',

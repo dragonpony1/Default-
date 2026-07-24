@@ -7,6 +7,7 @@ import AddEntry from './AddEntry';
 import ProcedurePicker from './ProcedurePicker';
 import MedList from './MedList';
 import AllergyList from './AllergyList';
+import PrevHxList from './PrevHxList';
 
 interface Props {
   d: PreopEval;
@@ -123,8 +124,14 @@ export default function Intake({ d, set, customChoices }: Props) {
       ? `Allergies: ${[...d.allergyList.map((x) => x.name), d.allergies].filter(Boolean).join(', ')}`
       : '';
 
+  const prevHxSummary = d.previousAnesthesiaNone
+    ? 'Anesth hx: none'
+    : d.prevHxList.length || d.previousAnesthesia
+      ? `Hx: ${[...d.prevHxList.map((x) => x.name), d.previousAnesthesia].filter(Boolean).join(', ')}`
+      : '';
+
   const historySummary = joinBits([
-    noneableSummary('Anesth hx', 'previousAnesthesia', 'previousAnesthesiaNone'),
+    prevHxSummary,
     medsSummary,
     noneableSummary('Fam hx', 'familyHistory', 'familyHistoryNone'),
     allergySummary,
@@ -193,7 +200,11 @@ export default function Intake({ d, set, customChoices }: Props) {
 
       {sec('history', 'History', historySummary, (
         <>
-          {noneable('Previous anesthesia / operations', 'previousAnesthesia', 'previousAnesthesiaNone')}
+          <div className="igroup">
+            <span>Previous anesthesia / operations</span>
+            <PrevHxList d={d} set={set} customChoices={customChoices} />
+          </div>
+          {noneable('Other history / notes', 'previousAnesthesia', 'previousAnesthesiaNone')}
           <div className="igroup">
             <span>Current medications</span>
             <MedList d={d} set={set} customChoices={customChoices} />

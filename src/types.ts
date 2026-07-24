@@ -11,6 +11,11 @@ export interface AllergyEntry {
   reaction: string;
 }
 
+export interface PrevHxEntry {
+  name: string;
+  detail: string;
+}
+
 export interface PreopEval {
   // Header
   age: string;
@@ -24,6 +29,7 @@ export interface PreopEval {
   p: string;
   r: string;
   t: string;
+  prevHxList: PrevHxEntry[];
   previousAnesthesia: string;
   previousAnesthesiaNone: boolean;
   meds: MedEntry[];
@@ -126,6 +132,7 @@ export const emptyPreopEval: PreopEval = {
   p: '',
   r: '',
   t: '',
+  prevHxList: [],
   previousAnesthesia: '',
   previousAnesthesiaNone: false,
   meds: [],

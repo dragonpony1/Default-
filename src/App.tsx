@@ -263,7 +263,13 @@ export default function App() {
             <div className="cell grow half pair">
               <div className="pair-main">
                 <span className="lbl">Previous Anesthesia / Operations</span>
-                {ta('previousAnesthesia', 2)}
+                {d.prevHxList.map((item) => (
+                  <div className="detline" key={item.name}>
+                    {item.name}
+                    {item.detail ? ` — ${item.detail}` : ''}
+                  </div>
+                ))}
+                {ta('previousAnesthesia', d.prevHxList.length ? 1 : 2)}
               </div>
               <div className="none-box">{bx('previousAnesthesiaNone', 'None')}</div>
             </div>

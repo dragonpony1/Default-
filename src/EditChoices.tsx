@@ -112,6 +112,27 @@ export default function EditChoices({ choices, setChoices }: Props) {
         </div>
         <AddEntry onAdd={(label) => add('allergens', label)} placeholder="Add an allergen…" />
       </section>
+      <section className="icard">
+        <h2>Surgery / Anesthesia History Dictionary</h2>
+        <p className="fbf-hint">
+          Add prior surgeries or anesthesia events the type-ahead misses and they will be suggested
+          on this device.
+        </p>
+        <div className="chips wrap">
+          {(choices.prevhx ?? []).map((label) => (
+            <button
+              type="button"
+              className="chip on"
+              key={`ph:${label}`}
+              title="Remove this entry"
+              onClick={() => remove('prevhx', label)}
+            >
+              {label} ✕
+            </button>
+          ))}
+        </div>
+        <AddEntry onAdd={(label) => add('prevhx', label)} placeholder="Add a surgery or event…" />
+      </section>
       {SYSTEMS.map((s) => {
         const custom = choices[s.key] ?? [];
         return (
