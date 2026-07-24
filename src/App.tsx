@@ -7,6 +7,7 @@ import Barcode39 from './Barcode39';
 import Intake from './Intake';
 import FieldByField from './FieldByField';
 import EditChoices from './EditChoices';
+import AnesRecord, { clearAnesDraft } from './AnesRecord';
 import { loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 
 type StringKeys = { [K in keyof PreopEval]: PreopEval[K] extends string ? K : never }[keyof PreopEval];
@@ -14,7 +15,8 @@ type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : nev
 
 export default function App() {
   const [d, setD] = useState<PreopEval>(loadDraft);
-  const [view, setView] = useState<'gather' | 'fields' | 'form' | 'choices'>('gather');
+  const [view, setView] = useState<'gather' | 'fields' | 'form' | 'anes' | 'choices'>('gather');
+  const [anesReset, setAnesReset] = useState(0);
   const [choices, setChoicesState] = useState<CustomChoices>(loadCustomChoices);
 
   const setChoices = (c: CustomChoices) => {
@@ -29,9 +31,11 @@ export default function App() {
   const set = <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => setD((prev) => ({ ...prev, [k]: v }));
 
   const handleClear = () => {
-    if (window.confirm('Clear the entire form? This removes all entered data from this device.')) {
+    if (window.confirm('Clear both forms? This removes all entered patient data from this device.')) {
       clearDraft();
+      clearAnesDraft();
       setD({ ...emptyPreopEval });
+      setAnesReset((n) => n + 1);
     }
   };
 
@@ -196,6 +200,9 @@ export default function App() {
           <button className={view === 'form' ? 'on' : ''} onClick={() => setView('form')}>
             Paper Form
           </button>
+          <button className={view === 'anes' ? 'on' : ''} onClick={() => setView('anes')}>
+            Anesthesia Record
+          </button>
           <button className={view === 'choices' ? 'on' : ''} onClick={() => setView('choices')}>
             Edit Choices
           </button>
@@ -215,7 +222,9 @@ export default function App() {
         <FieldByField d={d} set={set} customChoices={choices} onFinish={() => setView('form')} />
       )}
       {view === 'choices' && <EditChoices choices={choices} setChoices={setChoices} />}
+      {view === 'anes' && <AnesRecord key={anesReset} />}
 
+      {view !== 'anes' && (
       <div className={`page${view === 'form' ? '' : ' print-only-block'}`}>
         <div className="page-top">
           <div className="bc-wrap">
@@ -471,6 +480,7 @@ export default function App() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

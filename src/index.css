@@ -1210,3 +1210,287 @@ input[type='checkbox']:checked::after {
 .medclass.or {
   background: #b02a2a;
 }
+
+/* ---- Intra-op Anesthesia Record (landscape) ---- */
+
+.ar-wrap {
+  overflow-x: auto;
+}
+
+.ar {
+  background: #fff;
+  border: 1px solid #ccc;
+  width: 10.4in;
+  padding: 0.15in;
+  font-size: 7px;
+  line-height: 1.2;
+  color: #000;
+}
+
+.ar .cell {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  border-right: 1px solid #000;
+  padding: 1px 4px;
+}
+
+.ar .cell:last-child {
+  border-right: none;
+}
+
+.ar .cell.grow {
+  flex: 1;
+}
+
+.ar .t {
+  width: 5em;
+}
+
+.ar .t.xshort { width: 2.2em; }
+.ar .t.short { width: 3.5em; }
+.ar .t.med { width: 5em; }
+.ar .t.wide { width: 100%; flex: 1; }
+
+.ar-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.ar-toprow {
+  flex: 1;
+  display: flex;
+  border: 2px solid #000;
+  border-bottom: none;
+}
+
+.ar-bc {
+  width: 1.4in;
+  text-align: center;
+}
+
+.ar-bc .barcode {
+  height: 18px;
+}
+
+/* Section band */
+
+.ar-sections {
+  display: flex;
+  border: 2px solid #000;
+  align-items: stretch;
+}
+
+.ar-sec {
+  flex: 1;
+  border-right: 1px solid #000;
+  padding: 2px 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.ar-sec:last-child {
+  border-right: none;
+}
+
+.ar-sec .ck {
+  display: block;
+  margin-right: 0;
+  white-space: normal;
+}
+
+.ar-h {
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+  border-bottom: 1px solid #000;
+  margin: 1px -3px 2px;
+  padding-bottom: 1px;
+}
+
+.ar-h:not(:first-child) {
+  margin-top: 3px;
+}
+
+.ar-line {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+.ar-line .ck {
+  display: inline;
+  white-space: nowrap;
+  margin-right: 3px;
+}
+
+.ar-sym {
+  line-height: 1.3;
+}
+
+/* Charting band */
+
+.ar-main {
+  display: flex;
+  border: 2px solid #000;
+  border-top: none;
+}
+
+.ar-chart {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #000;
+}
+
+.ar-bandlabel {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 6.5px;
+  line-height: 1.15;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+  padding: 0 2px;
+  background: #eee;
+}
+
+.ar-chart > .ar-bandlabel:first-child {
+  border-top: none;
+}
+
+.ar-crow {
+  display: flex;
+  align-items: stretch;
+  height: 0.103in;
+}
+
+.ar-clabel {
+  width: 1.55in;
+  border-right: 1px solid #000;
+  border-bottom: 1px solid #999;
+  padding: 0 2px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+}
+
+.ar-clabel.num {
+  justify-content: flex-end;
+  font-weight: 700;
+}
+
+.ar-cgrid {
+  flex: 1;
+  border-bottom: 1px solid #999;
+  background-image: repeating-linear-gradient(
+    to right,
+    #bbb 0,
+    #bbb 0.5px,
+    transparent 0.5px,
+    transparent 0.1in
+  );
+}
+
+.ar-crow.vs .ar-cgrid {
+  background-image:
+    repeating-linear-gradient(to right, #bbb 0, #bbb 0.5px, transparent 0.5px, transparent 0.1in);
+}
+
+.ar-ctotal {
+  width: 0.55in;
+  border-left: 1px solid #000;
+  border-bottom: 1px solid #999;
+}
+
+.ar-ctotal.noline {
+  border-left: 1px solid #000;
+}
+
+.ar-tothead {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0.55in;
+  text-align: center;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 6.5px;
+  background: #eee;
+  border-left: 1px solid #000;
+  border-bottom: 1px solid #000;
+}
+
+.ar-right {
+  width: 2.15in;
+  padding: 2px 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ar-remarks {
+  border: none;
+  border-bottom: 1px solid #999;
+  font-size: inherit;
+}
+
+/* Bottom admin strip */
+
+.ar-bottom {
+  border: 2px solid #000;
+  border-top: none;
+}
+
+.ar-brow {
+  display: flex;
+  border-bottom: 1px solid #000;
+}
+
+.ar-brow:last-child {
+  border-bottom: none;
+}
+
+.ar-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-top: 2px;
+  font-size: 6px;
+  line-height: 1.1;
+}
+
+.ar-foot-title {
+  line-height: 1.1;
+}
+
+.ar-foot-title {
+  font-size: 10px;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.ar-plabel {
+  border-left: 1px solid #000;
+  padding: 1px 4px 8px;
+  writing-mode: vertical-rl;
+  font-size: 7px;
+}
+
+@media print {
+  .ar-wrap {
+    overflow: visible;
+  }
+
+  .ar {
+    border: none;
+    width: 100%;
+    padding: 0;
+  }
+}
