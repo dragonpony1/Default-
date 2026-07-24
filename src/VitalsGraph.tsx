@@ -11,6 +11,7 @@ export type VitalsData = Record<Series, Record<string, number>>;
 
 interface Props {
   cols: number;
+  endCol: number; // last column to plot (from the anesthesia stop time)
   vitals: VitalsData;
   setVitals: (next: VitalsData) => void;
 }
@@ -39,7 +40,7 @@ const rowIndex = (v: number) => (MAX - v) / STEP_V;
 const topFrac = (v: number) => (rowIndex(v) + 0.5) / ROWS;
 const valueFromFrac = (frac: number) => MAX - (frac * ROWS - 0.5) * STEP_V;
 
-export default function VitalsGraph({ cols, vitals, setVitals }: Props) {
+export default function VitalsGraph({ cols, endCol, vitals, setVitals }: Props) {
   const plotRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ series: Series; col: number } | null>(null);
 
@@ -73,8 +74,12 @@ export default function VitalsGraph({ cols, vitals, setVitals }: Props) {
     const start = firstCol(entries);
     if (start == null) return null;
 
+    // Carry forward from the first reading only up to the stop column; a mark
+    // dragged past the stop still shows so nothing is silently lost.
+    const explicitMax = Math.max(...Object.keys(entries).map(Number));
+    const last = Math.min(cols - 1, Math.max(endCol, explicitMax));
     const points: Array<{ col: number; value: number }> = [];
-    for (let c = start; c < cols; c++) {
+    for (let c = start; c <= last; c++) {
       const v = valueAt(entries, c);
       if (v != null) points.push({ col: c, value: v });
     }

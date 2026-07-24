@@ -119,6 +119,17 @@ export default function AnesRecord() {
 
   const times = columnTimes(d.tx.surgStart ?? '');
 
+  // Vital-sign marks carry forward only to the Anesthesia Stop time; until a
+  // stop is entered they fill to the end of the grid.
+  const endCol = (() => {
+    const s = parseTime(d.tx.surgStart ?? '');
+    const e = parseTime(d.tx.anesStop ?? '');
+    if (s == null || e == null) return COLS - 1;
+    let diff = e - s;
+    if (diff < 0) diff += 24 * 60;
+    return Math.max(0, Math.min(COLS - 1, Math.floor(diff / STEP)));
+  })();
+
   // One tappable charting cell.
   const cell = (rowKey: string, col: number) => (
     <input
@@ -396,7 +407,7 @@ export default function AnesRecord() {
                 </div>
                 <div className="vsplot">
                   {[200, 180, 160, 140, 120, 100, 80, 60, 40, 20, 0].map((n) => vrow(n))}
-                  <VitalsGraph cols={COLS} vitals={d.vitals} setVitals={setVitals} />
+                  <VitalsGraph cols={COLS} endCol={endCol} vitals={d.vitals} setVitals={setVitals} />
                 </div>
               </div>
             </div>
