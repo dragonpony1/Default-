@@ -161,10 +161,13 @@ export default function AnesRecord() {
       <div className="ar-clabel num">{n} &mdash;</div>
       <div className="ar-vscells">
         <svg className="ar-vsgrid" viewBox={`0 0 ${COLS * STEP} 10`} preserveAspectRatio="none" aria-hidden="true">
-          {Array.from({ length: COLS * STEP + 1 }, (_, x) => (
-            <line key={x} x1={x} y1="0" x2={x} y2="10" stroke="#999" strokeWidth={x % STEP === 0 ? 0.5 : 0.2} />
-          ))}
-          <line x1="0" y1="5" x2={COLS * STEP} y2="5" stroke="#999" strokeWidth="0.2" />
+          {Array.from({ length: COLS * STEP + 1 }, (_, x) => {
+            // faint 1-min, light 5-min, darker 15-min, darkest 30-min
+            const stroke = x % 30 === 0 ? '#555' : x % 15 === 0 ? '#888' : x % 5 === 0 ? '#aaa' : '#e0e0e0';
+            const w = x % 15 === 0 ? 0.6 : x % 5 === 0 ? 0.4 : 0.2;
+            return <line key={x} x1={x} y1="0" x2={x} y2="10" stroke={stroke} strokeWidth={w} />;
+          })}
+          <line x1="0" y1="5" x2={COLS * STEP} y2="5" stroke="#ccc" strokeWidth="0.2" />
         </svg>
       </div>
       <div className="ar-ctotal" />
@@ -408,6 +411,16 @@ export default function AnesRecord() {
                 <div className="vsplot">
                   {[200, 180, 160, 140, 120, 100, 80, 60, 40, 20, 0].map((n) => vrow(n))}
                   <VitalsGraph cols={COLS} endCol={endCol} vitals={d.vitals} setVitals={setVitals} />
+                </div>
+                {/* Time axis at the graph: clock labels every 15 minutes */}
+                <div className="vg-timeaxis">
+                  <div className="vg-ta-spacer">Time</div>
+                  <div className="vg-ta-cells">
+                    {times.map((t, c) => (
+                      <div className="vg-ta-cell" key={c}>{c % 3 === 0 ? t : ''}</div>
+                    ))}
+                  </div>
+                  <div className="vg-ta-total" />
                 </div>
               </div>
             </div>
