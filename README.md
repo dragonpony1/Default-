@@ -18,9 +18,50 @@ electronically and produce a clean, printed US-Letter form.
   Center form 170-165-90061 (03/12, Rev. 03/22): systems review with WNL and
   condition checkboxes, tobacco/ethanol screening, diagnostics and laboratory
   study columns, post-anesthesia note, physical status, inpatient note, and
-  signature blocks. Prints on a single US Letter page.
+  signature blocks. Prints on a single US Letter page. No patient identifiers
+  are entered — the patient label sticker is applied after printing.
 
 Planned: intra-op anesthesia record, PACU note, controlled substance log.
+
+## App structure
+
+Four tabs, all reading and writing the same draft:
+
+- **Gather Info** — the whole intake as a checklist of collapsible sections;
+  each collapsed row shows a one-line summary of what's entered.
+- **Pre-Op Wizard** — one question at a time (35 steps) with a progress bar,
+  Restart / Review all controls, and a review screen listing every field with
+  tap-to-edit. The wizard's step position persists per device.
+- **Paper Form** — the print-exact replica; Print always outputs this view.
+- **Edit Choices** — per-device configuration of every choice list (stored
+  separately from patient drafts, survives Clear form).
+
+Structured entry (in both Gather Info and the wizard):
+
+- **Procedure**: service tabs (Ortho / General / ENT / Podiatry / GYN) with
+  seeded per-service procedure chips, then Left/Right side chips; the side is
+  stored as a text prefix ("Right TKA").
+- **Medications**: offline type-ahead over `src/meds.ts` (~230 generics +
+  brands); one row per med with dose/frequency; anticoagulants, antiplatelets,
+  GLP-1s, and insulins are badged and prompt for last dose taken.
+- **Allergies**: offline type-ahead over `src/allergens.ts`; reaction field
+  per row; OR-critical allergens (latex, chlorhexidine, cefazolin,
+  propofol/egg/soy, succinylcholine, MH, heparin/HIT…) badged OR Alert.
+- **Previous anesthesia / operations**: type-ahead over `src/prevhx.ts`;
+  red flags for difficult airway / MH / post-op ICU / pseudocholinesterase
+  deficiency, amber for PONV / awareness / cardiac / bariatric history.
+- **Planned anesthesia**: multi-select chips (General, Spinal, MAC, blocks…)
+  that join with " + " into the printed text.
+- **Systems review**: on-screen OSA and CPAP are separate (either checks the
+  printed combined OSA/CPAP box); Home O2 question (night / 24-7, L/min)
+  prints into Respiratory comments; per-condition detail fields and custom
+  conditions print into each system's Comments column.
+
+Structured entries print as lines inside the original form's boxes — the
+printed checkbox grid itself is never altered. Choice lists are seeded via
+versioned payloads in `src/choices.ts` (removals stick across seed upgrades)
+and are user-extendable on the Edit Choices tab. All free-text inputs disable
+OS autocorrect/autocapitalize (`src/inputProps.ts`).
 
 ## Development
 
