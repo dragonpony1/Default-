@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { noAuto } from './inputProps';
 import VitalsGraph, { type VitalsData, type Series } from './VitalsGraph';
+import AnesWizard from './AnesWizard';
 
 // Intra-op Anesthesia Record replicating Mountain West Medical Center form
 // 170-165-MW250046HMS (03/08, Rev. 06/15), portrait US Letter, built from a
@@ -66,6 +67,7 @@ export function clearAnesDraft(): void {
 
 export default function AnesRecord() {
   const [d, setD] = useState<AnesDraft>(loadAnes);
+  const [mode, setMode] = useState<'chart' | 'wizard'>('chart');
 
   useEffect(() => {
     localStorage.setItem(KEY, JSON.stringify(d));
@@ -182,8 +184,32 @@ export default function AnesRecord() {
     </div>
   );
 
+  if (mode === 'wizard') {
+    return (
+      <>
+        <div className="awiz-switch screen-only">
+          <button type="button" className="chip on" onClick={() => setMode('chart')}>← Back to full chart</button>
+        </div>
+        <AnesWizard
+          ck={d.ck}
+          tx={d.tx}
+          cells={d.cells}
+          setCk={(k, v) => setD((p) => ({ ...p, ck: { ...p.ck, [k]: v } }))}
+          setTx={(k, v) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: v } }))}
+          setCell={setCell}
+          endCol={endCol}
+          onDone={() => setMode('chart')}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="ar-wrap">
+      <div className="awiz-switch screen-only">
+        <button type="button" className="chip" onClick={() => setMode('wizard')}>⛑ Guided setup wizard</button>
+        <span className="awiz-switch-hint">Walks you through setup, airway, blocks &amp; end-of-case. The grid stays tap-and-drag.</span>
+      </div>
       <div className="ar">
         {/* Header: two rows, allergies + patient label boxes span both */}
         <div className="ar-header">

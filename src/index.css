@@ -1978,3 +1978,52 @@ input[type='checkbox']:checked::after {
   flex: none;
   border-left: 1px solid #000;
 }
+
+/* Anesthesia Record wizard switch + phases */
+.awiz-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.awiz-switch-hint {
+  font-size: 0.85rem;
+  color: #555;
+}
+
+.awiz {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.awiz-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.awiz-phases {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.awiz-phase {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #98a3b3;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: #eef1f5;
+}
+
+.awiz-phase.on {
+  background: #2a5db0;
+  color: #fff;
+}
