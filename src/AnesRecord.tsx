@@ -9,20 +9,46 @@ import { noAuto } from './inputProps';
 
 const KEY = 'anes-record-draft-v1';
 
+// The charting grid is a time axis: COLS columns of STEP minutes each,
+// anchored to the surgery start time entered on the record.
+const STEP = 5;
+const COLS = 18;
+
 interface AnesDraft {
   ck: Record<string, boolean>;
   tx: Record<string, string>;
+  cells: Record<string, string>;
 }
 
 function loadAnes(): AnesDraft {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return { ck: {}, tx: {} };
+    if (!raw) return { ck: {}, tx: {}, cells: {} };
     const parsed = JSON.parse(raw) as Partial<AnesDraft>;
-    return { ck: parsed.ck ?? {}, tx: parsed.tx ?? {} };
+    return { ck: parsed.ck ?? {}, tx: parsed.tx ?? {}, cells: parsed.cells ?? {} };
   } catch {
-    return { ck: {}, tx: {} };
+    return { ck: {}, tx: {}, cells: {} };
   }
+}
+
+// Parse "0730", "7:30", "730" → minutes since midnight, or null.
+function parseTime(s: string): number | null {
+  const m = s.trim().match(/^(\d{1,2}):?(\d{2})$/);
+  if (!m) return null;
+  const h = +m[1];
+  const min = +m[2];
+  if (h > 23 || min > 59) return null;
+  return h * 60 + min;
+}
+
+// Column clock labels from the start time; blank until a valid start is set.
+function columnTimes(start: string): string[] {
+  const base = parseTime(start);
+  if (base == null) return Array(COLS).fill('');
+  return Array.from({ length: COLS }, (_, i) => {
+    const t = (base + i * STEP) % (24 * 60);
+    return String(Math.floor(t / 60)).padStart(2, '0') + String(t % 60).padStart(2, '0');
+  });
 }
 
 export function clearAnesDraft(): void {
@@ -56,23 +82,48 @@ export default function AnesRecord() {
     />
   );
 
-  // Grid cells are drawn with SVG lines — CSS background gradients render
-  // unevenly in print. Patterns are defined once on the page and referenced
-  // from every cell; 96 CSS px = 1in, so 9.6 = 0.1in columns.
-  const gridCell = (fine = false) => (
-    <div className={`ar-cgrid${fine ? ' fine' : ''}`}>
-      <svg className="ar-gridsvg" aria-hidden="true">
-        <rect width="100%" height="100%" fill={`url(#${fine ? 'arGridFine' : 'arGrid'})`} />
-        {fine && <line x1="0" y1="50%" x2="100%" y2="50%" stroke="#444" strokeWidth="0.6" />}
-      </svg>
+  const setCell = (k: string, v: string) =>
+    setD((p) => ({ ...p, cells: { ...p.cells, [k]: v } }));
+
+  const times = columnTimes(d.tx.surgStart ?? '');
+
+  // One tappable charting cell.
+  const cell = (rowKey: string, col: number) => (
+    <input
+      {...noAuto}
+      key={col}
+      className="ar-cell"
+      value={d.cells[`${rowKey}:${col}`] ?? ''}
+      onChange={(e) => setCell(`${rowKey}:${col}`, e.target.value)}
+    />
+  );
+
+  // Value row: label | tappable time-columns | totals input
+  const crow = (label: ReactNode, key: string) => (
+    <div className="ar-crow" key={key}>
+      <div className="ar-clabel">{label}</div>
+      <div className="ar-cells">{Array.from({ length: COLS }, (_, c) => cell(key, c))}</div>
+      <input
+        {...noAuto}
+        className="ar-cell ar-totalcell"
+        value={d.cells[`${key}:total`] ?? ''}
+        onChange={(e) => setCell(`${key}:total`, e.target.value)}
+      />
     </div>
   );
 
-  // One charting row: label | grid | totals box
-  const crow = (label: ReactNode, key: string, cls = '') => (
-    <div className={`ar-crow ${cls}`} key={key}>
-      <div className="ar-clabel">{label}</div>
-      {gridCell()}
+  // Vital-signs row: label | crosshatch for hand-drawn BP/HR ticks | totals
+  const vrow = (n: number) => (
+    <div className="ar-crow vs" key={`vs${n}`}>
+      <div className="ar-clabel num">{n} &mdash;</div>
+      <div className="ar-vscells">
+        <svg className="ar-vsgrid" viewBox={`0 0 ${COLS * STEP} 10`} preserveAspectRatio="none" aria-hidden="true">
+          {Array.from({ length: COLS * STEP + 1 }, (_, x) => (
+            <line key={x} x1={x} y1="0" x2={x} y2="10" stroke="#999" strokeWidth={x % STEP === 0 ? 0.5 : 0.2} />
+          ))}
+          <line x1="0" y1="5" x2={COLS * STEP} y2="5" stroke="#999" strokeWidth="0.2" />
+        </svg>
+      </div>
       <div className="ar-ctotal" />
     </div>
   );
@@ -88,17 +139,6 @@ export default function AnesRecord() {
   return (
     <div className="ar-wrap">
       <div className="ar">
-        <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
-          <defs>
-            <pattern id="arGrid" width="19.2" height="8" patternUnits="userSpaceOnUse">
-              <path d="M 0.3 0 V 8" stroke="#444" strokeWidth="0.6" />
-            </pattern>
-            <pattern id="arGridFine" width="7.1" height="8" patternUnits="userSpaceOnUse">
-              <path d="M 0.3 0 V 8" stroke="#444" strokeWidth="0.6" />
-            </pattern>
-          </defs>
-        </svg>
-
         {/* Header: two rows, allergies + patient label boxes span both */}
         <div className="ar-header">
           <div className="ar-hleft">
@@ -265,7 +305,30 @@ export default function AnesRecord() {
           </div>
 
           <div className="ar-chart">
-            <div className="ar-tothead">Totals</div>
+            {/* Time axis: surgery start anchors 5-minute columns */}
+            <div className="ar-band ar-timeband">
+              <div className="ar-vband" />
+              <div className="ar-bandrows">
+                <div className="ar-crow th">
+                  <div className="ar-clabel th-start">
+                    <span>Surgery start</span>
+                    <input
+                      {...noAuto}
+                      className="ar-startinput"
+                      placeholder="0730"
+                      value={d.tx.surgStart ?? ''}
+                      onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, surgStart: e.target.value } }))}
+                    />
+                  </div>
+                  <div className="ar-cells th-times">
+                    {times.map((t, c) => (
+                      <div className="ar-thcell" key={c}>{t}</div>
+                    ))}
+                  </div>
+                  <div className="ar-ctotal th-total">Totals</div>
+                </div>
+              </div>
+            </div>
             {band('Medications', (
               <>
                 {crow('Oxygen (L/minute)', 'med0')}
@@ -290,15 +353,7 @@ export default function AnesRecord() {
               </>
             ))}
             {band('Vital Signs', (
-              <>
-                {[200, 180, 160, 140, 120, 100, 80, 60, 40, 20, 0].map((n) => (
-                  <div className="ar-crow vs" key={`vs${n}`}>
-                    <div className="ar-clabel num">{n} &mdash;</div>
-                    {gridCell(true)}
-                    <div className="ar-ctotal" />
-                  </div>
-                ))}
-              </>
+              <>{[200, 180, 160, 140, 120, 100, 80, 60, 40, 20, 0].map((n) => vrow(n))}</>
             ), 'vsband')}
             {band('Vent', (
               <>

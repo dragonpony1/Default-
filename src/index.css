@@ -1478,6 +1478,15 @@ input[type='checkbox']:checked::after {
   height: 0.165in;
 }
 
+.vsband .ar-crow {
+  height: 0.185in;
+}
+
+.vsband .ar-clabel {
+  border-bottom: none;
+  border-right: none;
+}
+
 .ar-clabel {
   width: 1in;
   font-size: 6px;
@@ -1505,14 +1514,64 @@ input[type='checkbox']:checked::after {
   align-items: baseline;
 }
 
-.ar-cgrid {
+/* Tappable time-column cells */
+.ar-cells {
   flex: 1;
+  display: flex;
   border-bottom: 0.5px solid #777;
-  position: relative;
-  overflow: hidden;
 }
 
-.ar-gridsvg {
+.ar-crow:last-child .ar-cells {
+  border-bottom: none;
+}
+
+.ar-cell {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  border-right: 0.5px solid #bbb;
+  background: transparent;
+  font: inherit;
+  font-size: 6.5px;
+  text-align: center;
+  padding: 0;
+  color: #000;
+}
+
+.ar-cell:nth-child(5n) {
+  border-right: 0.6px solid #666;
+}
+
+.ar-cell:focus {
+  outline: none;
+  background: #eef4ff;
+}
+
+.ar-totalcell {
+  width: 0.3in;
+  flex: none;
+  border: none;
+  border-left: 1px solid #000;
+  border-bottom: 0.5px solid #777;
+  font-weight: 600;
+}
+
+.ar-crow:last-child .ar-totalcell {
+  border-bottom: none;
+}
+
+/* Vital-signs crosshatch for hand-drawn ticks */
+.ar-vscells {
+  flex: 1;
+  position: relative;
+  border-bottom: 1px solid #000;
+}
+
+.vsband .ar-crow:last-child .ar-vscells {
+  border-bottom: none;
+}
+
+.ar-vsgrid {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -1520,28 +1579,70 @@ input[type='checkbox']:checked::after {
   display: block;
 }
 
-.ar-crow:last-child .ar-cgrid {
+/* Time axis header */
+.ar-timeband .ar-crow.th {
+  height: 0.2in;
+}
+
+.th-start {
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  font-weight: 700;
+}
+
+.th-start span {
+  font-size: 5.5px;
+}
+
+.ar-startinput {
+  width: 90%;
+  border: none;
+  border-bottom: 1px solid #2a5db0;
+  background: transparent;
+  font: inherit;
+  font-size: 8px;
+  font-weight: 700;
+  text-align: center;
+  padding: 0;
+  color: #2a5db0;
+}
+
+.ar-startinput:focus {
+  outline: none;
+  background: #eef4ff;
+}
+
+.th-times {
   border-bottom: none;
+}
+
+.ar-thcell {
+  flex: 1;
+  min-width: 0;
+  border-right: 0.5px solid #bbb;
+  font-size: 5.5px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: -0.3px;
+}
+
+.ar-thcell:nth-child(5n) {
+  border-right: 0.6px solid #666;
+}
+
+.th-total {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 6px;
+  text-transform: uppercase;
 }
 
 /* Vital signs: finer grid with a mid-line every 10 units */
-
-.vsband .ar-crow {
-  height: 0.185in;
-}
-
-.vsband .ar-clabel {
-  border-bottom: none;
-  border-right: none;
-}
-
-.vsband .ar-cgrid {
-  border-bottom: 1px solid #000;
-}
-
-.vsband .ar-crow:last-child .ar-cgrid {
-  border-bottom: none;
-}
 
 .ar-ctotal {
   width: 0.3in;
@@ -1552,19 +1653,6 @@ input[type='checkbox']:checked::after {
 
 .ar-crow:last-child .ar-ctotal {
   border-bottom: none;
-}
-
-.ar-tothead {
-  position: absolute;
-  top: -0.115in;
-  right: 0;
-  width: 0.3in;
-  text-align: center;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 6.5px;
-  border: 1px solid #000;
-  background: #fff;
 }
 
 /* Right column: remarks / fluids / recovery */
