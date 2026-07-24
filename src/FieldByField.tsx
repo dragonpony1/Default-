@@ -8,6 +8,7 @@ import ProcedurePicker from './ProcedurePicker';
 import MedList from './MedList';
 import AllergyList from './AllergyList';
 import PrevHxList from './PrevHxList';
+import AnesthesiaPicker from './AnesthesiaPicker';
 
 interface Props {
   d: PreopEval;
@@ -504,7 +505,13 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     { title: 'Problem list / diagnoses', render: () => area('problemList'), summary: () => d.problemList },
     {
       title: 'Planned anesthesia / special monitors',
-      render: () => area('plannedAnesthesia'),
+      hint: 'Tap to combine — selections join with "+". Edit the text for anything else.',
+      render: () => (
+        <>
+          <AnesthesiaPicker d={d} set={set} customChoices={customChoices} />
+          {area('plannedAnesthesia')}
+        </>
+      ),
       summary: () => d.plannedAnesthesia,
     },
     {

@@ -10,35 +10,58 @@ export const SERVICES = ['Ortho', 'General', 'ENT', 'Podiatry', 'GYN'] as const;
 export type Service = (typeof SERVICES)[number];
 export const procKey = (svc: string) => `proc:${svc}`;
 
-const DEFAULT_PROCS: Partial<Record<Service, string[]>> = {
-  Ortho: [
-    'TKA',
-    'THA',
-    'Shoulder scope',
-    'TSA',
-    'Trigger finger',
-    'CTR',
-    'Hip scope',
-    'Knee arthroscopy',
+// Versioned seeds: each version's payload merges into the stored lists
+// exactly once per device, so later removals stick while new defaults still
+// arrive in later versions.
+const SEEDS: Array<[string, Record<string, string[]>]> = [
+  [
+    'v2',
+    {
+      [procKey('Ortho')]: [
+        'TKA',
+        'THA',
+        'Shoulder scope',
+        'TSA',
+        'Trigger finger',
+        'CTR',
+        'Hip scope',
+        'Knee arthroscopy',
+      ],
+      [procKey('General')]: [
+        'Colonoscopy',
+        'EGD',
+        'EGD + Colonoscopy',
+        'Cholecystectomy',
+        'Appendectomy',
+        'Dx laparotomy',
+        'Exploratory laparotomy',
+        'TIF',
+      ],
+      [procKey('ENT')]: ['Tonsils and adenoids', 'Septoplasty', 'Sinus scope', 'Nasal bone reduction'],
+      [procKey('Podiatry')]: ['Bone procedure', 'Soft tissue procedure'],
+      [procKey('GYN')]: ['Lap hyst', 'Vaginal hyst', 'Hysteroscopy', 'Suction D&C'],
+    },
   ],
-  General: [
-    'Colonoscopy',
-    'EGD',
-    'EGD + Colonoscopy',
-    'Cholecystectomy',
-    'Appendectomy',
-    'Dx laparotomy',
-    'Exploratory laparotomy',
-    'TIF',
+  [
+    'v3',
+    {
+      anesthesia: [
+        'General',
+        'Spinal',
+        'Epidural',
+        'MAC',
+        'Local + sedation',
+        'Adductor canal block',
+        'Interscalene block',
+        'Supraclavicular block',
+        'Popliteal block',
+        'Ankle block',
+        'Bier block',
+        'TAP block',
+      ],
+    },
   ],
-  ENT: ['Tonsils and adenoids', 'Septoplasty', 'Sinus scope', 'Nasal bone reduction'],
-  Podiatry: ['Bone procedure', 'Soft tissue procedure'],
-  GYN: ['Lap hyst', 'Vaginal hyst', 'Hysteroscopy', 'Suction D&C'],
-};
-
-// Each SEED_VERSION merges DEFAULT_PROCS into the stored lists exactly once
-// per device, so later removals stick while new defaults still arrive.
-const SEED_VERSION = 'v2';
+];
 
 function seed(c: CustomChoices): CustomChoices {
   let changed = false;
@@ -54,13 +77,16 @@ function seed(c: CustomChoices): CustomChoices {
     changed = true;
   }
   const done = c.__seeded ?? [];
-  if (!done.includes(SEED_VERSION)) {
-    for (const svc of SERVICES) {
-      c[procKey(svc)] = [...new Set([...c[procKey(svc)], ...(DEFAULT_PROCS[svc] ?? [])])];
+  for (const [ver, payload] of SEEDS) {
+    if (!done.includes(ver)) {
+      for (const [key, list] of Object.entries(payload)) {
+        c[key] = [...new Set([...(c[key] ?? []), ...list])];
+      }
+      done.push(ver);
+      changed = true;
     }
-    c.__seeded = [...done, SEED_VERSION];
-    changed = true;
   }
+  c.__seeded = done;
   if (changed) saveCustomChoices(c);
   return c;
 }

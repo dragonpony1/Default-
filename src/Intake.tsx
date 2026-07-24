@@ -8,6 +8,7 @@ import ProcedurePicker from './ProcedurePicker';
 import MedList from './MedList';
 import AllergyList from './AllergyList';
 import PrevHxList from './PrevHxList';
+import AnesthesiaPicker from './AnesthesiaPicker';
 
 interface Props {
   d: PreopEval;
@@ -359,7 +360,11 @@ export default function Intake({ d, set, customChoices }: Props) {
             {boolChip('physicalStatusE', 'E (Emergency)')}
           </div>
           {areaField('Problem list / diagnoses', 'problemList')}
-          {areaField('Planned anesthesia / special monitors', 'plannedAnesthesia')}
+          <div className="igroup">
+            <span>Planned anesthesia / special monitors</span>
+            <AnesthesiaPicker d={d} set={set} customChoices={customChoices} />
+          </div>
+          {areaField('', 'plannedAnesthesia')}
           {areaField('Pre-anesthesia medications ordered', 'preAnesthesiaMeds')}
           {field('Evaluation date/time', 'evalDateTime', { small: true })}
           <p className="ihint">

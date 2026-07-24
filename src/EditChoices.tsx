@@ -133,6 +133,27 @@ export default function EditChoices({ choices, setChoices }: Props) {
         </div>
         <AddEntry onAdd={(label) => add('prevhx', label)} placeholder="Add a surgery or event…" />
       </section>
+      <section className="icard">
+        <h2>Planned Anesthesia</h2>
+        <p className="fbf-hint">
+          One-tap choices for the anesthetic plan. Selections combine with &ldquo;+&rdquo; on the
+          form (e.g. Spinal + Adductor canal block).
+        </p>
+        <div className="chips wrap">
+          {(choices.anesthesia ?? []).map((label) => (
+            <button
+              type="button"
+              className="chip on"
+              key={`an:${label}`}
+              title="Remove this option"
+              onClick={() => remove('anesthesia', label)}
+            >
+              {label} ✕
+            </button>
+          ))}
+        </div>
+        <AddEntry onAdd={(label) => add('anesthesia', label)} placeholder="Add an anesthesia option…" />
+      </section>
       {SYSTEMS.map((s) => {
         const custom = choices[s.key] ?? [];
         return (
