@@ -11,9 +11,9 @@ import VitalsGraph, { type VitalsData, type Series } from './VitalsGraph';
 const KEY = 'anes-record-draft-v1';
 
 // The charting grid is a time axis: COLS columns of STEP minutes each,
-// anchored to the surgery start time entered on the record.
+// anchored to the surgery start time entered on the record. 36 × 5 min = 3 h.
 const STEP = 5;
-const COLS = 18;
+const COLS = 36;
 
 interface AnesDraft {
   ck: Record<string, boolean>;
@@ -354,7 +354,7 @@ export default function AnesRecord() {
                   </div>
                   <div className="ar-cells th-times">
                     {times.map((t, c) => (
-                      <div className="ar-thcell" key={c}>{t}</div>
+                      <div className="ar-thcell" key={c}>{c % 2 === 0 ? t : ''}</div>
                     ))}
                   </div>
                   <div className="ar-ctotal th-total">Totals</div>
