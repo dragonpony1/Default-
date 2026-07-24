@@ -1544,7 +1544,7 @@ input[type='checkbox']:checked::after {
 }
 
 .ar-ctotal {
-  width: 0.52in;
+  width: 0.72in;
   border-left: 1px solid #000;
   border-bottom: 0.5px solid #777;
   flex: none;
@@ -1556,9 +1556,9 @@ input[type='checkbox']:checked::after {
 
 .ar-tothead {
   position: absolute;
-  top: -0.13in;
+  top: -0.115in;
   right: 0;
-  width: 0.52in;
+  width: 0.72in;
   text-align: center;
   font-weight: 700;
   text-transform: uppercase;
