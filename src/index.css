@@ -1517,6 +1517,7 @@ input[type='checkbox']:checked::after {
 /* Tappable time-column cells */
 .ar-cells {
   flex: 1;
+  min-width: 0;
   display: flex;
   border-bottom: 0.5px solid #777;
 }
@@ -1528,6 +1529,7 @@ input[type='checkbox']:checked::after {
 .ar-cell {
   flex: 1;
   min-width: 0;
+  width: 0;
   border: none;
   border-right: 0.5px solid #bbb;
   background: transparent;
