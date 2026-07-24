@@ -128,11 +128,13 @@ export default function AnesWizard(api: WizardApi) {
       hint: 'Tap the common dose or type another — these drop into the first (surgery-start) grid column.',
       render: () => (
         <>
+          {drugDoses('Lidocaine', 'oth5:0', 'mg', [40, 50, 100])}
           {drugDoses('Propofol', 'med3:0', 'mg', [100, 150, 200])}
           {drugDoses('Fentanyl', 'med6:0', 'mcg', [50, 100, 150, 250])}
           {drugDoses('Versed', 'med7:0', 'mg', [1, 2])}
           {drugDoses('Rocuronium', 'med5:0', 'mg', [30, 50])}
           {drugDoses('Succinylcholine', 'med4:0', 'mg', [100])}
+          {drugDoses('Ancef (cefazolin)', 'oth6:0', 'g', [1, 2, 3])}
         </>
       ),
     },
@@ -169,41 +171,7 @@ export default function AnesWizard(api: WizardApi) {
         </>
       ),
     },
-    // ---------- Phase 3: Regional / blocks ----------
-    {
-      phase: 'Regional / blocks',
-      title: 'Block type',
-      hint: 'Skip if none — tap Next.',
-      render: () => group('Conduction anesthesia', <>{ckChip('spinal', 'Spinal')}{ckChip('epidural', 'Epidural')}{ckChip('bier', 'Bier')}{ckChip('axillary', 'Axillary')}{ckChip('local', 'Local')}{ckChip('condOther', 'Other')}</>),
-    },
-    {
-      phase: 'Regional / blocks',
-      title: 'Block agents & details',
-      render: () => (
-        <>
-          <div className="irow">
-            {field('Duramorph mg', 'duramorph')}
-            {field('Fentanyl mcg', 'fentanyl')}
-            {field('Naropin mL', 'naropin')}
-            {field('Sensorcaine mL', 'sensorcaine')}
-            {field('Xylocaine mL', 'xylocaine')}
-          </div>
-          <div className="irow">
-            {field('Needle size', 'needleSize')}
-            {field('# Attempts', 'condAttempts')}
-            {field('Site', 'site')}
-            {field('Time', 'condTime', 'HHMM')}
-          </div>
-          {group('Findings', <>{ckChip('paresthesia', 'Paresthesia')}{ckChip('cffcsf', 'CFF/CSF')}</>)}
-          <div className="irow">
-            {field('Lot #', 'lotNum')}
-            {field('Expiration', 'expDate')}
-            {field('Manufacturer', 'manufacturer')}
-          </div>
-        </>
-      ),
-    },
-    // ---------- Phase 4: End of case ----------
+    // ---------- Phase 3: End of case ----------
     {
       phase: 'End of case',
       title: 'Emergence & reversal',
@@ -264,7 +232,7 @@ export default function AnesWizard(api: WizardApi) {
     <div className="intake screen-only awiz">
       <div className="awiz-top">
         <div className="awiz-phases">
-          {['Start of case', 'Airway & positioning', 'Regional / blocks', 'End of case'].map((ph) => (
+          {['Start of case', 'Airway & positioning', 'End of case'].map((ph) => (
             <span key={ph} className={`awiz-phase${cur.phase === ph ? ' on' : ''}`}>{ph}</span>
           ))}
         </div>

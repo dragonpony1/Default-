@@ -420,8 +420,9 @@ export default function AnesRecord() {
                 {crow('ROBINUL IV mg', 'oth1')}
                 {crow('NEO IV mg', 'oth2')}
                 {crow('SUGAMMADEX IV mg', 'oth3')}
+                {crow('LIDOCAINE IV mg', 'oth5')}
+                {crow('ANCEF (cefazolin) g', 'oth6')}
                 {crow('LR/D5LR/NS', 'oth4')}
-                {crow('', 'oth5')}
               </>
             ))}
             <div className="ar-band vsband">
