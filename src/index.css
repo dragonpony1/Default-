@@ -2027,3 +2027,26 @@ input[type='checkbox']:checked::after {
   background: #2a5db0;
   color: #fff;
 }
+
+/* Wizard dose / pick inputs */
+.awiz-doseinput {
+  font: inherit;
+  width: 5em;
+  padding: 0.4rem 0.5rem;
+  border: 1.5px dashed #98a3b3;
+  border-radius: 8px;
+  min-height: 44px;
+  text-align: center;
+}
+
+.awiz-doseinput:focus {
+  outline: none;
+  border-style: solid;
+  border-color: #2a5db0;
+}
+
+.awiz-unit {
+  font-weight: 400;
+  color: #666;
+  font-size: 0.8rem;
+}
