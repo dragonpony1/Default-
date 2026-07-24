@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { noAuto } from './inputProps';
 import { emptyPreopEval, type PreopEval, type YesNo } from './types';
 import { SYSTEMS, type SystemBand } from './formConfig';
@@ -30,8 +30,26 @@ export default function App() {
 
   const set = <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => setD((prev) => ({ ...prev, [k]: v }));
 
+  // Two-tap clear: first tap arms the button (auto-disarms after 5s), a second
+  // tap within that window shows a final confirm before wiping. Guards against
+  // an accidental single tap mid-case.
+  const [clearArmed, setClearArmed] = useState(false);
+  const clearTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const disarmClear = () => {
+    if (clearTimer.current) clearTimeout(clearTimer.current);
+    clearTimer.current = null;
+    setClearArmed(false);
+  };
+
   const handleClear = () => {
-    if (window.confirm('Clear both forms? This removes all entered patient data from this device.')) {
+    if (!clearArmed) {
+      setClearArmed(true);
+      clearTimer.current = setTimeout(() => setClearArmed(false), 5000);
+      return;
+    }
+    disarmClear();
+    if (window.confirm('Clear BOTH forms and wipe all entered data from this device? This cannot be undone.')) {
       clearDraft();
       clearAnesDraft();
       setD({ ...emptyPreopEval });
@@ -209,7 +227,9 @@ export default function App() {
         </div>
         <div className="toolbar-actions">
           <button onClick={() => window.print()}>Print</button>
-          <button className="danger" onClick={handleClear}>Clear form</button>
+          <button className={`danger${clearArmed ? ' armed' : ''}`} onClick={handleClear} onBlur={disarmClear}>
+            {clearArmed ? '⚠ Tap again to clear all' : 'Clear form'}
+          </button>
         </div>
         <p className="privacy-note">
           No patient name or identifiers are entered here &mdash; apply the patient label sticker after
