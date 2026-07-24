@@ -1235,7 +1235,31 @@ input[type='checkbox']:checked::after {
 /* ---- Intra-op Anesthesia Record (portrait, from scan) ---- */
 
 .ar-wrap {
-  overflow-x: auto;
+  overflow: auto;
+}
+
+/* Reserves the scaled footprint so the pane scrolls to the zoomed chart.
+   Transform scale (not CSS `zoom`) keeps pointer-drag frac math intact. */
+.ar-scaler {
+  overflow: hidden;
+}
+
+.ar-zoomctl {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.ar-zoomctl .chip {
+  min-height: 40px;
+  min-width: 44px;
+  padding: 0.3rem 0.6rem;
+  font-weight: 700;
+}
+
+.ar-zoomval {
+  min-width: 4.5rem;
 }
 
 .ar {
@@ -1842,11 +1866,18 @@ input[type='checkbox']:checked::after {
     overflow: visible;
   }
 
+  .ar-scaler {
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
   .ar {
     border: none;
     width: 100%;
     padding: 0;
     padding-top: 0.25in;
+    transform: none !important;
   }
 
 }
@@ -1864,7 +1895,8 @@ input[type='checkbox']:checked::after {
   right: 0.3in;
   top: 0;
   bottom: 0;
-  touch-action: none;
+  /* No touch-action:none here so two-finger pinch-zoom works over the grid;
+     the draggable marks keep touch-action:none so single-finger drag still works. */
 }
 
 .vg-series {

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { noAuto } from './inputProps';
 import VitalsGraph, { type VitalsData, type Series } from './VitalsGraph';
 import AnesWizard from './AnesWizard';
@@ -65,13 +65,33 @@ export function clearAnesDraft(): void {
   localStorage.removeItem(KEY);
 }
 
-export default function AnesRecord() {
+export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }) {
   const [d, setD] = useState<AnesDraft>(loadAnes);
   const [mode, setMode] = useState<'chart' | 'wizard'>('chart');
+  const [zoom, setZoom] = useState(1);
+  const bumpZoom = (delta: number) => setZoom((z) => Math.min(2.5, Math.max(0.8, Math.round((z + delta) * 10) / 10)));
+  // Zoom via transform scale (not CSS `zoom`, which breaks pointer-drag math).
+  // Reserve the scaled footprint on a wrapper so the pane scrolls to it.
+  const arRef = useRef<HTMLDivElement>(null);
+  const [natural, setNatural] = useState({ w: 0, h: 0 });
+  useLayoutEffect(() => {
+    if (arRef.current) setNatural({ w: arRef.current.offsetWidth, h: arRef.current.offsetHeight });
+  }, [mode, d]);
 
   useEffect(() => {
     localStorage.setItem(KEY, JSON.stringify(d));
   }, [d]);
+
+  // Clear form bumps resetSignal — reload from the (now-cleared) storage
+  // directly so the mounted record can't autosave stale data back.
+  const seenReset = useRef(resetSignal);
+  useEffect(() => {
+    if (resetSignal !== seenReset.current) {
+      seenReset.current = resetSignal;
+      setD(loadAnes());
+      setMode('chart');
+    }
+  }, [resetSignal]);
 
   const ck = (k: string, label?: string) => (
     <label className="ck" key={k}>
@@ -208,9 +228,22 @@ export default function AnesRecord() {
     <div className="ar-wrap">
       <div className="awiz-switch screen-only">
         <button type="button" className="chip" onClick={() => setMode('wizard')}>⛑ Guided setup wizard</button>
-        <span className="awiz-switch-hint">Walks you through setup, airway, blocks &amp; end-of-case. The grid stays tap-and-drag.</span>
+        <span className="awiz-switch-hint">Walks you through setup, airway &amp; end-of-case. The grid stays tap-and-drag.</span>
+        <span className="ar-zoomctl">
+          <button type="button" className="chip" onClick={() => bumpZoom(-0.2)} aria-label="Zoom out">−</button>
+          <button type="button" className="chip ar-zoomval" onClick={() => setZoom(1)}>{Math.round(zoom * 100)}%</button>
+          <button type="button" className="chip" onClick={() => bumpZoom(0.2)} aria-label="Zoom in">+</button>
+        </span>
       </div>
-      <div className="ar">
+      <div
+        className="ar-scaler"
+        style={zoom !== 1 && natural.w ? { width: natural.w * zoom, height: natural.h * zoom } : undefined}
+      >
+      <div
+        className="ar"
+        ref={arRef}
+        style={zoom !== 1 ? { transform: `scale(${zoom})`, transformOrigin: 'top left' } : undefined}
+      >
         {/* Header: two rows, allergies + patient label boxes span both */}
         <div className="ar-header">
           <div className="ar-hleft">
@@ -548,6 +581,7 @@ export default function AnesRecord() {
           </div>
         </div>
 
+      </div>
       </div>
     </div>
   );
