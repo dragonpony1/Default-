@@ -227,7 +227,7 @@ export default function App() {
         </div>
         <div className="toolbar-actions">
           <button onClick={() => window.print()}>Print</button>
-          <button className={`danger${clearArmed ? ' armed' : ''}`} onClick={handleClear} onBlur={disarmClear}>
+          <button className={`danger${clearArmed ? ' armed' : ''}`} onClick={handleClear}>
             {clearArmed ? '⚠ Tap again to clear all' : 'Clear form'}
           </button>
         </div>
@@ -242,7 +242,7 @@ export default function App() {
         <FieldByField d={d} set={set} customChoices={choices} onFinish={() => setView('form')} />
       )}
       {view === 'choices' && <EditChoices choices={choices} setChoices={setChoices} />}
-      {view === 'anes' && <AnesRecord key={anesReset} />}
+      {view === 'anes' && <AnesRecord resetSignal={anesReset} />}
 
       {view !== 'anes' && (
       <div className={`page${view === 'form' ? '' : ' print-only-block'}`}>
