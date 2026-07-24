@@ -419,7 +419,7 @@ export default function AnesRecord() {
                 {crow('TORADOL IV mg', 'oth0')}
                 {crow('ROBINUL IV mg', 'oth1')}
                 {crow('NEO IV mg', 'oth2')}
-                {crow('', 'oth3')}
+                {crow('SUGAMMADEX IV mg', 'oth3')}
                 {crow('LR/D5LR/NS', 'oth4')}
                 {crow('', 'oth5')}
               </>

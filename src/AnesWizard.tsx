@@ -40,19 +40,30 @@ export default function AnesWizard(api: WizardApi) {
       <input {...noAuto} value={api.tx[k] ?? ''} placeholder={ph} onChange={(e) => api.setTx(k, e.target.value)} />
     </label>
   );
-  const drug = (label: string, cellKey: string, unit = '') => (
-    <label className="ifield small" key={cellKey}>
-      <span>{label} {unit}</span>
-      <input
-        {...noAuto}
-        inputMode="numeric"
-        value={api.cells[cellKey] ?? ''}
-        onChange={(e) => api.setCell(cellKey, e.target.value)}
-      />
-    </label>
-  );
   const group = (title: string, children: ReactNode) => (
     <div className="igroup"><span>{title}</span><div className="chips wrap">{children}</div></div>
+  );
+  // Single-select chips that write a text value (with a free-text fallback).
+  const pick = (title: string, k: string, opts: string[], free = false, ph = '') => (
+    <div className="igroup" key={k}>
+      <span>{title}</span>
+      <div className="chips wrap">
+        {opts.map((o) => chip(api.tx[k] === o, () => api.setTx(k, api.tx[k] === o ? '' : o), o, k + o))}
+        {free && (
+          <input {...noAuto} className="awiz-doseinput" placeholder={ph || 'other'} value={opts.includes(api.tx[k]) ? '' : (api.tx[k] ?? '')} onChange={(e) => api.setTx(k, e.target.value)} />
+        )}
+      </div>
+    </div>
+  );
+  // A drug with common-dose quick-pick chips that fill the grid cell.
+  const drugDoses = (label: string, cellKey: string, unit: string, doses: number[]) => (
+    <div className="igroup" key={cellKey}>
+      <span>{label} <span className="awiz-unit">{unit}</span></span>
+      <div className="chips wrap">
+        {doses.map((dv) => chip(api.cells[cellKey] === String(dv), () => api.setCell(cellKey, api.cells[cellKey] === String(dv) ? '' : String(dv)), String(dv), cellKey + dv))}
+        <input {...noAuto} className="awiz-doseinput" inputMode="numeric" placeholder="other" value={doses.map(String).includes(api.cells[cellKey]) ? '' : (api.cells[cellKey] ?? '')} onChange={(e) => api.setCell(cellKey, e.target.value)} />
+      </div>
+    </div>
   );
 
   const steps: Step[] = [
@@ -94,31 +105,35 @@ export default function AnesWizard(api: WizardApi) {
     },
     {
       phase: 'Start of case',
-      title: 'IV access & ASA',
+      title: 'IV access',
+      hint: 'Where the IV is and what it is — tap the gauge and site.',
       render: () => (
         <>
-          <div className="irow">
-            {field('IV Star', 'ivStar')}
-            {field('Size', 'ivSize')}
-            {field('Area', 'ivArea')}
-            {field('Local', 'ivLocal')}
-          </div>
-          {group('ASA Physical Status', <>{['1', '2', '3', '4', '5'].map((n) => chip(api.ck[`asa${n}`], () => api.setCk(`asa${n}`, !api.ck[`asa${n}`]), n, `asa${n}`))}{ckChip('asaE', 'E')}</>)}
+          {pick('Gauge', 'ivSize', ['14g', '16g', '18g', '20g', '22g', '24g'])}
+          {pick('Site', 'ivArea', ['R hand', 'L hand', 'R forearm', 'L forearm', 'R AC', 'L AC', 'EJ', 'Foot'], true, 'other site')}
+          {pick('Local at site', 'ivLocal', ['Lidocaine', 'None'])}
+          {field('Started by / time', 'ivStar', 'e.g. RN / 0715')}
         </>
       ),
     },
     {
       phase: 'Start of case',
+      title: 'ASA physical status',
+      render: () =>
+        group('ASA', <>{['1', '2', '3', '4', '5'].map((n) => chip(api.ck[`asa${n}`], () => api.setCk(`asa${n}`, !api.ck[`asa${n}`]), n, `asa${n}`))}{ckChip('asaE', 'E (Emergency)')}</>),
+    },
+    {
+      phase: 'Start of case',
       title: 'Induction drugs',
-      hint: 'Doses given at induction — these drop into the first (surgery-start) grid column.',
+      hint: 'Tap the common dose or type another — these drop into the first (surgery-start) grid column.',
       render: () => (
-        <div className="irow">
-          {drug('Propofol', 'med3:0', 'mg')}
-          {drug('Fentanyl', 'med6:0', 'mcg')}
-          {drug('Versed', 'med7:0', 'mg')}
-          {drug('Roc/Vec', 'med5:0', 'mg')}
-          {drug('Sux', 'med4:0', 'mg')}
-        </div>
+        <>
+          {drugDoses('Propofol', 'med3:0', 'mg', [100, 150, 200])}
+          {drugDoses('Fentanyl', 'med6:0', 'mcg', [50, 100, 150, 250])}
+          {drugDoses('Versed', 'med7:0', 'mg', [1, 2])}
+          {drugDoses('Rocuronium', 'med5:0', 'mg', [30, 50])}
+          {drugDoses('Succinylcholine', 'med4:0', 'mg', [100])}
+        </>
       ),
     },
     // ---------- Phase 2: Airway & positioning ----------
@@ -129,8 +144,8 @@ export default function AnesWizard(api: WizardApi) {
       render: () => (
         <>
           {group('Type', <>{ckChip('ettOral', 'Oral')}{ckChip('ettNasal', 'Nasal')}{ckChip('ettRae', 'RAE')}{ckChip('lma', 'LMA')}</>)}
+          {pick('Tube size (mm)', 'tubeSize', ['6.0', '6.5', '7.0', '7.5', '8.0'], true, 'other')}
           <div className="irow">
-            {field('Tube size', 'tubeSize', 'mm')}
             {field('Length (lip)', 'tubeLength', 'cm')}
             {field('Time', 'ettTime', 'HHMM')}
             {field('# Attempts', 'attempts')}
@@ -192,14 +207,8 @@ export default function AnesWizard(api: WizardApi) {
     {
       phase: 'End of case',
       title: 'Emergence & reversal',
-      hint: 'Reversal doses drop into the grid near the anesthesia stop time.',
-      render: () => (
-        <div className="irow">
-          {drug('Robinul', `oth1:${api.endCol}`, 'mg')}
-          {drug('Neostigmine', `oth2:${api.endCol}`, 'mg')}
-          {drug('Zofran', `med8:${api.endCol}`, 'mg')}
-        </div>
-      ),
+      hint: 'Sugammadex dose — drops into the grid near the anesthesia stop time.',
+      render: () => drugDoses('Sugammadex', `oth3:${api.endCol}`, 'mg', [200, 500]),
     },
     {
       phase: 'End of case',
