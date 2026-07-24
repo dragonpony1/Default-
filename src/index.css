@@ -1225,7 +1225,7 @@ input[type='checkbox']:checked::after {
   background: #b02a2a;
 }
 
-/* ---- Intra-op Anesthesia Record (landscape) ---- */
+/* ---- Intra-op Anesthesia Record (portrait, from scan) ---- */
 
 .ar-wrap {
   overflow-x: auto;
@@ -1234,82 +1234,104 @@ input[type='checkbox']:checked::after {
 .ar {
   background: #fff;
   border: 1px solid #ccc;
-  width: 10.4in;
-  padding: 0.15in;
+  width: 8.5in;
+  padding: 0.3in 0.35in;
   font-size: 7px;
-  line-height: 1.2;
+  line-height: 1.25;
   color: #000;
+  position: relative;
 }
 
-.ar .cell {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 2px;
-  border-right: 1px solid #000;
-  padding: 1px 4px;
-}
-
-.ar .cell:last-child {
-  border-right: none;
-}
-
-.ar .cell.grow {
-  flex: 1;
-}
-
-.ar .t {
-  width: 5em;
-}
-
-.ar .t.xshort { width: 2.2em; }
-.ar .t.short { width: 3.5em; }
-.ar .t.med { width: 5em; }
+.ar .t { width: 4em; }
+.ar .t.xshort { width: 2.4em; }
+.ar .t.short { width: 4em; }
+.ar .t.med { width: 6em; }
 .ar .t.wide { width: 100%; flex: 1; }
+.ar .t.grow { flex: 1; min-width: 2em; }
 
-.ar-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin-bottom: 2px;
-}
-
-.ar-toprow {
-  flex: 1;
-  display: flex;
-  border: 2px solid #000;
-  border-bottom: none;
+.ar .lbl {
+  font-weight: 700;
 }
 
 .ar-bc {
-  width: 1.4in;
+  position: absolute;
+  top: 0.12in;
+  right: 0.35in;
+  width: 1.5in;
   text-align: center;
 }
 
 .ar-bc .barcode {
-  height: 18px;
+  height: 20px;
 }
 
-/* Section band */
+/* Header */
+
+.ar-header {
+  display: flex;
+  border: 2px solid #000;
+  border-bottom: none;
+  margin-top: 0.32in;
+}
+
+.ar-hleft {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+}
+
+.ar-hrow {
+  display: flex;
+  border-bottom: 1px solid #000;
+}
+
+.ar-hrow .cell {
+  flex: 1;
+  border-right: 1px solid #000;
+  padding: 1px 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.ar-hallergy {
+  flex: 1.4;
+  padding: 1px 4px;
+  border-bottom: 1px solid #000;
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+/* Setup sections */
 
 .ar-sections {
   display: flex;
   border: 2px solid #000;
+  border-bottom: none;
   align-items: stretch;
 }
 
 .ar-sec {
-  flex: 1;
   border-right: 1px solid #000;
-  padding: 2px 3px;
+  padding: 1px 3px 2px;
   display: flex;
   flex-direction: column;
   gap: 1px;
   min-width: 0;
+  flex: 1;
 }
 
 .ar-sec:last-child {
   border-right: none;
 }
+
+.ar-sec.ar-safety { flex: 0.9; }
+.ar-sec:nth-child(2) { flex: 1; }
+.ar-sec:nth-child(3) { flex: 1.5; }
+.ar-sec:nth-child(4) { flex: 1.8; }
+.ar-sec:nth-child(5) { flex: 1.15; }
+.ar-sec.ar-conduction { flex: 3.05; }
 
 .ar-sec .ck {
   display: block;
@@ -1322,7 +1344,7 @@ input[type='checkbox']:checked::after {
   text-transform: uppercase;
   text-align: center;
   border-bottom: 1px solid #000;
-  margin: 1px -3px 2px;
+  margin: 0 -3px 2px;
   padding-bottom: 1px;
 }
 
@@ -1333,26 +1355,76 @@ input[type='checkbox']:checked::after {
 .ar-line {
   display: flex;
   align-items: baseline;
-  gap: 2px;
+  gap: 1px;
   flex-wrap: wrap;
 }
+
+.ar-line.ind { padding-left: 8px; }
+.ar-line.ind2 { padding-left: 26px; }
 
 .ar-line .ck {
   display: inline;
   white-space: nowrap;
-  margin-right: 3px;
+  margin-right: 2px;
 }
 
-.ar-sym {
-  line-height: 1.3;
+.ar input[type='checkbox'] {
+  margin-right: 2px;
 }
+
+.ar-cond3 {
+  display: flex;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.ar-condcol {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.ar-condcol.mid {
+  flex: 1.15;
+}
+
+.ar-condcol:first-child { flex: 0.7; }
+.ar-condcol:last-child { flex: 1; }
 
 /* Charting band */
 
 .ar-main {
   display: flex;
   border: 2px solid #000;
-  border-top: none;
+  align-items: stretch;
+}
+
+.ar-symcol {
+  width: 0.66in;
+  border-right: 1px solid #000;
+  padding: 1px 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: center;
+  font-size: 6.5px;
+}
+
+.ar-sym {
+  line-height: 1.15;
+}
+
+.ar-sym .b {
+  font-size: 8px;
+}
+
+.ar-ivblock {
+  margin-top: auto;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .ar-chart {
@@ -1361,140 +1433,309 @@ input[type='checkbox']:checked::after {
   display: flex;
   flex-direction: column;
   border-right: 1px solid #000;
+  min-width: 0;
 }
 
-.ar-bandlabel {
+.ar-band {
+  display: flex;
+  border-bottom: 1px solid #000;
+  align-items: stretch;
+}
+
+.ar-band:last-child {
+  border-bottom: none;
+}
+
+.ar-vband {
+  width: 0.14in;
+  border-right: 1px solid #000;
+  position: relative;
+  flex: none;
+}
+
+.ar-vband span {
+  position: absolute;
+  inset: 0;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-align: center;
   font-weight: 700;
   text-transform: uppercase;
   font-size: 6.5px;
-  line-height: 1.15;
-  border-top: 1px solid #000;
-  border-bottom: 1px solid #000;
-  padding: 0 2px;
-  background: #eee;
+  letter-spacing: 0.04em;
 }
 
-.ar-chart > .ar-bandlabel:first-child {
-  border-top: none;
+.ar-bandrows {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .ar-crow {
   display: flex;
   align-items: stretch;
-  height: 0.103in;
+  height: 0.118in;
 }
 
 .ar-clabel {
-  width: 1.55in;
+  width: 1in;
+  font-size: 6px;
   border-right: 1px solid #000;
-  border-bottom: 1px solid #999;
+  border-bottom: 0.5px solid #777;
   padding: 0 2px;
   overflow: hidden;
   white-space: nowrap;
-  text-overflow: ellipsis;
   display: flex;
   align-items: center;
+}
+
+.ar-crow:last-child .ar-clabel {
+  border-bottom: none;
 }
 
 .ar-clabel.num {
   justify-content: flex-end;
   font-weight: 700;
+  border-right: none;
+}
+
+.ar-inlineck {
+  display: flex;
+  align-items: baseline;
 }
 
 .ar-cgrid {
   flex: 1;
-  border-bottom: 1px solid #999;
-  background-image: repeating-linear-gradient(
-    to right,
-    #bbb 0,
-    #bbb 0.5px,
-    transparent 0.5px,
-    transparent 0.1in
-  );
+  border-bottom: 0.5px solid #777;
+  position: relative;
+  overflow: hidden;
 }
 
-.ar-crow.vs .ar-cgrid {
-  background-image:
-    repeating-linear-gradient(to right, #bbb 0, #bbb 0.5px, transparent 0.5px, transparent 0.1in);
+.ar-gridsvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.ar-crow:last-child .ar-cgrid {
+  border-bottom: none;
+}
+
+/* Vital signs: finer grid with a mid-line every 10 units */
+
+.vsband .ar-crow {
+  height: 0.168in;
+}
+
+.vsband .ar-clabel {
+  border-bottom: none;
+  border-right: none;
+}
+
+.vsband .ar-cgrid {
+  border-bottom: 1px solid #000;
+}
+
+.vsband .ar-crow:last-child .ar-cgrid {
+  border-bottom: none;
 }
 
 .ar-ctotal {
-  width: 0.55in;
+  width: 0.52in;
   border-left: 1px solid #000;
-  border-bottom: 1px solid #999;
+  border-bottom: 0.5px solid #777;
+  flex: none;
 }
 
-.ar-ctotal.noline {
-  border-left: 1px solid #000;
+.ar-crow:last-child .ar-ctotal {
+  border-bottom: none;
 }
 
 .ar-tothead {
   position: absolute;
-  top: 0;
+  top: -0.13in;
   right: 0;
-  width: 0.55in;
+  width: 0.52in;
   text-align: center;
   font-weight: 700;
   text-transform: uppercase;
   font-size: 6.5px;
-  background: #eee;
-  border-left: 1px solid #000;
-  border-bottom: 1px solid #000;
+  border: 1px solid #000;
+  background: #fff;
 }
 
+/* Right column: remarks / fluids / recovery */
+
 .ar-right {
-  width: 2.15in;
-  padding: 2px 3px;
+  width: 1.95in;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+}
+
+.ar-rbox {
+  border-bottom: 1px solid #000;
+  padding: 1px 3px 3px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ar-rbox:last-child {
+  border-bottom: none;
+  flex: 1;
+}
+
+.ar-remarksbox {
+  flex: 1;
 }
 
 .ar-remarks {
   border: none;
-  border-bottom: 1px solid #999;
+  flex: 1;
   font-size: inherit;
 }
 
-/* Bottom admin strip */
+.ar-rbox .ck {
+  display: block;
+}
+
+.ar-rbox .ar-line .ck {
+  display: inline;
+}
+
+/* Bottom admin block */
 
 .ar-bottom {
+  display: flex;
   border: 2px solid #000;
   border-top: none;
+  align-items: stretch;
+}
+
+.ar-bleft {
+  width: 38%;
+  border-right: 1px solid #000;
+  display: flex;
+  flex-direction: column;
+}
+
+.ar-surgeon {
+  flex: 1;
+  padding: 1px 4px;
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+  border-bottom: 1px solid #000;
+}
+
+.ar-asa {
+  padding: 2px 4px;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.ar-bright {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .ar-brow {
   display: flex;
+  align-items: baseline;
+  gap: 3px;
+  padding: 1px 4px;
   border-bottom: 1px solid #000;
 }
 
-.ar-brow:last-child {
+.ar-btable {
+  display: flex;
+  flex: 1;
+}
+
+.ar-times {
+  width: 45%;
+  border-right: 1px solid #000;
+  display: flex;
+  flex-direction: column;
+}
+
+.ar-trow {
+  display: flex;
+  border-bottom: 1px solid #000;
+  flex: 1;
+  align-items: center;
+}
+
+.ar-trow:last-child {
   border-bottom: none;
 }
 
+.ar-trow > * {
+  flex: 1;
+  padding: 0 3px;
+  border-right: 1px solid #000;
+  min-width: 0;
+}
+
+.ar-trow > *:last-child {
+  border-right: none;
+}
+
+.ar-trow.head {
+  font-weight: 700;
+  text-align: center;
+  flex: 0.7;
+}
+
+.ar-trow.head span {
+  text-align: center;
+}
+
+.t.cellu {
+  width: auto;
+  border-bottom: none;
+}
+
+.ar-dx {
+  flex: 1;
+  padding: 1px 4px;
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+/* Footer */
+
 .ar-foot {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  margin-top: 2px;
-  font-size: 6px;
-  line-height: 1.1;
+  gap: 0.5in;
+  margin-top: 3px;
+  font-size: 7px;
+  line-height: 1.3;
+  padding-left: 0.6in;
 }
 
 .ar-foot-title {
-  line-height: 1.1;
-}
-
-.ar-foot-title {
-  font-size: 10px;
+  font-size: 12px;
   font-family: Georgia, 'Times New Roman', serif;
+}
+
+.ar-foot-org {
+  margin-top: 6px;
 }
 
 .ar-plabel {
   border-left: 1px solid #000;
-  padding: 1px 4px 8px;
+  padding: 2px 4px 24px;
   writing-mode: vertical-rl;
-  font-size: 7px;
+  transform: rotate(180deg);
+  font-size: 7.5px;
 }
 
 @media print {
@@ -1506,5 +1747,11 @@ input[type='checkbox']:checked::after {
     border: none;
     width: 100%;
     padding: 0;
+    padding-top: 0.25in;
+  }
+
+  .ar-bc {
+    top: -0.05in;
+    right: 0;
   }
 }
