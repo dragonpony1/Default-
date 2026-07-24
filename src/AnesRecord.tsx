@@ -1,5 +1,4 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import Barcode39 from './Barcode39';
 import { noAuto } from './inputProps';
 
 // Intra-op Anesthesia Record replicating Mountain West Medical Center form
@@ -99,12 +98,8 @@ export default function AnesRecord() {
             </pattern>
           </defs>
         </svg>
-        <div className="ar-bc">
-          <Barcode39 value="ANES" />
-          <div className="bc-caption">*ANES*</div>
-        </div>
 
-        {/* Header: two rows, allergies box spans both */}
+        {/* Header: two rows, allergies + patient label boxes span both */}
         <div className="ar-header">
           <div className="ar-hleft">
             <div className="ar-hrow">
@@ -122,6 +117,7 @@ export default function AnesRecord() {
             <span className="lbl">ALLERGIES</span>
             {tx('allergies', 'wide')}
           </div>
+          <div className="ar-hlabel">Patient Label</div>
         </div>
 
         {/* Setup sections */}
@@ -401,16 +397,6 @@ export default function AnesRecord() {
           </div>
         </div>
 
-        <div className="ar-foot">
-          <div>
-            <div className="ar-foot-title">Anesthesia Record</div>
-            <div>170-165-MW250046HMS&nbsp;&nbsp;&nbsp;&nbsp;03/08 (Rev. 06/15)&nbsp;&nbsp;&nbsp;&nbsp;Page 1 of 1</div>
-            <div>ORIGINAL &ndash; Medical Record&nbsp;&nbsp;&nbsp;&nbsp;COPY &ndash; Anesthesia Department</div>
-            <div>COPY &ndash; Pharmacy</div>
-            <div className="ar-foot-org">Mountain West Medical Center</div>
-          </div>
-          <div className="ar-plabel">Patient Label</div>
-        </div>
       </div>
     </div>
   );

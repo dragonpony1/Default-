@@ -1253,25 +1253,25 @@ input[type='checkbox']:checked::after {
   font-weight: 700;
 }
 
-.ar-bc {
-  position: absolute;
-  top: 0.12in;
-  right: 0.35in;
-  width: 1.5in;
-  text-align: center;
-}
-
-.ar-bc .barcode {
-  height: 20px;
-}
-
 /* Header */
 
 .ar-header {
   display: flex;
   border: 2px solid #000;
   border-bottom: none;
-  margin-top: 0.32in;
+}
+
+.ar-hlabel {
+  width: 1.15in;
+  border-left: 1px solid #000;
+  border-bottom: 1px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7.5px;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .ar-hleft {
@@ -1475,7 +1475,7 @@ input[type='checkbox']:checked::after {
 .ar-crow {
   display: flex;
   align-items: stretch;
-  height: 0.142in;
+  height: 0.165in;
 }
 
 .ar-clabel {
@@ -1527,7 +1527,7 @@ input[type='checkbox']:checked::after {
 /* Vital signs: finer grid with a mid-line every 10 units */
 
 .vsband .ar-crow {
-  height: 0.168in;
+  height: 0.185in;
 }
 
 .vsband .ar-clabel {
@@ -1750,8 +1750,4 @@ input[type='checkbox']:checked::after {
     padding-top: 0.25in;
   }
 
-  .ar-bc {
-    top: -0.05in;
-    right: 0;
-  }
 }
