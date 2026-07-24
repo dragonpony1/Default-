@@ -57,11 +57,23 @@ export default function AnesRecord() {
     />
   );
 
+  // Grid cells are drawn with SVG lines — CSS background gradients render
+  // unevenly in print. Patterns are defined once on the page and referenced
+  // from every cell; 96 CSS px = 1in, so 9.6 = 0.1in columns.
+  const gridCell = (fine = false) => (
+    <div className={`ar-cgrid${fine ? ' fine' : ''}`}>
+      <svg className="ar-gridsvg" aria-hidden="true">
+        <rect width="100%" height="100%" fill={`url(#${fine ? 'arGridFine' : 'arGrid'})`} />
+        {fine && <line x1="0" y1="50%" x2="100%" y2="50%" stroke="#444" strokeWidth="0.6" />}
+      </svg>
+    </div>
+  );
+
   // One charting row: label | grid | totals box
   const crow = (label: ReactNode, key: string, cls = '') => (
     <div className={`ar-crow ${cls}`} key={key}>
       <div className="ar-clabel">{label}</div>
-      <div className="ar-cgrid" />
+      {gridCell()}
       <div className="ar-ctotal" />
     </div>
   );
@@ -77,6 +89,16 @@ export default function AnesRecord() {
   return (
     <div className="ar-wrap">
       <div className="ar">
+        <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+          <defs>
+            <pattern id="arGrid" width="9.6" height="8" patternUnits="userSpaceOnUse">
+              <path d="M 0.3 0 V 8" stroke="#444" strokeWidth="0.6" />
+            </pattern>
+            <pattern id="arGridFine" width="7.1" height="8" patternUnits="userSpaceOnUse">
+              <path d="M 0.3 0 V 8" stroke="#444" strokeWidth="0.6" />
+            </pattern>
+          </defs>
+        </svg>
         <div className="ar-bc">
           <Barcode39 value="ANES" />
           <div className="bc-caption">*ANES*</div>
@@ -276,7 +298,7 @@ export default function AnesRecord() {
                 {[200, 180, 160, 140, 120, 100, 80, 60, 40, 20, 0].map((n) => (
                   <div className="ar-crow vs" key={`vs${n}`}>
                     <div className="ar-clabel num">{n} &mdash;</div>
-                    <div className="ar-cgrid" />
+                    {gridCell(true)}
                     <div className="ar-ctotal" />
                   </div>
                 ))}

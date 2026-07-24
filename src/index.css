@@ -1401,7 +1401,7 @@ input[type='checkbox']:checked::after {
 }
 
 .ar-symcol {
-  width: 0.72in;
+  width: 0.66in;
   border-right: 1px solid #000;
   padding: 1px 2px;
   display: flex;
@@ -1479,7 +1479,8 @@ input[type='checkbox']:checked::after {
 }
 
 .ar-clabel {
-  width: 1.42in;
+  width: 1in;
+  font-size: 6px;
   border-right: 1px solid #000;
   border-bottom: 0.5px solid #777;
   padding: 0 2px;
@@ -1507,13 +1508,16 @@ input[type='checkbox']:checked::after {
 .ar-cgrid {
   flex: 1;
   border-bottom: 0.5px solid #777;
-  background-image: repeating-linear-gradient(
-    to right,
-    #555 0,
-    #555 0.5px,
-    transparent 0.5px,
-    transparent 0.1in
-  );
+  position: relative;
+  overflow: hidden;
+}
+
+.ar-gridsvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .ar-crow:last-child .ar-cgrid {
@@ -1523,7 +1527,7 @@ input[type='checkbox']:checked::after {
 /* Vital signs: finer grid with a mid-line every 10 units */
 
 .vsband .ar-crow {
-  height: 0.148in;
+  height: 0.168in;
 }
 
 .vsband .ar-clabel {
@@ -1533,9 +1537,6 @@ input[type='checkbox']:checked::after {
 
 .vsband .ar-cgrid {
   border-bottom: 1px solid #000;
-  background-image:
-    linear-gradient(to bottom, transparent calc(50% - 0.25px), #555 calc(50% - 0.25px), #555 calc(50% + 0.25px), transparent calc(50% + 0.25px)),
-    repeating-linear-gradient(to right, #555 0, #555 0.5px, transparent 0.5px, transparent 0.074in);
 }
 
 .vsband .ar-crow:last-child .ar-cgrid {
@@ -1569,7 +1570,7 @@ input[type='checkbox']:checked::after {
 /* Right column: remarks / fluids / recovery */
 
 .ar-right {
-  width: 2.05in;
+  width: 1.95in;
   display: flex;
   flex-direction: column;
 }
