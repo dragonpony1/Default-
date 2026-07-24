@@ -73,7 +73,13 @@ body {
   display: flex;
   border: 1px solid #2a5db0;
   border-radius: 6px;
-  overflow: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tabs button {
@@ -83,6 +89,17 @@ body {
   background: #fff;
   color: #2a5db0;
   cursor: pointer;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+/* Phones: labels stay one line and the strip swipes sideways instead of
+   wrapping or clipping. Tighter padding fits more tabs before scrolling. */
+@media (max-width: 640px) {
+  .tabs button {
+    padding: 0.5rem 0.7rem;
+    font-size: 15px;
+  }
 }
 
 .tabs button.on {
