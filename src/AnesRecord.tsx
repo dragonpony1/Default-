@@ -144,19 +144,19 @@ export default function AnesRecord() {
     </div>
   );
 
-  // Vital-signs row: label | one vertical line per 5-minute column (a mark
-  // lands on each) | midline. Wider than the drug rows for readability.
+  // Vital-signs row: label | crosshatch for hand-drawn BP/HR ticks | totals
   const vrow = (n: number) => (
     <div className="ar-crow vs" key={`vs${n}`}>
       <div className="ar-clabel num">{n} &mdash;</div>
       <div className="ar-vscells">
-        <svg className="ar-vsgrid" viewBox={`0 0 ${COLS} 10`} preserveAspectRatio="none" aria-hidden="true">
-          {Array.from({ length: COLS }, (_, i) => (
-            <line key={i} x1={i + 0.5} y1="0" x2={i + 0.5} y2="10" stroke="#aaa" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+        <svg className="ar-vsgrid" viewBox={`0 0 ${COLS * STEP} 10`} preserveAspectRatio="none" aria-hidden="true">
+          {Array.from({ length: COLS * STEP + 1 }, (_, x) => (
+            <line key={x} x1={x} y1="0" x2={x} y2="10" stroke="#999" strokeWidth={x % STEP === 0 ? 0.5 : 0.2} />
           ))}
-          <line x1="0" y1="5" x2={COLS} y2="5" stroke="#ccc" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+          <line x1="0" y1="5" x2={COLS * STEP} y2="5" stroke="#999" strokeWidth="0.2" />
         </svg>
       </div>
+      <div className="ar-ctotal" />
     </div>
   );
 
