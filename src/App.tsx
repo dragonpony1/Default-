@@ -4,7 +4,6 @@ import { emptyPreopEval, type PreopEval, type YesNo } from './types';
 import { SYSTEMS, type SystemBand } from './formConfig';
 import { clearDraft, loadDraft, saveDraft } from './storage';
 import Barcode39 from './Barcode39';
-import Intake from './Intake';
 import FieldByField from './FieldByField';
 import EditChoices from './EditChoices';
 import AnesRecord, { clearAnesDraft } from './AnesRecord';
@@ -15,7 +14,7 @@ type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : nev
 
 export default function App() {
   const [d, setD] = useState<PreopEval>(loadDraft);
-  const [view, setView] = useState<'gather' | 'fields' | 'form' | 'anes' | 'choices'>('gather');
+  const [view, setView] = useState<'fields' | 'form' | 'anes' | 'choices'>('fields');
   const [anesReset, setAnesReset] = useState(0);
   const [choices, setChoicesState] = useState<CustomChoices>(loadCustomChoices);
 
@@ -209,9 +208,6 @@ export default function App() {
       <header className="toolbar screen-only">
         <h1>Pre-Anesthesia Evaluation</h1>
         <div className="tabs">
-          <button className={view === 'gather' ? 'on' : ''} onClick={() => setView('gather')}>
-            Gather Info
-          </button>
           <button className={view === 'fields' ? 'on' : ''} onClick={() => setView('fields')}>
             Pre-Op Wizard
           </button>
@@ -237,7 +233,6 @@ export default function App() {
         </p>
       </header>
 
-      {view === 'gather' && <Intake d={d} set={set} customChoices={choices} />}
       {view === 'fields' && (
         <FieldByField d={d} set={set} customChoices={choices} onFinish={() => setView('form')} />
       )}
