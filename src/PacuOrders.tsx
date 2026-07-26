@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { noAuto } from './inputProps';
 import { useCaseData, setCaseField } from './caseData';
 import Barcode39 from './Barcode39';
+import PacuWizard from './PacuWizard';
 
 // Post-Anesthesia Recovery Room Orders replicating Mountain West Medical
 // Center form 170-165-1131001HMSFAC (01/15, Rev. 07/15, 07/22), portrait US
@@ -33,6 +34,7 @@ export function clearPacuDraft(): void {
 
 export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }) {
   const [d, setD] = useState<PacuDraft>(loadPacu);
+  const [mode, setMode] = useState<'form' | 'wizard'>('form');
   const caseData = useCaseData(); // shared allergies (pre-populated from pre-op)
 
   useEffect(() => {
@@ -44,8 +46,27 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
     if (resetSignal !== seenReset.current) {
       seenReset.current = resetSignal;
       setD(loadPacu());
+      setMode('form');
     }
   }, [resetSignal]);
+
+  const setCkVal = (k: string, v: boolean) => setD((p) => ({ ...p, ck: { ...p.ck, [k]: v } }));
+  const setTxVal = (k: string, v: string) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: v } }));
+
+  if (mode === 'wizard') {
+    return (
+      <PacuWizard
+        ck={d.ck}
+        tx={d.tx}
+        setCk={setCkVal}
+        setTx={setTxVal}
+        allergies={caseData.allergies}
+        setAllergies={(v) => setCaseField('allergies', v)}
+        onBack={() => setMode('form')}
+        onDone={() => setMode('form')}
+      />
+    );
+  }
 
   const ck = (k: string) => (
     <input
@@ -79,6 +100,11 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
   );
 
   return (
+    <>
+      <div className="awiz-switch screen-only">
+        <button type="button" className="chip" onClick={() => setMode('wizard')}>⛑ Guided PACU wizard</button>
+        <span className="awiz-switch-hint">Walks you through the standing orders and doses. The full form stays fillable.</span>
+      </div>
     <div className="page po-page">
       <div className="page-top">
         <div className="bc-wrap">
@@ -270,5 +296,6 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
       </div>
       <div className="po-hospital">Mountain West Medical Center</div>
     </div>
+    </>
   );
 }
