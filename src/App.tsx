@@ -240,6 +240,7 @@ export default function App() {
         <p className="privacy-note">
           No patient name or identifiers are entered here &mdash; apply the patient label sticker after
           printing. All data stays on this device only; clear the form after printing.
+          <span className="build-stamp">Version: {__BUILD_DATE__}</span>
         </p>
       </header>
 

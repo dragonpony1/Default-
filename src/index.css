@@ -2363,3 +2363,10 @@ input[type='checkbox']:checked::after {
     height: 9px;
   }
 }
+
+.build-stamp {
+  display: block;
+  margin-top: 2px;
+  color: #999;
+  font-size: 0.85em;
+}
