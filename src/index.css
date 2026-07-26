@@ -69,6 +69,66 @@ body {
   color: #555;
 }
 
+/* Provider quick-pick bar: tap initials to "click in" and load defaults. */
+.provbar {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.6rem;
+  background: #f1f4fa;
+  border: 1px solid #d3ddf0;
+  border-radius: 8px;
+}
+
+.provbar-label {
+  font-weight: 700;
+  color: #2a5db0;
+  margin-right: 0.2rem;
+}
+
+/* These buttons live inside .toolbar, whose `button` rule would paint them all
+   solid blue — override it so they read as chips (white, blue when active). */
+.provbar button {
+  background: #fff;
+  border: 1.5px solid #98a3b3;
+  border-radius: 999px;
+  color: #1a1a1a;
+  padding: 0.4rem 0.9rem;
+  min-height: 44px;
+}
+
+.provbar .prov-chip {
+  min-width: 3rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #2a5db0;
+}
+
+.provbar .prov-chip.on {
+  background: #2a5db0;
+  border-color: #2a5db0;
+  color: #fff;
+}
+
+.provbar .prov-add {
+  color: #2a5db0;
+  border-style: dashed;
+}
+
+.provbar .prov-save {
+  border-color: #1a7a3a;
+  color: #1a7a3a;
+  font-weight: 700;
+}
+
+.provbar .prov-remove {
+  border-color: #b02a2a;
+  color: #b02a2a;
+  min-width: 44px;
+}
+
 .tabs {
   display: flex;
   border: 1px solid #2a5db0;
