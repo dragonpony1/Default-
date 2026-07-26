@@ -48,6 +48,26 @@ export default function App() {
     if (summary) setCaseField('allergies', summary);
   }, [d.allergiesNone, d.allergyList, d.allergies]);
 
+  // Weight and height flow to the shared case (and onto PACU) just like
+  // allergies. Fill both lb and kg from whichever unit was entered.
+  useEffect(() => {
+    const w = d.weight.trim();
+    if (!w) return;
+    const n = Number(w);
+    if (d.weightUnit === 'kg') {
+      setCaseField('weightKg', w);
+      if (!Number.isNaN(n)) setCaseField('weight', String(Math.round(n * 2.2046)));
+    } else {
+      setCaseField('weight', w);
+      if (!Number.isNaN(n)) setCaseField('weightKg', String(Math.round(n / 2.2046)));
+    }
+  }, [d.weight, d.weightUnit]);
+
+  useEffect(() => {
+    const h = d.height.trim();
+    if (h) setCaseField('height', d.heightUnit ? `${h} ${d.heightUnit}` : h);
+  }, [d.height, d.heightUnit]);
+
   const set = <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => setD((prev) => ({ ...prev, [k]: v }));
 
   // Two-tap clear: first tap arms the button (auto-disarms after 5s), a second

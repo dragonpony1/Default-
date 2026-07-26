@@ -10,10 +10,13 @@ import { useSyncExternalStore } from 'react';
 
 export interface CaseData {
   allergies: string;
+  weight: string; // lb
+  weightKg: string;
+  height: string;
 }
 
 const KEY = 'anes-case-v1';
-const empty: CaseData = { allergies: '' };
+const empty: CaseData = { allergies: '', weight: '', weightKg: '', height: '' };
 
 function read(): CaseData {
   try {

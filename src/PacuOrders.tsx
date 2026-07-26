@@ -63,6 +63,12 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
         setTx={setTxVal}
         allergies={caseData.allergies}
         setAllergies={(v) => setCaseField('allergies', v)}
+        weight={caseData.weight}
+        weightKg={caseData.weightKg}
+        height={caseData.height}
+        setWeight={(v) => setCaseField('weight', v)}
+        setWeightKg={(v) => setCaseField('weightKg', v)}
+        setHeight={(v) => setCaseField('height', v)}
         onBack={() => setMode('form')}
         onDone={() => setMode('form')}
       />
@@ -132,11 +138,11 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
               onChange={(e) => setCaseField('allergies', e.target.value)}
             />
             <span>Patient Wt</span>
-            {tx('weight')}
+            <input {...noAuto} className="t u xshort" value={caseData.weight} onChange={(e) => setCaseField('weight', e.target.value)} />
             <span>(kg)</span>
-            {tx('weightKg')}
+            <input {...noAuto} className="t u xshort" value={caseData.weightKg} onChange={(e) => setCaseField('weightKg', e.target.value)} />
             <span>Ht</span>
-            {tx('height', 'short')}
+            <input {...noAuto} className="t u short" value={caseData.height} onChange={(e) => setCaseField('height', e.target.value)} />
           </div>
         ))}
         {item(2, (
