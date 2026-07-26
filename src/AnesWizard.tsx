@@ -39,6 +39,19 @@ interface Step {
   render: () => ReactNode;
 }
 
+// Short labels for the section jump-nav so all sections fit in the strip.
+const NAV_SHORT: Record<string, string> = {
+  'Machine & technique': 'Machine',
+  'IV access': 'IV',
+  'ASA physical status': 'ASA',
+  'Induction drugs': 'Induction',
+  Positioning: 'Position',
+  'Emergence & reversal': 'Emergence',
+  'Stop times': 'Stop',
+  'Fluid totals': 'Fluids',
+  'Recovery & handoff': 'Recovery',
+};
+
 export default function AnesWizard(api: WizardApi) {
   const [step, setStep] = useState(0);
 
@@ -287,7 +300,7 @@ export default function AnesWizard(api: WizardApi) {
               onClick={() => setStep(i)}
               title={`${s.phase}: ${s.title}`}
             >
-              {s.title}
+              {NAV_SHORT[s.title] ?? s.title}
             </button>
           ))}
         </div>
