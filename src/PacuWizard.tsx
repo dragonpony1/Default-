@@ -13,6 +13,12 @@ export interface PacuWizApi {
   setTx: (k: string, v: string) => void;
   allergies: string;
   setAllergies: (v: string) => void;
+  weight: string;
+  weightKg: string;
+  height: string;
+  setWeight: (v: string) => void;
+  setWeightKg: (v: string) => void;
+  setHeight: (v: string) => void;
   onBack: () => void;
   onDone: () => void;
 }
@@ -53,7 +59,7 @@ export default function PacuWizard(api: PacuWizApi) {
     {
       title: 'Patient',
       nav: 'Patient',
-      hint: 'Allergies carry over from the pre-op case. Weight drives dosing.',
+      hint: 'Allergies, weight, and height carry over from the pre-op case. Weight drives dosing.',
       render: () => (
         <>
           <label className="ifield" key="allergies">
@@ -61,9 +67,18 @@ export default function PacuWizard(api: PacuWizApi) {
             <input {...noAuto} value={api.allergies} placeholder="NKDA or list" onChange={(e) => api.setAllergies(e.target.value)} />
           </label>
           <div className="irow">
-            {field('Weight (lb)', 'weight')}
-            {field('Weight (kg)', 'weightKg')}
-            {field('Height', 'height')}
+            <label className="ifield" key="weight">
+              <span>Weight (lb)</span>
+              <input {...noAuto} value={api.weight} onChange={(e) => api.setWeight(e.target.value)} />
+            </label>
+            <label className="ifield" key="weightKg">
+              <span>Weight (kg)</span>
+              <input {...noAuto} value={api.weightKg} onChange={(e) => api.setWeightKg(e.target.value)} />
+            </label>
+            <label className="ifield" key="height">
+              <span>Height</span>
+              <input {...noAuto} value={api.height} onChange={(e) => api.setHeight(e.target.value)} />
+            </label>
           </div>
         </>
       ),
