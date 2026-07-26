@@ -15,3 +15,10 @@ export const numPad = {
   inputMode: 'none',
   'data-np': '1',
 } as const;
+
+// Temperature fields: floating slider pad instead of any keyboard.
+export const tempPad = {
+  ...noAuto,
+  inputMode: 'none',
+  'data-temp': '1',
+} as const;
