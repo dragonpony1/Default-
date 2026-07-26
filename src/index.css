@@ -2116,9 +2116,15 @@ input[type='checkbox']:checked::after {
 
 .awiz-top {
   display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Progress bar + count sit right under the section buttons. */
+.awiz-progress {
+  display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex-wrap: wrap;
 }
 
 .awiz-phases {
@@ -2144,33 +2150,42 @@ input[type='checkbox']:checked::after {
   color: #fff;
 }
 
-/* Section jump-nav: every wizard section as a tappable chip so you can hop
-   straight to any one to make a change. Scrolls sideways on narrow screens. */
+/* Section jump-nav: small, light buttons in a single horizontal strip that
+   scrolls sideways — tap any one to hop straight to that section. */
 .awiz-secnav {
   display: flex;
-  gap: 0.3rem;
-  flex-wrap: wrap;
-  flex: 1;
+  gap: 0.25rem;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.awiz-secnav::-webkit-scrollbar {
+  display: none;
 }
 
 .awiz-secbtn {
   font: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #2a5db0;
-  background: #fff;
-  border: 1.5px solid #cbd5e6;
-  border-radius: 999px;
-  padding: 0.35rem 0.7rem;
-  min-height: 40px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #607089;
+  background: transparent;
+  border: 1px solid #dbe2ee;
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
+  min-height: 28px;
   cursor: pointer;
   white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .awiz-secbtn.on {
-  background: #2a5db0;
+  background: #eaf0fb;
   border-color: #2a5db0;
-  color: #fff;
+  color: #2a5db0;
+  font-weight: 700;
 }
 
 .awiz-narration textarea {

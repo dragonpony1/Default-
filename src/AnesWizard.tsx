@@ -291,8 +291,10 @@ export default function AnesWizard(api: WizardApi) {
             </button>
           ))}
         </div>
-        <div className="fbf-bar"><div className="fbf-fill" style={{ width: `${((step + 1) / steps.length) * 100}%` }} /></div>
-        <span className="fbf-count">{step + 1} of {steps.length}</span>
+        <div className="awiz-progress">
+          <div className="fbf-bar"><div className="fbf-fill" style={{ width: `${((step + 1) / steps.length) * 100}%` }} /></div>
+          <span className="fbf-count">{step + 1} of {steps.length}</span>
+        </div>
       </div>
 
       <section className="icard fbf-card">
