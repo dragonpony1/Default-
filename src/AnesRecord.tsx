@@ -462,6 +462,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                 {crow('SUGAMMADEX IV mg', 'oth3')}
                 {crow('LIDOCAINE IV mg', 'oth5')}
                 {crow('ANCEF (cefazolin) g', 'oth6')}
+                {crow('DECADRON IV mg', 'oth7')}
                 {crow('LR/D5LR/NS', 'oth4')}
               </>
             ))}

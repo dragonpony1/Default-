@@ -1,12 +1,16 @@
 // Provider profiles: each provider (identified by initials) saves their
-// standing CHOICES — the drug orders and setup they usually pick — so tapping
-// their button "clicks them in" and pre-populates the forms. No patient data
-// is ever stored here; these are provider preferences only, local to the
-// device, wiped only when the provider chooses to delete their profile.
+// standing CHOICES — the drug orders, setup, and narration they usually pick —
+// so tapping their button "clicks them in" and pre-populates the forms. No
+// patient data is ever stored here; these are provider preferences only, local
+// to the device, wiped only when the provider chooses to delete their profile.
 
 export interface ProviderPrefs {
   pacu?: { ck: Record<string, boolean>; tx: Record<string, string> };
-  recordCk?: Record<string, boolean>; // record setup checkboxes (monitors, technique…)
+  recordCk?: Record<string, boolean>; // record setup checkboxes (monitors, airway, positioning…)
+  inductionCells?: Record<string, string>; // induction drug doses (surgery-start column)
+  airwayTx?: Record<string, string>; // tube size / length
+  emergenceDoses?: { sugammadex?: string; zofran?: string; decadron?: string };
+  narrative?: string; // record Remarks / narration
   plannedAnesthesia?: string;
   providerName?: string; // stamped on record / PACU / billing signature lines
 }
@@ -40,6 +44,21 @@ const RECORD_PERCASE = new Set([
   'asaE',
 ]);
 
+// Induction drug cells (surgery-start column 0) — match the wizard's Induction step.
+const INDUCTION_CELLS = ['oth5:0', 'med3:0', 'med6:0', 'med7:0', 'med5:0', 'med4:0', 'oth6:0'];
+// Airway text fields that are provider defaults (not per-case time/attempts).
+const AIRWAY_TX = ['tubeSize', 'tubeLength'];
+// Emergence drug grid rows.
+const EMERGENCE_ROWS = { sugammadex: 'oth3', zofran: 'med8', decadron: 'oth7' } as const;
+
+const STEP = 5;
+const COLS = 36;
+
+interface RecDraft {
+  ck?: Record<string, boolean>;
+  tx?: Record<string, string>;
+  cells?: Record<string, string>;
+}
 interface Draft {
   ck?: Record<string, boolean>;
   tx?: Record<string, string>;
@@ -52,6 +71,40 @@ function read<T>(key: string): T | null {
   } catch {
     return null;
   }
+}
+
+function parseHHMM(s: string): number | null {
+  const m = (s ?? '').trim().match(/^(\d{1,2}):?(\d{2})$/);
+  if (!m) return null;
+  const h = +m[1];
+  const min = +m[2];
+  if (h > 23 || min > 59) return null;
+  return h * 60 + min;
+}
+
+// Same end-of-graph column the record computes from surgery-start → anesthesia-stop.
+function endColFor(tx: Record<string, string>): number {
+  const s = parseHHMM(tx.surgStart ?? '');
+  const e = parseHHMM(tx.anesStop ?? '');
+  if (s == null || e == null) return COLS - 1;
+  let diff = e - s;
+  if (diff < 0) diff += 24 * 60;
+  return Math.max(0, Math.min(COLS - 1, Math.floor(diff / STEP)));
+}
+
+// Most recent non-empty dose in any column of a drug row (column-independent).
+function lastDoseForRow(cells: Record<string, string>, row: string): string {
+  let val = '';
+  for (const [k, v] of Object.entries(cells)) {
+    if (k.startsWith(`${row}:`) && v) val = v;
+  }
+  return val;
+}
+
+function pick(src: Record<string, string>, keys: string[]): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const k of keys) if (src[k]) out[k] = src[k];
+  return out;
 }
 
 // The department's providers, seeded on first run. Each starts with no saved
@@ -77,19 +130,31 @@ export function saveProviders(list: ProviderProfile[]): void {
 // Snapshot the current forms into a set of provider preferences (no patient data).
 export function captureCurrentPrefs(initials: string): ProviderPrefs {
   const pacu = read<Draft>(PACU);
-  const rec = read<Draft>(REC);
+  const rec = read<RecDraft>(REC);
   const preop = read<Record<string, unknown>>(PREOP);
 
+  const recCk = rec?.ck ?? {};
+  const recTx = rec?.tx ?? {};
+  const recCells = rec?.cells ?? {};
+
   const recordCk: Record<string, boolean> = {};
-  for (const [k, v] of Object.entries(rec?.ck ?? {})) {
+  for (const [k, v] of Object.entries(recCk)) {
     if (!RECORD_PERCASE.has(k)) recordCk[k] = v;
   }
 
   return {
     pacu: { ck: pacu?.ck ?? {}, tx: pacu?.tx ?? {} },
     recordCk,
+    inductionCells: pick(recCells, INDUCTION_CELLS),
+    airwayTx: pick(recTx, AIRWAY_TX),
+    emergenceDoses: {
+      sugammadex: lastDoseForRow(recCells, EMERGENCE_ROWS.sugammadex),
+      zofran: lastDoseForRow(recCells, EMERGENCE_ROWS.zofran),
+      decadron: lastDoseForRow(recCells, EMERGENCE_ROWS.decadron),
+    },
+    narrative: recTx.remarks ?? '',
     plannedAnesthesia: typeof preop?.plannedAnesthesia === 'string' ? preop.plannedAnesthesia : '',
-    providerName: (rec?.tx?.anesthetist || initials) as string,
+    providerName: recTx.anesthetist || initials,
   };
 }
 
@@ -109,14 +174,29 @@ export function applyProviderToDrafts(prefs: ProviderPrefs): { plannedAnesthesia
     }),
   );
 
-  // Record: merge their setup checkboxes + stamp anesthetist name.
-  const rec = read<Draft>(REC) ?? {};
+  // Record: merge setup checkboxes, induction doses, airway defaults, emergence
+  // doses (placed at the current end-of-graph column), narration, and name.
+  const rec = read<RecDraft>(REC) ?? {};
+  const recTx = { ...(rec.tx ?? {}) };
+  const endCol = endColFor(recTx);
+  const cells = { ...(rec.cells ?? {}), ...(prefs.inductionCells ?? {}) };
+  const em = prefs.emergenceDoses ?? {};
+  if (em.sugammadex) cells[`${EMERGENCE_ROWS.sugammadex}:${endCol}`] = em.sugammadex;
+  if (em.zofran) cells[`${EMERGENCE_ROWS.zofran}:${endCol}`] = em.zofran;
+  if (em.decadron) cells[`${EMERGENCE_ROWS.decadron}:${endCol}`] = em.decadron;
+
   localStorage.setItem(
     REC,
     JSON.stringify({
       ...rec,
       ck: { ...(rec.ck ?? {}), ...(prefs.recordCk ?? {}) },
-      tx: { ...(rec.tx ?? {}), ...(name ? { anesthetist: name } : {}) },
+      tx: {
+        ...recTx,
+        ...(prefs.airwayTx ?? {}),
+        ...(prefs.narrative ? { remarks: prefs.narrative } : {}),
+        ...(name ? { anesthetist: name } : {}),
+      },
+      cells,
     }),
   );
 
