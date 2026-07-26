@@ -2253,6 +2253,126 @@ input[type='checkbox']:checked::after {
   flex: 0 1 6rem;
 }
 
+/* ---- Signature pad (modal) ---- */
+.sigpad-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.sigpad {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  width: min(640px, 100%);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.sigpad-title {
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+}
+
+.sigpad-canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 1;
+  border: 1.5px dashed #98a3b3;
+  border-radius: 8px;
+  touch-action: none;
+  background: #fff;
+}
+
+.sigpad-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+.sigpad-actions .grow {
+  flex: 1;
+}
+
+.prov-sig {
+  border-color: #6a3ab0 !important;
+  color: #6a3ab0 !important;
+}
+
+/* ---- Signature stamp (on the forms) ---- */
+.sigstamp {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sigstamp-line {
+  min-height: 34px;
+  border-bottom: 1px solid #000;
+  display: flex;
+  align-items: flex-end;
+}
+
+.sigstamp-img {
+  max-height: 40px;
+  max-width: 100%;
+}
+
+.sigstamp-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 8px;
+}
+
+.sigstamp-label {
+  font-weight: 700;
+}
+
+.sigstamp-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+
+.sigstamp-actions .chip {
+  min-height: 36px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.sigstamp-clear {
+  color: #b02a2a;
+  border-color: #b02a2a;
+}
+
+/* Inline signature (record / billing name lines): image sits on the line */
+.sig-inline {
+  max-height: 22px;
+  max-width: 100%;
+  vertical-align: bottom;
+}
+
+.ar-signbtn,
+.bs-signbtn {
+  min-height: 30px;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  margin-left: 0.3rem;
+}
+
+.ar-sigdt,
+.bs-sigdt {
+  font-size: 8px;
+  color: #333;
+  margin-left: 0.3rem;
+}
+
 /* Wizard dose / pick inputs */
 .awiz-doseinput {
   font: inherit;

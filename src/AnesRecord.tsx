@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { noAuto } from './inputProps';
 import { useCaseData, setCaseField } from './caseData';
 import VitalsGraph, { type VitalsData, type Series } from './VitalsGraph';
+import { useSigner, nowStamp } from './signer';
 import AnesWizard from './AnesWizard';
 
 // Intra-op Anesthesia Record replicating Mountain West Medical Center form
@@ -69,6 +70,7 @@ export function clearAnesDraft(): void {
 export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }) {
   const [d, setD] = useState<AnesDraft>(loadAnes);
   const caseData = useCaseData(); // shared allergies (pre-populated from pre-op)
+  const signer = useSigner();
   const [mode, setMode] = useState<'chart' | 'wizard'>('chart');
   const [zoom, setZoom] = useState(1);
   const bumpZoom = (delta: number) => setZoom((z) => Math.min(2.5, Math.max(0.8, Math.round((z + delta) * 10) / 10)));
@@ -573,7 +575,27 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             </div>
           </div>
           <div className="ar-bright">
-            <div className="ar-brow"><span className="lbl">Anesthetist</span>{tx('anesthetist', 'wide')}</div>
+            <div className="ar-brow">
+              <span className="lbl">Anesthetist</span>
+              {d.tx.sigImg ? (
+                <img className="sig-inline" src={d.tx.sigImg} alt="signature" />
+              ) : (
+                tx('anesthetist', 'wide')
+              )}
+              {d.tx.sigDate && <span className="ar-sigdt">{d.tx.sigDate} {d.tx.sigTime}</span>}
+              {signer.signature && (
+                <button
+                  type="button"
+                  className="chip ar-signbtn screen-only"
+                  onClick={() => {
+                    const { date, time } = nowStamp();
+                    setD((p) => ({ ...p, tx: { ...p.tx, sigImg: p.tx.sigImg ? '' : signer.signature, sigDate: p.tx.sigImg ? '' : date, sigTime: p.tx.sigImg ? '' : time } }));
+                  }}
+                >
+                  {d.tx.sigImg ? '✕' : `✍ Sign ${signer.initials}`}
+                </button>
+              )}
+            </div>
             <div className="ar-brow"><span className="lbl">Procedure</span>{tx('procedure', 'wide')}</div>
             <div className="ar-btable">
               <div className="ar-times">

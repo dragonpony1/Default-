@@ -11,6 +11,7 @@ import PacuOrders, { clearPacuDraft } from './PacuOrders';
 import BillingSheet, { clearBillingDraft } from './BillingSheet';
 import { loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 import { setCaseField, clearCase } from './caseData';
+import { clearSigner } from './signer';
 import ProviderBar from './ProviderBar';
 import { applyProviderToDrafts, type ProviderPrefs } from './providers';
 
@@ -74,6 +75,7 @@ export default function App() {
       clearPacuDraft();
       clearBillingDraft();
       clearCase();
+      clearSigner();
       setD({ ...emptyPreopEval });
       setAnesReset((n) => n + 1);
     }

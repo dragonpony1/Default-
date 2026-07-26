@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { noAuto } from './inputProps';
 import BillingWizard from './BillingWizard';
+import { useSigner, nowStamp } from './signer';
 
 // Deseret Peak Anesthesia Billing Information sheet, built from a flat scan
 // of the original. Tap the box beside a CPT code to mark it; header fields
@@ -121,6 +122,7 @@ export function clearBillingDraft(): void {
 export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number }) {
   const [d, setD] = useState<BillingDraft>(loadBilling);
   const [mode, setMode] = useState<'form' | 'wizard'>('form');
+  const signer = useSigner();
 
   useEffect(() => {
     localStorage.setItem(KEY, JSON.stringify(d));
@@ -201,7 +203,21 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
           <span className="b">Dx:</span>{tx('dx', 'grow')}
         </div>
         <div className="bs-fline">
-          <span className="b">CRNA</span>{tx('crna', 'wide')}
+          <span className="b">CRNA</span>
+          {d.tx.sigImg ? <img className="sig-inline" src={d.tx.sigImg} alt="signature" /> : tx('crna', 'wide')}
+          {d.tx.sigDate && <span className="bs-sigdt">{d.tx.sigDate} {d.tx.sigTime}</span>}
+          {signer.signature && (
+            <button
+              type="button"
+              className="chip bs-signbtn screen-only"
+              onClick={() => {
+                const { date, time } = nowStamp();
+                setD((p) => ({ ...p, tx: { ...p.tx, sigImg: p.tx.sigImg ? '' : signer.signature, sigDate: p.tx.sigImg ? '' : date, sigTime: p.tx.sigImg ? '' : time } }));
+              }}
+            >
+              {d.tx.sigImg ? '✕' : `✍ Sign ${signer.initials}`}
+            </button>
+          )}
           <span className="b">Start Time</span>{tx('startTime', 'med')}
           <span className="b">End Time</span>{tx('endTime', 'med')}
         </div>
