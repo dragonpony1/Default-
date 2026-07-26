@@ -1,0 +1,53 @@
+import { useSyncExternalStore } from 'react';
+
+// The currently "clicked-in" provider's signature, so any form can stamp it.
+// Set when a provider is selected in the provider bar; cleared on Clear form.
+// Holds only the provider's own initials + their saved signature image — no
+// patient data. Session-only (not persisted); the saved signatures live on the
+// provider profiles in localStorage.
+
+export interface Signer {
+  initials: string;
+  signature: string; // data URL PNG, or '' if none saved
+}
+
+const empty: Signer = { initials: '', signature: '' };
+let current: Signer = empty;
+const listeners = new Set<() => void>();
+const emit = () => listeners.forEach((l) => l());
+
+export function getSigner(): Signer {
+  return current;
+}
+
+export function setSigner(s: Signer): void {
+  current = s;
+  emit();
+}
+
+export function clearSigner(): void {
+  current = empty;
+  emit();
+}
+
+function subscribe(fn: () => void): () => void {
+  listeners.add(fn);
+  return () => {
+    listeners.delete(fn);
+  };
+}
+
+export function useSigner(): Signer {
+  return useSyncExternalStore(subscribe, getSigner, getSigner);
+}
+
+// Current date (MM/DD/YY) and time (HHMM) for a signature stamp.
+export function nowStamp(): { date: string; time: string } {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const yy = String(d.getFullYear()).slice(-2);
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return { date: `${mm}/${dd}/${yy}`, time: `${hh}${min}` };
+}

@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { noAuto } from './inputProps';
+import { useCaseData, setCaseField } from './caseData';
 import Barcode39 from './Barcode39';
+import PacuWizard from './PacuWizard';
+import SignatureStamp from './SignatureStamp';
 
 // Post-Anesthesia Recovery Room Orders replicating Mountain West Medical
 // Center form 170-165-1131001HMSFAC (01/15, Rev. 07/15, 07/22), portrait US
@@ -32,6 +35,8 @@ export function clearPacuDraft(): void {
 
 export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }) {
   const [d, setD] = useState<PacuDraft>(loadPacu);
+  const [mode, setMode] = useState<'form' | 'wizard'>('form');
+  const caseData = useCaseData(); // shared allergies (pre-populated from pre-op)
 
   useEffect(() => {
     localStorage.setItem(KEY, JSON.stringify(d));
@@ -42,8 +47,33 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
     if (resetSignal !== seenReset.current) {
       seenReset.current = resetSignal;
       setD(loadPacu());
+      setMode('form');
     }
   }, [resetSignal]);
+
+  const setCkVal = (k: string, v: boolean) => setD((p) => ({ ...p, ck: { ...p.ck, [k]: v } }));
+  const setTxVal = (k: string, v: string) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: v } }));
+
+  if (mode === 'wizard') {
+    return (
+      <PacuWizard
+        ck={d.ck}
+        tx={d.tx}
+        setCk={setCkVal}
+        setTx={setTxVal}
+        allergies={caseData.allergies}
+        setAllergies={(v) => setCaseField('allergies', v)}
+        weight={caseData.weight}
+        weightKg={caseData.weightKg}
+        height={caseData.height}
+        setWeight={(v) => setCaseField('weight', v)}
+        setWeightKg={(v) => setCaseField('weightKg', v)}
+        setHeight={(v) => setCaseField('height', v)}
+        onBack={() => setMode('form')}
+        onDone={() => setMode('form')}
+      />
+    );
+  }
 
   const ck = (k: string) => (
     <input
@@ -77,6 +107,11 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
   );
 
   return (
+    <>
+      <div className="awiz-switch screen-only">
+        <button type="button" className="chip" onClick={() => setMode('wizard')}>⛑ Guided PACU wizard</button>
+        <span className="awiz-switch-hint">Walks you through the standing orders and doses. The full form stays fillable.</span>
+      </div>
     <div className="page po-page">
       <div className="page-top">
         <div className="bc-wrap">
@@ -96,13 +131,18 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
         {item(1, (
           <div className="po-line">
             <span>Patient allergies:</span>
-            {tx('allergies', 'grow')}
+            <input
+              {...noAuto}
+              className="t u grow"
+              value={caseData.allergies}
+              onChange={(e) => setCaseField('allergies', e.target.value)}
+            />
             <span>Patient Wt</span>
-            {tx('weight')}
+            <input {...noAuto} className="t u xshort" value={caseData.weight} onChange={(e) => setCaseField('weight', e.target.value)} />
             <span>(kg)</span>
-            {tx('weightKg')}
+            <input {...noAuto} className="t u xshort" value={caseData.weightKg} onChange={(e) => setCaseField('weightKg', e.target.value)} />
             <span>Ht</span>
-            {tx('height', 'short')}
+            <input {...noAuto} className="t u short" value={caseData.height} onChange={(e) => setCaseField('height', e.target.value)} />
           </div>
         ))}
         {item(2, (
@@ -239,16 +279,14 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
 
       <div className="po-sign">
         <div className="po-sigcell grow">
-          {tx('provider', 'grow')}
-          <div className="po-siglabel">Anesthesia Provider</div>
-        </div>
-        <div className="po-sigcell">
-          {tx('date', 'med')}
-          <div className="po-siglabel">Date</div>
-        </div>
-        <div className="po-sigcell">
-          {tx('time', 'med')}
-          <div className="po-siglabel">Time</div>
+          <SignatureStamp
+            label="Anesthesia Provider"
+            sig={d.tx.sigImg ?? ''}
+            date={d.tx.date ?? ''}
+            time={d.tx.time ?? ''}
+            onStamp={(s, dt, tm) => setD((p) => ({ ...p, tx: { ...p.tx, sigImg: s, date: dt, time: tm } }))}
+            onClear={() => setD((p) => ({ ...p, tx: { ...p.tx, sigImg: '' } }))}
+          />
         </div>
       </div>
 
@@ -263,5 +301,6 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
       </div>
       <div className="po-hospital">Mountain West Medical Center</div>
     </div>
+    </>
   );
 }

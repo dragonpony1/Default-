@@ -69,6 +69,66 @@ body {
   color: #555;
 }
 
+/* Provider quick-pick bar: tap initials to "click in" and load defaults. */
+.provbar {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.6rem;
+  background: #f1f4fa;
+  border: 1px solid #d3ddf0;
+  border-radius: 8px;
+}
+
+.provbar-label {
+  font-weight: 700;
+  color: #2a5db0;
+  margin-right: 0.2rem;
+}
+
+/* These buttons live inside .toolbar, whose `button` rule would paint them all
+   solid blue — override it so they read as chips (white, blue when active). */
+.provbar button {
+  background: #fff;
+  border: 1.5px solid #98a3b3;
+  border-radius: 999px;
+  color: #1a1a1a;
+  padding: 0.4rem 0.9rem;
+  min-height: 44px;
+}
+
+.provbar .prov-chip {
+  min-width: 3rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #2a5db0;
+}
+
+.provbar .prov-chip.on {
+  background: #2a5db0;
+  border-color: #2a5db0;
+  color: #fff;
+}
+
+.provbar .prov-add {
+  color: #2a5db0;
+  border-style: dashed;
+}
+
+.provbar .prov-save {
+  border-color: #1a7a3a;
+  color: #1a7a3a;
+  font-weight: 700;
+}
+
+.provbar .prov-remove {
+  border-color: #b02a2a;
+  color: #b02a2a;
+  min-width: 44px;
+}
+
 .tabs {
   display: flex;
   border: 1px solid #2a5db0;
@@ -1879,8 +1939,16 @@ input[type='checkbox']:checked::after {
 }
 
 @media print {
+  /* Give the print layout a fixed letter width so phones don't size the
+     record to their narrow screen (which clipped it to a thin slice). */
+  html,
+  body {
+    width: 8.5in;
+  }
+
   .ar-wrap {
     overflow: visible;
+    width: auto;
   }
 
   .ar-scaler {
@@ -1891,9 +1959,11 @@ input[type='checkbox']:checked::after {
 
   .ar {
     border: none;
-    width: 100%;
+    /* Fixed inch width (letter minus 0.25in margins), NOT 100% — 100% is the
+       device viewport on a phone, which squished the grid to a slice. */
+    width: 8in;
     padding: 0;
-    padding-top: 0.25in;
+    padding-top: 0.06in;
     transform: none !important;
   }
 
@@ -2050,15 +2120,21 @@ input[type='checkbox']:checked::after {
 }
 
 .awiz {
-  max-width: 640px;
-  margin: 0 auto;
+  max-width: 760px;
+  margin: 0;
 }
 
 .awiz-top {
   display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Progress bar + count sit right under the section buttons. */
+.awiz-progress {
+  display: flex;
   align-items: center;
   gap: 0.75rem;
-  flex-wrap: wrap;
 }
 
 .awiz-phases {
@@ -2082,6 +2158,229 @@ input[type='checkbox']:checked::after {
 .awiz-phase.on {
   background: #2a5db0;
   color: #fff;
+}
+
+/* Section jump-nav: small, light buttons in a single horizontal strip that
+   scrolls sideways — tap any one to hop straight to that section. */
+.awiz-secnav {
+  display: flex;
+  gap: 0.2rem;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+}
+
+.awiz-secbtn {
+  font: inherit;
+  font-size: 0.66rem;
+  font-weight: 500;
+  color: #607089;
+  background: transparent;
+  border: 1px solid #dbe2ee;
+  border-radius: 6px;
+  padding: 0.15rem 0.35rem;
+  min-height: 26px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.awiz-secbtn.on {
+  background: #eaf0fb;
+  border-color: #2a5db0;
+  color: #2a5db0;
+  font-weight: 700;
+}
+
+.awiz-narration textarea {
+  font: inherit;
+  width: 100%;
+  padding: 0.6rem;
+  border: 1.5px solid #98a3b3;
+  border-radius: 8px;
+  resize: vertical;
+  min-height: 8rem;
+}
+
+.awiz-narration textarea:focus {
+  outline: none;
+  border-color: #2a5db0;
+  box-shadow: 0 0 0 2px #2a5db033;
+}
+
+/* Wizard drug block (breakthrough pain) + priority checkbox */
+.awiz-drugblock {
+  border: 1px solid #e2e8f2;
+  border-radius: 8px;
+  padding: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+.awiz-priority {
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+/* Billing code picker: tappable rows for search results and selections */
+.awiz-codelist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.awiz-coderow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  text-align: left;
+  font: inherit;
+  background: #fff;
+  border: 1.5px solid #cbd5e6;
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.awiz-coderow.on {
+  background: #eaf0fb;
+  border-color: #2a5db0;
+}
+
+.awiz-code {
+  font-weight: 700;
+  color: #2a5db0;
+  flex: 0 0 4.5rem;
+}
+
+.awiz-codedesc {
+  color: #1a1a1a;
+}
+
+.ifield.small {
+  flex: 0 1 6rem;
+}
+
+/* ---- Signature pad (modal) ---- */
+.sigpad-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+}
+
+.sigpad {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  width: min(640px, 100%);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.sigpad-title {
+  font-weight: 700;
+  margin-bottom: 0.6rem;
+}
+
+.sigpad-canvas {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 1;
+  border: 1.5px dashed #98a3b3;
+  border-radius: 8px;
+  touch-action: none;
+  background: #fff;
+}
+
+.sigpad-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.7rem;
+}
+
+.sigpad-actions .grow {
+  flex: 1;
+}
+
+.prov-sig {
+  border-color: #6a3ab0 !important;
+  color: #6a3ab0 !important;
+}
+
+/* ---- Signature stamp (on the forms) ---- */
+.sigstamp {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sigstamp-line {
+  min-height: 34px;
+  border-bottom: 1px solid #000;
+  display: flex;
+  align-items: flex-end;
+}
+
+.sigstamp-img {
+  max-height: 40px;
+  max-width: 100%;
+}
+
+.sigstamp-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 8px;
+}
+
+.sigstamp-label {
+  font-weight: 700;
+}
+
+.sigstamp-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.3rem;
+}
+
+.sigstamp-actions .chip {
+  min-height: 36px;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.sigstamp-clear {
+  color: #b02a2a;
+  border-color: #b02a2a;
+}
+
+/* Inline signature (record / billing name lines): image sits on the line */
+.sig-inline {
+  max-height: 22px;
+  max-width: 100%;
+  vertical-align: bottom;
+}
+
+.ar-signbtn,
+.bs-signbtn {
+  min-height: 30px;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  margin-left: 0.3rem;
+}
+
+.ar-sigdt,
+.bs-sigdt {
+  font-size: 8px;
+  color: #333;
+  margin-left: 0.3rem;
 }
 
 /* Wizard dose / pick inputs */

@@ -10,6 +10,10 @@ import AnesRecord, { clearAnesDraft } from './AnesRecord';
 import PacuOrders, { clearPacuDraft } from './PacuOrders';
 import BillingSheet, { clearBillingDraft } from './BillingSheet';
 import { decodeChoices, loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
+import { setCaseField, clearCase } from './caseData';
+import { clearSigner } from './signer';
+import ProviderBar from './ProviderBar';
+import { applyProviderToDrafts, type ProviderPrefs } from './providers';
 
 type StringKeys = { [K in keyof PreopEval]: PreopEval[K] extends string ? K : never }[keyof PreopEval];
 type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : never }[keyof PreopEval];
@@ -45,6 +49,42 @@ export default function App() {
     }
   }, []);
 
+  // Share the pre-op allergy assessment into the Case so it pre-populates the
+  // record, PACU, and other documents. Only push when there's something to say
+  // so an empty pre-op never wipes an allergy typed on another form.
+  useEffect(() => {
+    const summary = d.allergiesNone
+      ? 'None'
+      : [
+          ...d.allergyList.map((x) => (x.reaction ? `${x.name} (${x.reaction})` : x.name)),
+          d.allergies,
+        ]
+          .filter(Boolean)
+          .join(', ');
+    if (summary) setCaseField('allergies', summary);
+  }, [d.allergiesNone, d.allergyList, d.allergies]);
+
+  // Weight and height flow to the shared case (and onto PACU) just like
+  // allergies. Fill both lb and kg from whichever unit was entered.
+  useEffect(() => {
+    const w = d.weight.trim();
+    if (!w) return;
+    const n = Number(w);
+    if (d.weightUnit === 'kg') {
+      setCaseField('weightKg', w);
+      if (!Number.isNaN(n)) setCaseField('weight', String(Math.round(n * 2.2046)));
+    } else {
+      setCaseField('weight', w);
+      if (!Number.isNaN(n)) setCaseField('weightKg', String(Math.round(n / 2.2046)));
+    }
+  }, [d.weight, d.weightUnit]);
+
+  useEffect(() => {
+    const h = d.height.trim();
+    if (h) setCaseField('height', d.heightUnit ? `${h} ${d.heightUnit}` : h);
+  }, [d.height, d.heightUnit]);
+
+
   const set = <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => setD((prev) => ({ ...prev, [k]: v }));
 
   // Two-tap clear: first tap arms the button (auto-disarms after 5s), a second
@@ -71,9 +111,22 @@ export default function App() {
       clearAnesDraft();
       clearPacuDraft();
       clearBillingDraft();
+      clearCase();
+      clearSigner();
       setD({ ...emptyPreopEval });
       setAnesReset((n) => n + 1);
     }
+  };
+
+  // A provider "clicks in": merge their saved standing choices into the drafts,
+  // apply the pre-op patch, and bump the reset signal so the mounted forms
+  // reload with the applied preferences.
+  const applyProvider = (prefs: ProviderPrefs) => {
+    const patch = applyProviderToDrafts(prefs);
+    if (patch.plannedAnesthesia != null && patch.plannedAnesthesia !== '') {
+      setD((prev) => ({ ...prev, plannedAnesthesia: patch.plannedAnesthesia as string }));
+    }
+    setAnesReset((n) => n + 1);
   };
 
   // Borderless inline text input
@@ -253,6 +306,7 @@ export default function App() {
             {clearArmed ? '⚠ Tap again to clear all' : 'Clear form'}
           </button>
         </div>
+        <ProviderBar onApply={applyProvider} />
         <p className="privacy-note">
           No patient name or identifiers are entered here &mdash; apply the patient label sticker after
           printing. All data stays on this device only; clear the form after printing.
