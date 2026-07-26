@@ -2676,3 +2676,93 @@ input[type='checkbox']:checked::after {
   border: 1px solid #ccc;
   border-radius: 8px;
 }
+
+/* ---- Floating 10-key pad ---- */
+
+.np {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1000;
+  background: #f4f5f7;
+  border: 1px solid #98a3b3;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  padding: 6px;
+  width: 240px;
+  user-select: none;
+  touch-action: none;
+}
+
+.np-handle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px 6px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.np-grip {
+  color: #667;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+.np-close {
+  font: inherit;
+  border: none;
+  background: transparent;
+  color: #667;
+  font-size: 1rem;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.np-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+
+.np-key {
+  font: inherit;
+  font-size: 1.25rem;
+  padding: 0;
+  height: 48px;
+  border: 1px solid #b6bec9;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.np-key:active {
+  background: #dbe6f5;
+}
+
+.np-fn {
+  background: #e6e9ee;
+  font-size: 1.05rem;
+}
+
+.np-small {
+  font-size: 0.85rem;
+}
+
+.np-bottom {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.np-bottom .np-key {
+  height: 42px;
+}
+
+.np-done {
+  background: #2a5db0;
+  border-color: #2a5db0;
+  color: #fff;
+  font-weight: 600;
+}

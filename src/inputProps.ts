@@ -6,3 +6,12 @@ export const noAuto = {
   autoCapitalize: 'off',
   spellCheck: false,
 } as const;
+
+// Numeric fields: suppress the OS keyboard entirely and summon the floating
+// 10-key pad instead (see NumPad.tsx). The pad's ABC key restores the OS
+// keyboard for a field when free text is genuinely needed.
+export const numPad = {
+  ...noAuto,
+  inputMode: 'none',
+  'data-np': '1',
+} as const;
