@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { noAuto } from './inputProps';
+import { noAuto, numPad } from './inputProps';
 import { emptyPreopEval, type PreopEval, type YesNo } from './types';
 import { SYSTEMS, type SystemBand } from './formConfig';
 import { clearDraft, loadDraft, saveDraft } from './storage';
 import Barcode39 from './Barcode39';
+import NumPad from './NumPad';
 import FieldByField from './FieldByField';
 import EditChoices from './EditChoices';
 import AnesRecord, { clearAnesDraft } from './AnesRecord';
@@ -134,6 +135,11 @@ export default function App() {
     <input {...noAuto} className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
   );
 
+  // Numeric variant: floating 10-key instead of the OS keyboard
+  const txn = (k: StringKeys, cls = '') => (
+    <input {...numPad} className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
+  );
+
   const ta = (k: StringKeys, rows = 2, cls = '') => (
     <textarea {...noAuto} className={`a ${cls}`} rows={rows} value={d[k]} onChange={(e) => set(k, e.target.value)} />
   );
@@ -260,12 +266,12 @@ export default function App() {
   ) => (
     <div className="pan2">
       <div className="pcol">
-        <div className="vrow"><span>BP</span>{txt(`${pre}Bp` as StringKeys)}</div>
-        <div className="vrow"><span>P</span>{txt(`${pre}P` as StringKeys)}</div>
-        <div className="vrow"><span>R</span>{txt(`${pre}R` as StringKeys)}</div>
-        <div className="vrow"><span>T</span>{txt(`${pre}T` as StringKeys)}</div>
-        <div className="vrow"><span>O&#8322; Sat.</span>{txt(`${pre}O2` as StringKeys)}</div>
-        <div className="vrow"><span>Pain (0&ndash;10)</span>{txt(`${pre}Pain` as StringKeys)}</div>
+        <div className="vrow"><span>BP</span>{txn(`${pre}Bp` as StringKeys)}</div>
+        <div className="vrow"><span>P</span>{txn(`${pre}P` as StringKeys)}</div>
+        <div className="vrow"><span>R</span>{txn(`${pre}R` as StringKeys)}</div>
+        <div className="vrow"><span>T</span>{txn(`${pre}T` as StringKeys)}</div>
+        <div className="vrow"><span>O&#8322; Sat.</span>{txn(`${pre}O2` as StringKeys)}</div>
+        <div className="vrow"><span>Pain (0&ndash;10)</span>{txn(`${pre}Pain` as StringKeys)}</div>
       </div>
       <div className="pcol">
         <div className="vrow"><span>N/V</span>{txt(`${pre}NV` as StringKeys)}</div>
@@ -278,6 +284,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <NumPad />
       <header className="toolbar screen-only">
         <h1>Pre-Anesthesia Evaluation</h1>
         <div className="tabs">
@@ -335,17 +342,17 @@ export default function App() {
           {/* Title / demographics */}
           <div className="row">
             <div className="cell grow c b caps">Pre Anesthesia Evaluation</div>
-            <div className="cell w9"><span className="lbl">Age</span>{txt('age')}</div>
+            <div className="cell w9"><span className="lbl">Age</span>{txn('age')}</div>
             <div className="cell w11">
               <span className="lbl">Sex</span>
               <span className="opts">{xbx('sex', 'M', 'M')}{xbx('sex', 'F', 'F')}</span>
             </div>
             <div className="cell w15">
-              <span className="lbl">Height</span>{txt('height', 'xshort')}
+              <span className="lbl">Height</span>{txn('height', 'xshort')}
               <span className="opts">{xbx('heightUnit', 'in', 'in')}{xbx('heightUnit', 'cm', 'cm')}</span>
             </div>
             <div className="cell w15">
-              <span className="lbl">Weight</span>{txt('weight', 'xshort')}
+              <span className="lbl">Weight</span>{txn('weight', 'xshort')}
               <span className="opts">{xbx('weightUnit', 'lb', 'lb')}{xbx('weightUnit', 'kg', 'kg')}</span>
             </div>
           </div>
@@ -358,10 +365,10 @@ export default function App() {
             <div className="cell grow half vitals">
               <div className="lbl">Pre-Procedure Vital Signs</div>
               <div className="vitline">
-                <span className="b">BP</span>{txt('bp', 'short')}
-                <span className="b">P</span>{txt('p', 'short')}
-                <span className="b">R</span>{txt('r', 'short')}
-                <span className="b">T</span>{txt('t', 'short')}
+                <span className="b">BP</span>{txn('bp', 'short')}
+                <span className="b">P</span>{txn('p', 'short')}
+                <span className="b">R</span>{txn('r', 'short')}
+                <span className="b">T</span>{txn('t', 'short')}
               </div>
             </div>
           </div>
@@ -457,8 +464,8 @@ export default function App() {
                 <>
                   <div className="inlinerow">
                     <span className="b">Tobacco Use:</span> {yn('tobacco')}
-                    {txt('tobaccoPacksDay', 'u short')} <span>Packs / Day for</span>
-                    {txt('tobaccoYears', 'u short')} <span>Years</span>
+                    {txn('tobaccoPacksDay', 'u short')} <span>Packs / Day for</span>
+                    {txn('tobaccoYears', 'u short')} <span>Years</span>
                   </div>
                   {d.homeO2 && (
                     <div className="detline">

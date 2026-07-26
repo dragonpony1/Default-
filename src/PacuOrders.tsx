@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { noAuto } from './inputProps';
+import { noAuto, numPad } from './inputProps';
 import { useCaseData, setCaseField } from './caseData';
 import Barcode39 from './Barcode39';
 import PacuWizard from './PacuWizard';
@@ -83,6 +83,15 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
     />
   );
 
+  const txn = (k: string, cls = 'xshort') => (
+    <input
+      {...numPad}
+      className={`t u ${cls}`}
+      value={d.tx[k] ?? ''}
+      onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: e.target.value } }))}
+    />
+  );
+
   const tx = (k: string, cls = 'xshort') => (
     <input
       {...noAuto}
@@ -138,11 +147,11 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
               onChange={(e) => setCaseField('allergies', e.target.value)}
             />
             <span>Patient Wt</span>
-            <input {...noAuto} className="t u xshort" value={caseData.weight} onChange={(e) => setCaseField('weight', e.target.value)} />
+            <input {...numPad} className="t u xshort" value={caseData.weight} onChange={(e) => setCaseField('weight', e.target.value)} />
             <span>(kg)</span>
-            <input {...noAuto} className="t u xshort" value={caseData.weightKg} onChange={(e) => setCaseField('weightKg', e.target.value)} />
+            <input {...numPad} className="t u xshort" value={caseData.weightKg} onChange={(e) => setCaseField('weightKg', e.target.value)} />
             <span>Ht</span>
-            <input {...noAuto} className="t u short" value={caseData.height} onChange={(e) => setCaseField('height', e.target.value)} />
+            <input {...numPad} className="t u short" value={caseData.height} onChange={(e) => setCaseField('height', e.target.value)} />
           </div>
         ))}
         {item(2, (
@@ -163,9 +172,9 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
           <>
             <div className="po-line">
               <span>Toradol (Ketoralac)</span>
-              {tx('toradolLow')}
+              {txn('toradolLow')}
               <span>mg (pain scale 1-5) to</span>
-              {tx('toradolHigh')}
+              {txn('toradolHigh')}
               <span>mg (pain scale 6-10) times 1 PRN post-operative IV/IM pain.</span>
             </div>
             <div className="po-or">~OR~</div>
@@ -178,7 +187,7 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
           <>
             <div className="po-line">
               <span>Lortab (Hydrocodone)</span>
-              {tx('lortab')}
+              {txn('lortab')}
               <span>mg 1 tablet/Elixir (pain scale 1-5) to 2 tablets (pain scale 6-10) PO PRN post-operative pain times 1 dose.</span>
             </div>
             <div className="po-or">~OR~</div>
@@ -187,7 +196,7 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
         {item(6, (
           <div className="po-line">
             <span>Percocet (Oxycodone)</span>
-            {tx('percocet')}
+            {txn('percocet')}
             <span>mg 1 tablet (pain scale 1-5) to 2 tablets (pain scale 6-10) PO PRN post-operative pain times 1 dose.</span>
           </div>
         ))}
@@ -197,13 +206,13 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
           <div className="po-line">
             {ck('morphine')}
             <span>Morphine Sulfate (Duramorph)</span>
-            {tx('morphineLow')}
+            {txn('morphineLow')}
             <span>mg (pain scale 3-5) to</span>
-            {tx('morphineHigh')}
+            {txn('morphineHigh')}
             <span>mg (pain scale 6-10) IV every</span>
-            {tx('morphineEvery')}
+            {txn('morphineEvery')}
             <span>minutes PRN post-operative pain. Maximum dose of</span>
-            {tx('morphineMax')}
+            {txn('morphineMax')}
             <span>mg (first, second, third)</span>
           </div>
         ))}
@@ -211,13 +220,13 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
           <div className="po-line">
             {ck('dilaudid')}
             <span>Dilaudid (Hydromorphone)</span>
-            {tx('dilaudidLow')}
+            {txn('dilaudidLow')}
             <span>mg (pain scale 3-5)</span>
-            {tx('dilaudidHigh')}
+            {txn('dilaudidHigh')}
             <span>mg (pain scale 6-10) IV every</span>
-            {tx('dilaudidEvery')}
+            {txn('dilaudidEvery')}
             <span>minutes PRN post-operative pain. Maximum dose of</span>
-            {tx('dilaudidMax')}
+            {txn('dilaudidMax')}
             <span>mg (first, second, third)</span>
           </div>
         ))}
@@ -225,13 +234,13 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
           <div className="po-line">
             {ck('fentanyl')}
             <span>Fentanyl (Sublimaze)</span>
-            {tx('fentanylLow')}
+            {txn('fentanylLow')}
             <span>mcg (pain scale 3-5)</span>
-            {tx('fentanylHigh')}
+            {txn('fentanylHigh')}
             <span>mcg (pain scale 6-10) IV every</span>
-            {tx('fentanylEvery')}
+            {txn('fentanylEvery')}
             <span>minutes PRN post-operative pain. Maximum dose of</span>
-            {tx('fentanylMax')}
+            {txn('fentanylMax')}
             <span>mcg (first, second, third)</span>
           </div>
         ))}
@@ -240,21 +249,21 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
         {item(10, (
           <div className="po-line">
             <span>Zofran (Ondansetron)</span>
-            {tx('zofran')}
+            {txn('zofran')}
             <span>mg IV PRN post-operative nausea/vomiting may repeat times 1 15 minutes after first dose. (first, second)</span>
           </div>
         ))}
         {item(11, (
           <div className="po-line">
             <span>Reglan (Metoclopramide)</span>
-            {tx('reglan')}
+            {txn('reglan')}
             <span>mg IV PRN post-operative nausea/vomiting may repeat times 1 15 minutes after first dose. (first, second)</span>
           </div>
         ))}
         {item(12, (
           <div className="po-line">
             <span>Demerol (Meperidine)</span>
-            {tx('demerol')}
+            {txn('demerol')}
             <span>mg IV PRN post-operative shivering. May repeat times 1 15 minutes after first dose.</span>
           </div>
         ))}

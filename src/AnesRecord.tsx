@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { noAuto } from './inputProps';
+import { noAuto, numPad } from './inputProps';
 import { useCaseData, setCaseField } from './caseData';
 import VitalsGraph, { type VitalsData, type Series } from './VitalsGraph';
 import { useSigner, nowStamp } from './signer';
@@ -108,6 +108,15 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     </label>
   );
 
+  const txn = (k: string, cls = '') => (
+    <input
+      {...numPad}
+      className={`t u ${cls}`}
+      value={d.tx[k] ?? ''}
+      onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: e.target.value } }))}
+    />
+  );
+
   const tx = (k: string, cls = '') => (
     <input
       {...noAuto}
@@ -127,8 +136,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     <label className="vg-first-field">
       <span>{label}</span>
       <input
-        {...noAuto}
-        inputMode="numeric"
+        {...numPad}
         value={d.vitals[series][0] ?? ''}
         onChange={(e) => {
           const raw = e.target.value.trim();
@@ -159,7 +167,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
   // One tappable charting cell.
   const cell = (rowKey: string, col: number) => (
     <input
-      {...noAuto}
+      {...numPad}
       key={col}
       className="ar-cell"
       value={d.cells[`${rowKey}:${col}`] ?? ''}
@@ -173,7 +181,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
       <div className="ar-clabel">{label}</div>
       <div className="ar-cells">{Array.from({ length: COLS }, (_, c) => cell(key, c))}</div>
       <input
-        {...noAuto}
+        {...numPad}
         className="ar-cell ar-totalcell"
         value={d.cells[`${key}:total`] ?? ''}
         onChange={(e) => setCell(`${key}:total`, e.target.value)}
@@ -300,15 +308,15 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             {ck('nasalCannula', 'Nasal Cannula')}
             {ck('simpleFaceMask', 'Simple Face Mask')}
             {ck('lma', 'LMA')}
-            <div className="ar-line">{ck('lmaSizeCk', 'Size')}{tx('lmaSize', 'xshort')}</div>
-            <div className="ar-line">{ck('air', 'Air')}{tx('airMl', 'xshort')} <span>mL</span></div>
+            <div className="ar-line">{ck('lmaSizeCk', 'Size')}{txn('lmaSize', 'xshort')}</div>
+            <div className="ar-line">{ck('air', 'Air')}{txn('airMl', 'xshort')} <span>mL</span></div>
           </div>
 
           <div className="ar-sec">
             <div className="ar-h">Endotracheal</div>
             <div className="ar-line">{ck('ettOral', 'Oral')}{ck('ettNasal', 'Nasal')}{ck('ettRae', 'RAE')}</div>
-            <div className="ar-line"><span>Tube size.</span>{tx('tubeSize', 'xshort')} <span>mm</span></div>
-            <div className="ar-line"><span>Length</span>{tx('tubeLength', 'xshort')} <span>cm (Lip)</span></div>
+            <div className="ar-line"><span>Tube size.</span>{txn('tubeSize', 'xshort')} <span>mm</span></div>
+            <div className="ar-line"><span>Length</span>{txn('tubeLength', 'xshort')} <span>cm (Lip)</span></div>
             <div className="ar-line ind">{ck('lubricant', 'Lubricant')}{ck('trachSpray', 'Trach Spray')}</div>
             <div className="ar-line ind">{ck('rapidSequence', 'Rapid Sequence')}</div>
             <div className="ar-line ind">{ck('cricoid', 'Cricoid Pressure')}</div>
@@ -317,8 +325,8 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             <div className="ar-line ind">{ck('atraumatic', 'Atraumatic')}{ck('traumatic', 'Traumatic')}</div>
             <div className="ar-line"><span className="b">BREATH SOUNDS:</span></div>
             <div className="ar-line ind">{ck('bilateral', 'Bilateral')}{ck('equal', 'Equal')}</div>
-            <div className="ar-line"><span className="b">TIME:</span>{tx('ettTime', 'short')}</div>
-            <div className="ar-line">{ck('attemptsCk', '# Attempts')}{tx('attempts', 'xshort')}</div>
+            <div className="ar-line"><span className="b">TIME:</span>{txn('ettTime', 'short')}</div>
+            <div className="ar-line">{ck('attemptsCk', '# Attempts')}{txn('attempts', 'xshort')}</div>
             {ck('arrivedIntubated', 'Arrived Intubated')}
             {ck('dentitionUnchanged', 'Dentition unchanged')}
           </div>
@@ -336,7 +344,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             <div className="ar-line">{ck('o2Analyzer', 'O₂ Analyzer')}{ck('calibrated', 'Calibrated')}</div>
             <div className="ar-line"><span className="b">WARMER:</span>{ck('warmerIv', 'IV Blood')}</div>
             <div className="ar-line ind">{ck('bairHugger', 'Bair Hugger')}{ck('bairUp', '↑')}{ck('bairDown', '↓')}</div>
-            <div className="ar-line">{ck('hme', 'HME')} <span>Temp</span>{tx('hmeTemp', 'xshort')}</div>
+            <div className="ar-line">{ck('hme', 'HME')} <span>Temp</span>{txn('hmeTemp', 'xshort')}</div>
             <div className="ar-line">{ck('artLine', 'Arterial Line')}{ck('artL', 'L')}{ck('artR', 'R')}</div>
             {ck('cvp', 'CVP')}
             {ck('swanGanz', 'Swan-Ganz')}
@@ -372,23 +380,23 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                 {ck('local', 'Local')}
               </div>
               <div className="ar-condcol mid">
-                <div className="ar-line">{ck('duramorphCk', 'Duramorph')}{tx('duramorph', 'xshort')} <span>mg</span></div>
-                <div className="ar-line">{ck('fentanylCk', 'Fentanyl')}{tx('fentanyl', 'xshort')} <span>mcg</span></div>
-                <div className="ar-line">{ck('sufentaCk', 'Sufenta')}{tx('sufenta', 'xshort')} <span>mcg</span></div>
-                <div className="ar-line">{ck('naropinCk', 'Naropin')}{tx('naropin', 'xshort')} <span>mL</span></div>
-                <div className="ar-line">{ck('nesacaineCk', 'Nesacaine')}{tx('nesacaine', 'xshort')} <span>mL</span></div>
-                <div className="ar-line">{ck('sensorcaineCk', 'Sensorcaine')}{tx('sensorcaine', 'xshort')} <span>mL</span></div>
-                <div className="ar-line">{ck('xylocaineCk', 'Xylocaine')}{tx('xylocaine', 'xshort')} <span>mL</span></div>
+                <div className="ar-line">{ck('duramorphCk', 'Duramorph')}{txn('duramorph', 'xshort')} <span>mg</span></div>
+                <div className="ar-line">{ck('fentanylCk', 'Fentanyl')}{txn('fentanyl', 'xshort')} <span>mcg</span></div>
+                <div className="ar-line">{ck('sufentaCk', 'Sufenta')}{txn('sufenta', 'xshort')} <span>mcg</span></div>
+                <div className="ar-line">{ck('naropinCk', 'Naropin')}{txn('naropin', 'xshort')} <span>mL</span></div>
+                <div className="ar-line">{ck('nesacaineCk', 'Nesacaine')}{txn('nesacaine', 'xshort')} <span>mL</span></div>
+                <div className="ar-line">{ck('sensorcaineCk', 'Sensorcaine')}{txn('sensorcaine', 'xshort')} <span>mL</span></div>
+                <div className="ar-line">{ck('xylocaineCk', 'Xylocaine')}{txn('xylocaine', 'xshort')} <span>mL</span></div>
                 <div className="ar-line">{ck('condOther1Ck', 'Other')}{tx('condOther1', 'short')}</div>
                 <div className="ar-line">{ck('condOther2Ck', 'Other')}{tx('condOther2', 'short')}</div>
               </div>
               <div className="ar-condcol">
-                <div className="ar-line">{ck('needleSizeCk', 'Needle Size')}{tx('needleSize', 'xshort')}</div>
-                <div className="ar-line">{ck('condAttemptsCk', '# Attempts')}{tx('condAttempts', 'xshort')}</div>
+                <div className="ar-line">{ck('needleSizeCk', 'Needle Size')}{txn('needleSize', 'xshort')}</div>
+                <div className="ar-line">{ck('condAttemptsCk', '# Attempts')}{txn('condAttempts', 'xshort')}</div>
                 <div className="ar-line">{ck('siteCk', 'Site')}{tx('site', 'short')}</div>
                 {ck('paresthesia', 'Paresthesia')}
                 {ck('cffcsf', 'CFFCSF')}
-                <div className="ar-line">{ck('condTimeCk', 'Time')}{tx('condTime', 'short')}</div>
+                <div className="ar-line">{ck('condTimeCk', 'Time')}{txn('condTime', 'short')}</div>
               </div>
             </div>
             <div className="ar-line"><span>Lot #</span>{tx('lotNum', 'grow')} <span>Expiration Date:</span>{tx('expDate', 'grow')}</div>
@@ -427,7 +435,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                   <div className="ar-clabel th-start">
                     <span>Surgery start</span>
                     <input
-                      {...noAuto}
+                      {...numPad}
                       className="ar-startinput"
                       placeholder="0730"
                       value={d.tx.surgStart ?? ''}
@@ -525,7 +533,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
           <div className="ar-right">
             <div className="ar-rbox ar-remarksbox">
               <div className="ar-h">Remarks</div>
-              <div className="ar-line"><span className="b">TIME:</span>{tx('remarkTime', 'grow')}</div>
+              <div className="ar-line"><span className="b">TIME:</span>{txn('remarkTime', 'grow')}</div>
               {ck('preInduction', 'Pre-induction anesthestic reassessment')}
               <textarea
                 {...noAuto}
@@ -537,20 +545,20 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             </div>
             <div className="ar-rbox">
               <div className="ar-h">Fluid Totals</div>
-              <div className="ar-line"><span>Crystalloid</span>{tx('crystalloid', 'grow')}</div>
-              <div className="ar-line"><span>EBL</span>{tx('fluidEbl', 'grow')}</div>
-              <div className="ar-line"><span>Urine</span>{tx('fluidUrine', 'grow')}</div>
-              <div className="ar-line"><span>Blood</span>{tx('fluidBlood', 'grow')}</div>
+              <div className="ar-line"><span>Crystalloid</span>{txn('crystalloid', 'grow')}</div>
+              <div className="ar-line"><span>EBL</span>{txn('fluidEbl', 'grow')}</div>
+              <div className="ar-line"><span>Urine</span>{txn('fluidUrine', 'grow')}</div>
+              <div className="ar-line"><span>Blood</span>{txn('fluidBlood', 'grow')}</div>
             </div>
             <div className="ar-rbox">
               <div className="ar-h">Recovery</div>
               <div className="ar-line"><span>Location</span>{tx('recLocation', 'grow')}</div>
-              <div className="ar-line"><span>Time</span>{tx('recTime', 'grow')}</div>
-              <div className="ar-line"><span>BP</span>{tx('recBp', 'grow')}</div>
-              <div className="ar-line"><span>O&#8322; Sat</span>{tx('recO2', 'grow')}</div>
-              <div className="ar-line"><span>P</span>{tx('recP', 'grow')}</div>
-              <div className="ar-line"><span>R</span>{tx('recR', 'grow')}</div>
-              <div className="ar-line"><span>T</span>{tx('recT', 'grow')}</div>
+              <div className="ar-line"><span>Time</span>{txn('recTime', 'grow')}</div>
+              <div className="ar-line"><span>BP</span>{txn('recBp', 'grow')}</div>
+              <div className="ar-line"><span>O&#8322; Sat</span>{txn('recO2', 'grow')}</div>
+              <div className="ar-line"><span>P</span>{txn('recP', 'grow')}</div>
+              <div className="ar-line"><span>R</span>{txn('recR', 'grow')}</div>
+              <div className="ar-line"><span>T</span>{txn('recT', 'grow')}</div>
               {ck('recDentition', 'Dentition unchanged')}
               {ck('reportToRn', 'Report to RN')}
               <div className="ar-line">{ck('awake', 'Awake')}{ck('stable', 'Stable')}{ck('recNasalO2', 'Nasal Oxygen')}</div>
@@ -600,8 +608,8 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             <div className="ar-btable">
               <div className="ar-times">
                 <div className="ar-trow head"><span /><span>Start</span><span>Stop</span></div>
-                <div className="ar-trow"><span className="lbl">Anesthesia</span>{tx('anesStart', 'cellu')}{tx('anesStop', 'cellu')}</div>
-                <div className="ar-trow"><span className="lbl">Surgery</span>{tx('surgStart', 'cellu')}{tx('surgStop', 'cellu')}</div>
+                <div className="ar-trow"><span className="lbl">Anesthesia</span>{txn('anesStart', 'cellu')}{txn('anesStop', 'cellu')}</div>
+                <div className="ar-trow"><span className="lbl">Surgery</span>{txn('surgStart', 'cellu')}{txn('surgStop', 'cellu')}</div>
               </div>
               <div className="ar-dx">
                 <span className="lbl">Diagnosis</span>
