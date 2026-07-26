@@ -1939,8 +1939,16 @@ input[type='checkbox']:checked::after {
 }
 
 @media print {
+  /* Give the print layout a fixed letter width so phones don't size the
+     record to their narrow screen (which clipped it to a thin slice). */
+  html,
+  body {
+    width: 8.5in;
+  }
+
   .ar-wrap {
     overflow: visible;
+    width: auto;
   }
 
   .ar-scaler {
@@ -1951,7 +1959,9 @@ input[type='checkbox']:checked::after {
 
   .ar {
     border: none;
-    width: 100%;
+    /* Fixed inch width (letter minus 0.25in margins), NOT 100% — 100% is the
+       device viewport on a phone, which squished the grid to a slice. */
+    width: 8in;
     padding: 0;
     padding-top: 0.06in;
     transform: none !important;
