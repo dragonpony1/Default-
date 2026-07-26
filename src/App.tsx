@@ -11,6 +11,8 @@ import PacuOrders, { clearPacuDraft } from './PacuOrders';
 import BillingSheet, { clearBillingDraft } from './BillingSheet';
 import { loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 import { setCaseField, clearCase } from './caseData';
+import ProviderBar from './ProviderBar';
+import { applyProviderToDrafts, type ProviderPrefs } from './providers';
 
 type StringKeys = { [K in keyof PreopEval]: PreopEval[K] extends string ? K : never }[keyof PreopEval];
 type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : never }[keyof PreopEval];
@@ -75,6 +77,17 @@ export default function App() {
       setD({ ...emptyPreopEval });
       setAnesReset((n) => n + 1);
     }
+  };
+
+  // A provider "clicks in": merge their saved standing choices into the drafts,
+  // apply the pre-op patch, and bump the reset signal so the mounted forms
+  // reload with the applied preferences.
+  const applyProvider = (prefs: ProviderPrefs) => {
+    const patch = applyProviderToDrafts(prefs);
+    if (patch.plannedAnesthesia != null && patch.plannedAnesthesia !== '') {
+      setD((prev) => ({ ...prev, plannedAnesthesia: patch.plannedAnesthesia as string }));
+    }
+    setAnesReset((n) => n + 1);
   };
 
   // Borderless inline text input
@@ -254,6 +267,7 @@ export default function App() {
             {clearArmed ? '⚠ Tap again to clear all' : 'Clear form'}
           </button>
         </div>
+        <ProviderBar onApply={applyProvider} />
         <p className="privacy-note">
           No patient name or identifiers are entered here &mdash; apply the patient label sticker after
           printing. All data stays on this device only; clear the form after printing.
