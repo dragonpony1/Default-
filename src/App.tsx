@@ -7,6 +7,8 @@ import Barcode39 from './Barcode39';
 import FieldByField from './FieldByField';
 import EditChoices from './EditChoices';
 import AnesRecord, { clearAnesDraft } from './AnesRecord';
+import PacuOrders, { clearPacuDraft } from './PacuOrders';
+import BillingSheet, { clearBillingDraft } from './BillingSheet';
 import { loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 
 type StringKeys = { [K in keyof PreopEval]: PreopEval[K] extends string ? K : never }[keyof PreopEval];
@@ -14,7 +16,7 @@ type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : nev
 
 export default function App() {
   const [d, setD] = useState<PreopEval>(loadDraft);
-  const [view, setView] = useState<'fields' | 'form' | 'anes' | 'choices'>('fields');
+  const [view, setView] = useState<'fields' | 'form' | 'anes' | 'pacu' | 'billing' | 'choices'>('fields');
   const [anesReset, setAnesReset] = useState(0);
   const [choices, setChoicesState] = useState<CustomChoices>(loadCustomChoices);
 
@@ -48,9 +50,11 @@ export default function App() {
       return;
     }
     disarmClear();
-    if (window.confirm('Clear BOTH forms and wipe all entered data from this device? This cannot be undone.')) {
+    if (window.confirm('Clear ALL forms and wipe all entered data from this device? This cannot be undone.')) {
       clearDraft();
       clearAnesDraft();
+      clearPacuDraft();
+      clearBillingDraft();
       setD({ ...emptyPreopEval });
       setAnesReset((n) => n + 1);
     }
@@ -217,6 +221,12 @@ export default function App() {
           <button className={view === 'anes' ? 'on' : ''} onClick={() => setView('anes')}>
             Anesthesia Record
           </button>
+          <button className={view === 'pacu' ? 'on' : ''} onClick={() => setView('pacu')}>
+            PACU Orders
+          </button>
+          <button className={view === 'billing' ? 'on' : ''} onClick={() => setView('billing')}>
+            Billing
+          </button>
           <button className={view === 'choices' ? 'on' : ''} onClick={() => setView('choices')}>
             Edit Choices
           </button>
@@ -238,8 +248,10 @@ export default function App() {
       )}
       {view === 'choices' && <EditChoices choices={choices} setChoices={setChoices} />}
       {view === 'anes' && <AnesRecord resetSignal={anesReset} />}
+      {view === 'pacu' && <PacuOrders resetSignal={anesReset} />}
+      {view === 'billing' && <BillingSheet resetSignal={anesReset} />}
 
-      {view !== 'anes' && (
+      {view !== 'anes' && view !== 'pacu' && view !== 'billing' && (
       <div className={`page${view === 'form' ? '' : ' print-only-block'}`}>
         <div className="page-top">
           <div className="bc-wrap">
