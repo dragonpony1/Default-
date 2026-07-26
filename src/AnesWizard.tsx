@@ -1,5 +1,19 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { noAuto } from './inputProps';
+
+// "0730"/"7:30"/"730" → minutes since midnight, or null.
+function parseHHMM(s: string): number | null {
+  const m = s.trim().match(/^(\d{1,2}):?(\d{2})$/);
+  if (!m) return null;
+  const h = +m[1];
+  const min = +m[2];
+  if (h > 23 || min > 59) return null;
+  return h * 60 + min;
+}
+function toHHMM(mins: number): string {
+  const t = ((mins % 1440) + 1440) % 1440;
+  return String(Math.floor(t / 60)).padStart(2, '0') + String(t % 60).padStart(2, '0');
+}
 
 // Guided walk-through of the Anesthesia Record's dense, easy-to-miss "hard
 // points" — start of case, airway & positioning, regional/blocks, end of
@@ -27,6 +41,18 @@ interface Step {
 
 export default function AnesWizard(api: WizardApi) {
   const [step, setStep] = useState(0);
+
+  // Airway time auto-fills 7 minutes after the anesthesia start time (once, if
+  // it hasn't been set yet — a manual entry is never overwritten).
+  const { setTx } = api;
+  const anesStart = api.tx.anesStart ?? '';
+  const ettTime = api.tx.ettTime ?? '';
+  useEffect(() => {
+    if (ettTime) return;
+    const base = parseHHMM(anesStart);
+    if (base == null) return;
+    setTx('ettTime', toHHMM(base + 7));
+  }, [anesStart, ettTime, setTx]);
 
   const chip = (active: boolean, onClick: () => void, label: string, key?: string) => (
     <button key={key ?? label} type="button" className={`chip${active ? ' on' : ''}`} onClick={onClick}>
@@ -111,8 +137,6 @@ export default function AnesWizard(api: WizardApi) {
         <>
           {pick('Gauge', 'ivSize', ['14g', '16g', '18g', '20g', '22g', '24g'])}
           {pick('Site', 'ivArea', ['R hand', 'L hand', 'R forearm', 'L forearm', 'R AC', 'L AC', 'EJ', 'Foot'], true, 'other site')}
-          {pick('Local at site', 'ivLocal', ['Lidocaine', 'None'])}
-          {field('Started by / time', 'ivStar', 'e.g. RN / 0715')}
         </>
       ),
     },
@@ -175,8 +199,14 @@ export default function AnesWizard(api: WizardApi) {
     {
       phase: 'End of case',
       title: 'Emergence & reversal',
-      hint: 'Sugammadex dose — drops into the grid near the anesthesia stop time.',
-      render: () => drugDoses('Sugammadex', `oth3:${api.endCol}`, 'mg', [200, 500]),
+      hint: 'Doses drop into the grid near the anesthesia stop time.',
+      render: () => (
+        <>
+          {drugDoses('Sugammadex', `oth3:${api.endCol}`, 'mg', [200, 500])}
+          {drugDoses('Zofran (ondansetron)', `med8:${api.endCol}`, 'mg', [4])}
+          {drugDoses('Decadron (dexamethasone)', `oth7:${api.endCol}`, 'mg', [4, 10])}
+        </>
+      ),
     },
     {
       phase: 'End of case',
@@ -221,6 +251,23 @@ export default function AnesWizard(api: WizardApi) {
         </>
       ),
     },
+    {
+      phase: 'End of case',
+      title: 'Narration',
+      hint: 'Free-text notes — type, or use your stylus/finger with the on-screen keyboard. This fills the record’s Remarks. Save it to a provider to reuse your usual narrative.',
+      render: () => (
+        <label className="ifield awiz-narration" key="remarks">
+          <span>Narrative / Remarks</span>
+          <textarea
+            {...noAuto}
+            rows={8}
+            value={api.tx.remarks ?? ''}
+            placeholder="e.g. Patient tolerated procedure well, hemodynamically stable throughout, extubated awake and taken to PACU in stable condition…"
+            onChange={(e) => api.setTx('remarks', e.target.value)}
+          />
+        </label>
+      ),
+    },
   ];
 
   const cur = steps[step];
@@ -231,9 +278,17 @@ export default function AnesWizard(api: WizardApi) {
   return (
     <div className="intake screen-only awiz">
       <div className="awiz-top">
-        <div className="awiz-phases">
-          {['Start of case', 'Airway & positioning', 'End of case'].map((ph) => (
-            <span key={ph} className={`awiz-phase${cur.phase === ph ? ' on' : ''}`}>{ph}</span>
+        <div className="awiz-secnav">
+          {steps.map((s, i) => (
+            <button
+              key={s.title}
+              type="button"
+              className={`awiz-secbtn${i === step ? ' on' : ''}`}
+              onClick={() => setStep(i)}
+              title={`${s.phase}: ${s.title}`}
+            >
+              {s.title}
+            </button>
           ))}
         </div>
         <div className="fbf-bar"><div className="fbf-fill" style={{ width: `${((step + 1) / steps.length) * 100}%` }} /></div>

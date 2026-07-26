@@ -1953,7 +1953,7 @@ input[type='checkbox']:checked::after {
     border: none;
     width: 100%;
     padding: 0;
-    padding-top: 0.25in;
+    padding-top: 0.06in;
     transform: none !important;
   }
 
@@ -2142,6 +2142,51 @@ input[type='checkbox']:checked::after {
 .awiz-phase.on {
   background: #2a5db0;
   color: #fff;
+}
+
+/* Section jump-nav: every wizard section as a tappable chip so you can hop
+   straight to any one to make a change. Scrolls sideways on narrow screens. */
+.awiz-secnav {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.awiz-secbtn {
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #2a5db0;
+  background: #fff;
+  border: 1.5px solid #cbd5e6;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  min-height: 40px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.awiz-secbtn.on {
+  background: #2a5db0;
+  border-color: #2a5db0;
+  color: #fff;
+}
+
+.awiz-narration textarea {
+  font: inherit;
+  width: 100%;
+  padding: 0.6rem;
+  border: 1.5px solid #98a3b3;
+  border-radius: 8px;
+  resize: vertical;
+  min-height: 8rem;
+}
+
+.awiz-narration textarea:focus {
+  outline: none;
+  border-color: #2a5db0;
+  box-shadow: 0 0 0 2px #2a5db033;
 }
 
 /* Wizard dose / pick inputs */
