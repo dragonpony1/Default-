@@ -2370,3 +2370,10 @@ input[type='checkbox']:checked::after {
   color: #999;
   font-size: 0.85em;
 }
+
+.xfer-qr {
+  width: min(320px, 100%);
+  align-self: center;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}

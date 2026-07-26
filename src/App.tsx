@@ -9,7 +9,7 @@ import EditChoices from './EditChoices';
 import AnesRecord, { clearAnesDraft } from './AnesRecord';
 import PacuOrders, { clearPacuDraft } from './PacuOrders';
 import BillingSheet, { clearBillingDraft } from './BillingSheet';
-import { loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
+import { decodeChoices, loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 
 type StringKeys = { [K in keyof PreopEval]: PreopEval[K] extends string ? K : never }[keyof PreopEval];
 type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : never }[keyof PreopEval];
@@ -28,6 +28,22 @@ export default function App() {
   useEffect(() => {
     saveDraft(d);
   }, [d]);
+
+  // Arriving via a scanned setup QR: the #setup= fragment carries another
+  // device's Edit Choices configuration. Confirm, save, and clear the hash so
+  // reloads don't re-prompt.
+  useEffect(() => {
+    const m = window.location.hash.match(/^#setup=(.+)$/);
+    if (!m) return;
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    const imported = decodeChoices(m[1]);
+    if (!imported) return;
+    if (window.confirm('Load the scanned Edit Choices setup onto THIS device? It replaces this device’s choice lists. Patient data is not affected.')) {
+      saveCustomChoices(imported);
+      setChoicesState(imported);
+      setView('choices');
+    }
+  }, []);
 
   const set = <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => setD((prev) => ({ ...prev, [k]: v }));
 
