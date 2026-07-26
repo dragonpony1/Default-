@@ -6,6 +6,8 @@ import {
   type ProviderProfile,
   type ProviderPrefs,
 } from './providers';
+import { setSigner } from './signer';
+import SignaturePad from './SignaturePad';
 
 // A row of provider buttons (by initials) on the front GUI. Tap a provider to
 // "click in" — their saved standing choices populate the forms. Add a provider
@@ -27,6 +29,7 @@ function newId(existing: ProviderProfile[]): string {
 export default function ProviderBar({ onApply }: Props) {
   const [list, setList] = useState<ProviderProfile[]>(loadProviders);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [padOpen, setPadOpen] = useState(false);
 
   const persist = (next: ProviderProfile[]) => {
     saveProviders(next);
@@ -49,7 +52,17 @@ export default function ProviderBar({ onApply }: Props) {
 
   const clickIn = (p: ProviderProfile) => {
     setActiveId(p.id);
+    setSigner({ initials: p.initials, signature: p.signature ?? '' });
     onApply(p.prefs);
+  };
+
+  const saveSignature = (dataUrl: string) => {
+    const p = list.find((x) => x.id === activeId);
+    if (!p) return;
+    const next = list.map((x) => (x.id === p.id ? { ...x, signature: dataUrl } : x));
+    persist(next);
+    setSigner({ initials: p.initials, signature: dataUrl });
+    setPadOpen(false);
   };
 
   const saveActive = () => {
@@ -94,10 +107,16 @@ export default function ProviderBar({ onApply }: Props) {
           <button type="button" className="chip prov-save" onClick={saveActive}>
             💾 Save {active.initials}'s defaults
           </button>
+          <button type="button" className="chip prov-sig" onClick={() => setPadOpen(true)}>
+            ✍ {active.signature ? 'Update' : 'Add'} signature
+          </button>
           <button type="button" className="chip prov-remove" onClick={removeActive} aria-label="Remove provider">
             ✕
           </button>
         </>
+      )}
+      {padOpen && active && (
+        <SignaturePad initial={active.signature} onSave={saveSignature} onCancel={() => setPadOpen(false)} />
       )}
     </div>
   );

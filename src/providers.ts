@@ -19,6 +19,7 @@ export interface ProviderProfile {
   id: string;
   initials: string;
   prefs: ProviderPrefs;
+  signature?: string; // saved signature image (data URL PNG), stamped with date/time
 }
 
 // Draft localStorage keys owned by the form components. Kept in sync with the

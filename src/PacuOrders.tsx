@@ -3,6 +3,7 @@ import { noAuto } from './inputProps';
 import { useCaseData, setCaseField } from './caseData';
 import Barcode39 from './Barcode39';
 import PacuWizard from './PacuWizard';
+import SignatureStamp from './SignatureStamp';
 
 // Post-Anesthesia Recovery Room Orders replicating Mountain West Medical
 // Center form 170-165-1131001HMSFAC (01/15, Rev. 07/15, 07/22), portrait US
@@ -272,16 +273,14 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
 
       <div className="po-sign">
         <div className="po-sigcell grow">
-          {tx('provider', 'grow')}
-          <div className="po-siglabel">Anesthesia Provider</div>
-        </div>
-        <div className="po-sigcell">
-          {tx('date', 'med')}
-          <div className="po-siglabel">Date</div>
-        </div>
-        <div className="po-sigcell">
-          {tx('time', 'med')}
-          <div className="po-siglabel">Time</div>
+          <SignatureStamp
+            label="Anesthesia Provider"
+            sig={d.tx.sigImg ?? ''}
+            date={d.tx.date ?? ''}
+            time={d.tx.time ?? ''}
+            onStamp={(s, dt, tm) => setD((p) => ({ ...p, tx: { ...p.tx, sigImg: s, date: dt, time: tm } }))}
+            onClear={() => setD((p) => ({ ...p, tx: { ...p.tx, sigImg: '' } }))}
+          />
         </div>
       </div>
 
