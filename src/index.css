@@ -2198,6 +2198,61 @@ input[type='checkbox']:checked::after {
   box-shadow: 0 0 0 2px #2a5db033;
 }
 
+/* Wizard drug block (breakthrough pain) + priority checkbox */
+.awiz-drugblock {
+  border: 1px solid #e2e8f2;
+  border-radius: 8px;
+  padding: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+.awiz-priority {
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+/* Billing code picker: tappable rows for search results and selections */
+.awiz-codelist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.awiz-coderow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  text-align: left;
+  font: inherit;
+  background: #fff;
+  border: 1.5px solid #cbd5e6;
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.awiz-coderow.on {
+  background: #eaf0fb;
+  border-color: #2a5db0;
+}
+
+.awiz-code {
+  font-weight: 700;
+  color: #2a5db0;
+  flex: 0 0 4.5rem;
+}
+
+.awiz-codedesc {
+  color: #1a1a1a;
+}
+
+.ifield.small {
+  flex: 0 1 6rem;
+}
+
 /* Wizard dose / pick inputs */
 .awiz-doseinput {
   font: inherit;

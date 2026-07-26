@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { noAuto } from './inputProps';
+import BillingWizard from './BillingWizard';
 
 // Deseret Peak Anesthesia Billing Information sheet, built from a flat scan
 // of the original. Tap the box beside a CPT code to mark it; header fields
@@ -8,7 +9,7 @@ import { noAuto } from './inputProps';
 
 const KEY = 'billing-sheet-draft-v1';
 
-type Code = [code: string, desc: string];
+export type Code = [code: string, desc: string];
 
 const LEFT: Code[] = [
   ['00126', 'BMT (PE tubes)'],
@@ -92,6 +93,11 @@ const RIGHT_BOTTOM: Code[] = [
   ['99140', 'Emergency after hrs'],
 ];
 
+// Procedure/anesthesia CPT codes (left + ortho columns) and the block/line
+// codes, exported so the guided wizard can search and check the same codes.
+export const PROCEDURE_CODES: Code[] = [...LEFT, ...RIGHT_TOP];
+export const BLOCK_CODES: Code[] = RIGHT_BOTTOM;
+
 interface BillingDraft {
   ck: Record<string, boolean>;
   tx: Record<string, string>;
@@ -114,6 +120,7 @@ export function clearBillingDraft(): void {
 
 export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number }) {
   const [d, setD] = useState<BillingDraft>(loadBilling);
+  const [mode, setMode] = useState<'form' | 'wizard'>('form');
 
   useEffect(() => {
     localStorage.setItem(KEY, JSON.stringify(d));
@@ -124,8 +131,25 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
     if (resetSignal !== seenReset.current) {
       seenReset.current = resetSignal;
       setD(loadBilling());
+      setMode('form');
     }
   }, [resetSignal]);
+
+  const setCkVal = (k: string, v: boolean) => setD((p) => ({ ...p, ck: { ...p.ck, [k]: v } }));
+  const setTxVal = (k: string, v: string) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: v } }));
+
+  if (mode === 'wizard') {
+    return (
+      <BillingWizard
+        ck={d.ck}
+        tx={d.tx}
+        setCk={setCkVal}
+        setTx={setTxVal}
+        onBack={() => setMode('form')}
+        onDone={() => setMode('form')}
+      />
+    );
+  }
 
   const ck = (k: string) => (
     <input
@@ -155,6 +179,11 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
   );
 
   return (
+    <>
+      <div className="awiz-switch screen-only">
+        <button type="button" className="chip" onClick={() => setMode('wizard')}>💲 Guided billing wizard</button>
+        <span className="awiz-switch-hint">Case info, find-a-code, modifiers, and blocks. The full form stays fillable.</span>
+      </div>
     <div className="page bs-page">
       <div className="bs-head">
         <div className="b bs-title">Deseret Peak Anesthesia Billing Information</div>
@@ -210,5 +239,6 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
         </div>
       </div>
     </div>
+    </>
   );
 }
