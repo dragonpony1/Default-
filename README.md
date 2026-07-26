@@ -12,6 +12,15 @@ electronically and produce a clean, printed US-Letter form.
   survives a page reload. Use **Clear form** after printing to remove all data
   from the device.
 
+## Installing on a tablet
+
+The app is a PWA and works fully offline after the first visit. On an Android
+tablet, open the GitHub Pages URL in Chrome, then **⋮ → Add to Home screen**
+(or "Install app"). The installed app opens full-screen, loads with no network,
+and picks up new versions automatically the next time it's online. Printing
+uses Android's print dialog, so a Bluetooth printer works once its
+manufacturer's print service app is installed on the tablet.
+
 ## Forms
 
 - **Pre-anesthesia evaluation** — implemented, matching Mountain West Medical
