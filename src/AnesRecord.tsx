@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { noAuto } from './inputProps';
+import { useCaseData, setCaseField } from './caseData';
 import VitalsGraph, { type VitalsData, type Series } from './VitalsGraph';
 import AnesWizard from './AnesWizard';
 
@@ -67,6 +68,7 @@ export function clearAnesDraft(): void {
 
 export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }) {
   const [d, setD] = useState<AnesDraft>(loadAnes);
+  const caseData = useCaseData(); // shared allergies (pre-populated from pre-op)
   const [mode, setMode] = useState<'chart' | 'wizard'>('chart');
   const [zoom, setZoom] = useState(1);
   const bumpZoom = (delta: number) => setZoom((z) => Math.min(2.5, Math.max(0.8, Math.round((z + delta) * 10) / 10)));
@@ -260,7 +262,12 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
           </div>
           <div className="ar-hallergy">
             <span className="lbl">ALLERGIES</span>
-            {tx('allergies', 'wide')}
+            <input
+              {...noAuto}
+              className="t u wide"
+              value={caseData.allergies}
+              onChange={(e) => setCaseField('allergies', e.target.value)}
+            />
           </div>
           <div className="ar-hlabel">Patient Label</div>
         </div>

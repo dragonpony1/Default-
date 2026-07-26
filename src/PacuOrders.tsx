@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { noAuto } from './inputProps';
+import { useCaseData, setCaseField } from './caseData';
 import Barcode39 from './Barcode39';
 
 // Post-Anesthesia Recovery Room Orders replicating Mountain West Medical
@@ -32,6 +33,7 @@ export function clearPacuDraft(): void {
 
 export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }) {
   const [d, setD] = useState<PacuDraft>(loadPacu);
+  const caseData = useCaseData(); // shared allergies (pre-populated from pre-op)
 
   useEffect(() => {
     localStorage.setItem(KEY, JSON.stringify(d));
@@ -96,7 +98,12 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
         {item(1, (
           <div className="po-line">
             <span>Patient allergies:</span>
-            {tx('allergies', 'grow')}
+            <input
+              {...noAuto}
+              className="t u grow"
+              value={caseData.allergies}
+              onChange={(e) => setCaseField('allergies', e.target.value)}
+            />
             <span>Patient Wt</span>
             {tx('weight')}
             <span>(kg)</span>

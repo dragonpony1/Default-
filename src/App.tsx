@@ -10,6 +10,7 @@ import AnesRecord, { clearAnesDraft } from './AnesRecord';
 import PacuOrders, { clearPacuDraft } from './PacuOrders';
 import BillingSheet, { clearBillingDraft } from './BillingSheet';
 import { loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
+import { setCaseField, clearCase } from './caseData';
 
 type StringKeys = { [K in keyof PreopEval]: PreopEval[K] extends string ? K : never }[keyof PreopEval];
 type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : never }[keyof PreopEval];
@@ -28,6 +29,21 @@ export default function App() {
   useEffect(() => {
     saveDraft(d);
   }, [d]);
+
+  // Share the pre-op allergy assessment into the Case so it pre-populates the
+  // record, PACU, and other documents. Only push when there's something to say
+  // so an empty pre-op never wipes an allergy typed on another form.
+  useEffect(() => {
+    const summary = d.allergiesNone
+      ? 'None'
+      : [
+          ...d.allergyList.map((x) => (x.reaction ? `${x.name} (${x.reaction})` : x.name)),
+          d.allergies,
+        ]
+          .filter(Boolean)
+          .join(', ');
+    if (summary) setCaseField('allergies', summary);
+  }, [d.allergiesNone, d.allergyList, d.allergies]);
 
   const set = <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => setD((prev) => ({ ...prev, [k]: v }));
 
@@ -55,6 +71,7 @@ export default function App() {
       clearAnesDraft();
       clearPacuDraft();
       clearBillingDraft();
+      clearCase();
       setD({ ...emptyPreopEval });
       setAnesReset((n) => n + 1);
     }
