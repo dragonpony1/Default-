@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { composeNarrative } from './narrative';
 import { noAuto } from './inputProps';
 
 // "0730"/"7:30"/"730" → minutes since midnight, or null.
@@ -271,6 +272,20 @@ export default function AnesWizard(api: WizardApi) {
       render: () => (
         <label className="ifield awiz-narration" key="remarks">
           <span>Narrative / Remarks</span>
+          <button
+            type="button"
+            className="chip"
+            onClick={(e) => {
+              e.preventDefault();
+              const draft = composeNarrative(api.ck, api.tx, api.cells);
+              if (!draft) { window.alert('Nothing charted yet to draft from.'); return; }
+              if (!api.tx.remarks || window.confirm('Replace the current remarks with a fresh draft from the chart?')) {
+                api.setTx('remarks', draft);
+              }
+            }}
+          >
+            ⚡ Draft from chart
+          </button>
           <textarea
             {...noAuto}
             rows={8}

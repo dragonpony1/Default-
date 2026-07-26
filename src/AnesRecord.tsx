@@ -1,9 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { noAuto, numPad } from './inputProps';
+import { noAuto, numPad, tempPad } from './inputProps';
 import { useCaseData, setCaseField } from './caseData';
 import VitalsGraph, { type VitalsData, type Series } from './VitalsGraph';
 import { useSigner, nowStamp } from './signer';
 import AnesWizard from './AnesWizard';
+import { composeNarrative } from './narrative';
 
 // Intra-op Anesthesia Record replicating Mountain West Medical Center form
 // 170-165-MW250046HMS (03/08, Rev. 06/15), portrait US Letter, built from a
@@ -108,6 +109,15 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     </label>
   );
 
+  const txtemp = (k: string, cls = '') => (
+    <input
+      {...tempPad}
+      className={`t u ${cls}`}
+      value={d.tx[k] ?? ''}
+      onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: e.target.value } }))}
+    />
+  );
+
   const txn = (k: string, cls = '') => (
     <input
       {...numPad}
@@ -167,7 +177,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
   // One tappable charting cell.
   const cell = (rowKey: string, col: number) => (
     <input
-      {...numPad}
+      {...(rowKey === 'mon2' ? tempPad : numPad)}
       key={col}
       className="ar-cell"
       value={d.cells[`${rowKey}:${col}`] ?? ''}
@@ -344,7 +354,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             <div className="ar-line">{ck('o2Analyzer', 'O₂ Analyzer')}{ck('calibrated', 'Calibrated')}</div>
             <div className="ar-line"><span className="b">WARMER:</span>{ck('warmerIv', 'IV Blood')}</div>
             <div className="ar-line ind">{ck('bairHugger', 'Bair Hugger')}{ck('bairUp', '↑')}{ck('bairDown', '↓')}</div>
-            <div className="ar-line">{ck('hme', 'HME')} <span>Temp</span>{txn('hmeTemp', 'xshort')}</div>
+            <div className="ar-line">{ck('hme', 'HME')} <span>Temp</span>{txtemp('hmeTemp', 'xshort')}</div>
             <div className="ar-line">{ck('artLine', 'Arterial Line')}{ck('artL', 'L')}{ck('artR', 'R')}</div>
             {ck('cvp', 'CVP')}
             {ck('swanGanz', 'Swan-Ganz')}
@@ -533,6 +543,19 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
           <div className="ar-right">
             <div className="ar-rbox ar-remarksbox">
               <div className="ar-h">Remarks</div>
+              <button
+                type="button"
+                className="chip ar-draftbtn screen-only"
+                onClick={() => {
+                  const draft = composeNarrative(d.ck, d.tx, d.cells);
+                  if (!draft) { window.alert('Nothing charted yet to draft from — fill in setup/airway/end-of-case first.'); return; }
+                  if (!d.tx.remarks || window.confirm('Replace the current remarks with a fresh draft from the chart?')) {
+                    setD((p) => ({ ...p, tx: { ...p.tx, remarks: draft } }));
+                  }
+                }}
+              >
+                ⚡ Draft from chart
+              </button>
               <div className="ar-line"><span className="b">TIME:</span>{txn('remarkTime', 'grow')}</div>
               {ck('preInduction', 'Pre-induction anesthestic reassessment')}
               <textarea
@@ -558,7 +581,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
               <div className="ar-line"><span>O&#8322; Sat</span>{txn('recO2', 'grow')}</div>
               <div className="ar-line"><span>P</span>{txn('recP', 'grow')}</div>
               <div className="ar-line"><span>R</span>{txn('recR', 'grow')}</div>
-              <div className="ar-line"><span>T</span>{txn('recT', 'grow')}</div>
+              <div className="ar-line"><span>T</span>{txtemp('recT', 'grow')}</div>
               {ck('recDentition', 'Dentition unchanged')}
               {ck('reportToRn', 'Report to RN')}
               <div className="ar-line">{ck('awake', 'Awake')}{ck('stable', 'Stable')}{ck('recNasalO2', 'Nasal Oxygen')}</div>

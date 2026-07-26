@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { noAuto, numPad } from './inputProps';
+import { noAuto, numPad, tempPad } from './inputProps';
 import { emptyPreopEval, type PreopEval, type YesNo } from './types';
 import { SYSTEMS, type SystemBand } from './formConfig';
 import { clearDraft, loadDraft, saveDraft } from './storage';
 import Barcode39 from './Barcode39';
 import NumPad from './NumPad';
+import TempPad from './TempPad';
 import FieldByField from './FieldByField';
 import EditChoices from './EditChoices';
 import AnesRecord, { clearAnesDraft } from './AnesRecord';
@@ -12,7 +13,7 @@ import PacuOrders, { clearPacuDraft } from './PacuOrders';
 import BillingSheet, { clearBillingDraft } from './BillingSheet';
 import { decodeChoices, loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 import { setCaseField, clearCase } from './caseData';
-import { clearSigner } from './signer';
+import { clearSigner, useSigner, nowStamp } from './signer';
 import ProviderBar from './ProviderBar';
 import { applyProviderToDrafts, type ProviderPrefs } from './providers';
 
@@ -24,6 +25,7 @@ export default function App() {
   const [view, setView] = useState<'fields' | 'form' | 'anes' | 'pacu' | 'billing' | 'choices'>('fields');
   const [anesReset, setAnesReset] = useState(0);
   const [choices, setChoicesState] = useState<CustomChoices>(loadCustomChoices);
+  const signer = useSigner();
 
   const setChoices = (c: CustomChoices) => {
     saveCustomChoices(c);
@@ -135,9 +137,40 @@ export default function App() {
     <input {...noAuto} className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
   );
 
+  // Signature cell: shows the stamped signature image; the clicked-in
+  // provider's saved signature stamps with one tap and fills the date/time.
+  const sigCell = (label: string, sigKey: 'panSig' | 'evalSig' | 'inpSig', dtKey: StringKeys) => (
+    <div className="sigcell grow tall">
+      <span className="lbl">{label}</span>
+      {d[sigKey] && <img className="sig-inline" src={d[sigKey]} alt="signature" />}
+      <span className="sig-actions screen-only">
+        {signer.signature && (
+          <button
+            type="button"
+            className="chip sig-btn"
+            onClick={() => {
+              const { date, time } = nowStamp();
+              setD((prev) => ({ ...prev, [sigKey]: signer.signature, [dtKey]: `${date} ${time}` }));
+            }}
+          >
+            {d[sigKey] ? '↻' : `✍ ${signer.initials}`}
+          </button>
+        )}
+        {d[sigKey] && (
+          <button type="button" className="chip sig-btn" onClick={() => setD((prev) => ({ ...prev, [sigKey]: '' }))}>✕</button>
+        )}
+      </span>
+    </div>
+  );
+
   // Numeric variant: floating 10-key instead of the OS keyboard
   const txn = (k: StringKeys, cls = '') => (
     <input {...numPad} className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
+  );
+
+  // Temperature variant: floating slider
+  const txT = (k: StringKeys, cls = '') => (
+    <input {...tempPad} className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
   );
 
   const ta = (k: StringKeys, rows = 2, cls = '') => (
@@ -269,7 +302,7 @@ export default function App() {
         <div className="vrow"><span>BP</span>{txn(`${pre}Bp` as StringKeys)}</div>
         <div className="vrow"><span>P</span>{txn(`${pre}P` as StringKeys)}</div>
         <div className="vrow"><span>R</span>{txn(`${pre}R` as StringKeys)}</div>
-        <div className="vrow"><span>T</span>{txn(`${pre}T` as StringKeys)}</div>
+        <div className="vrow"><span>T</span>{txT(`${pre}T` as StringKeys)}</div>
         <div className="vrow"><span>O&#8322; Sat.</span>{txn(`${pre}O2` as StringKeys)}</div>
         <div className="vrow"><span>Pain (0&ndash;10)</span>{txn(`${pre}Pain` as StringKeys)}</div>
       </div>
@@ -285,6 +318,7 @@ export default function App() {
   return (
     <div className="app">
       <NumPad />
+      <TempPad />
       <header className="toolbar screen-only">
         <h1>Pre-Anesthesia Evaluation</h1>
         <div className="tabs">
@@ -368,7 +402,7 @@ export default function App() {
                 <span className="b">BP</span>{txn('bp', 'short')}
                 <span className="b">P</span>{txn('p', 'short')}
                 <span className="b">R</span>{txn('r', 'short')}
-                <span className="b">T</span>{txn('t', 'short')}
+                <span className="b">T</span>{txT('t', 'short')}
               </div>
             </div>
           </div>
@@ -517,7 +551,7 @@ export default function App() {
                 {vitalsPair('pan')}
                 <div className="noteslot"><span className="b">NOTES:</span>{ta('panNotes', 2)}</div>
                 <div className="sigrow">
-                  <div className="sigcell grow"><span className="lbl">Signed</span></div>
+                  {sigCell('Signed', 'panSig', 'panDateTime')}
                   <div className="sigcell w40"><span className="lbl">Date/Time</span>{txt('panDateTime')}</div>
                 </div>
               </div>
@@ -555,7 +589,7 @@ export default function App() {
                 {ta('preAnesthesiaMeds', 3)}
               </div>
               <div className="sigrow topline">
-                <div className="sigcell grow tall"><span className="lbl">Evaluator Signature</span></div>
+                {sigCell('Evaluator Signature', 'evalSig', 'evalDateTime')}
                 <div className="sigcell w40 tall"><span className="lbl">Date/Time</span>{txt('evalDateTime')}</div>
               </div>
             </div>
@@ -565,7 +599,7 @@ export default function App() {
               {vitalsPair('inp')}
               <div className="noteslot grow"><span className="b">NOTES:</span>{ta('inpNotes', 3)}</div>
               <div className="sigrow topline">
-                <div className="sigcell grow tall"><span className="lbl">Signed</span></div>
+                {sigCell('Signed', 'inpSig', 'inpDateTime')}
                 <div className="sigcell w40 tall"><span className="lbl">Date/Time</span>{txt('inpDateTime')}</div>
               </div>
             </div>
