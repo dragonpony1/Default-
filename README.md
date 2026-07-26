@@ -30,7 +30,16 @@ manufacturer's print service app is installed on the tablet.
   signature blocks. Prints on a single US Letter page. No patient identifiers
   are entered — the patient label sticker is applied after printing.
 
-Planned: intra-op anesthesia record, PACU note, controlled substance log.
+- **Intra-op anesthesia record** — implemented, matching form 170-165-MW250046HMS
+  with a time-anchored charting grid and draggable BP/HR vitals.
+- **Post-Anesthesia Recovery Room Orders** — implemented, matching form
+  170-165-1131001HMSFAC (01/15, Rev. 07/15, 07/22): dose blanks, breakthrough-pain
+  priority checkboxes, call criteria, and free order lines 16–18.
+- **Deseret Peak Anesthesia Billing Information** — implemented: tappable CPT-code
+  table, modifier checks (age, ASA, prone, position), block and line codes, and an
+  add-a-code blank.
+
+Planned: controlled substance log.
 
 ## App structure
 
