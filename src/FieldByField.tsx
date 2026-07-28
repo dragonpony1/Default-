@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { noAuto } from './inputProps';
+import { noAuto, numPad, tempPad } from './inputProps';
 import type { PreopEval, YesNo } from './types';
 import { SYSTEMS, screenItems, type SystemBand } from './formConfig';
 import type { CustomChoices } from './choices';
@@ -70,6 +70,25 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     />
   );
 
+  const numInput = (k: StringKeys, placeholder = '') => (
+    <input
+      {...numPad}
+      className="fbf-input"
+      value={d[k]}
+      placeholder={placeholder}
+      onChange={(e) => set(k, e.target.value)}
+    />
+  );
+
+  const tempInput = (k: StringKeys) => (
+    <input
+      {...tempPad}
+      className="fbf-input"
+      value={d[k]}
+      onChange={(e) => set(k, e.target.value)}
+    />
+  );
+
   const area = (k: StringKeys, disabled = false) => (
     <textarea
         {...noAuto}
@@ -120,6 +139,13 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     title,
     hint,
     render: () => input(k),
+    summary: () => d[k],
+  });
+
+  const numStep = (title: string, k: StringKeys, hint?: string): Step => ({
+    title,
+    hint,
+    render: () => numInput(k),
     summary: () => d[k],
   });
 
@@ -203,13 +229,13 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       ),
       summary: () => d.proposedProcedure,
     },
-    textStep('Age', 'age'),
+    numStep('Age', 'age'),
     { title: 'Sex', render: () => oneOf('sex', ['M', 'F']), summary: () => d.sex },
     {
       title: 'Height',
       render: () => (
         <>
-          {input('height')}
+          {numInput('height')}
           {oneOf('heightUnit', ['in', 'cm'])}
         </>
       ),
@@ -219,16 +245,16 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       title: 'Weight',
       render: () => (
         <>
-          {input('weight')}
+          {numInput('weight')}
           {oneOf('weightUnit', ['lb', 'kg'])}
         </>
       ),
       summary: () => (d.weight ? `${d.weight} ${d.weightUnit}`.trim() : ''),
     },
-    textStep('Blood pressure', 'bp', 'Pre-procedure vital signs'),
-    textStep('Pulse', 'p', 'Pre-procedure vital signs'),
-    textStep('Respirations', 'r', 'Pre-procedure vital signs'),
-    textStep('Temperature', 't', 'Pre-procedure vital signs'),
+    numStep('Blood pressure', 'bp', 'Pre-procedure vital signs'),
+    numStep('Pulse', 'p', 'Pre-procedure vital signs'),
+    numStep('Respirations', 'r', 'Pre-procedure vital signs'),
+    { title: 'Temperature', hint: 'Pre-procedure vital signs', render: () => tempInput('t'), summary: () => d.t },
     textStep('NPO since', 'npo'),
     {
       title: 'Previous anesthesia / operations',
@@ -369,11 +395,11 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
             <>
               <label className="ifield">
                 <span>Packs / day</span>
-                <input {...noAuto} value={d.tobaccoPacksDay} onChange={(e) => set('tobaccoPacksDay', e.target.value)} />
+                <input {...numPad} value={d.tobaccoPacksDay} onChange={(e) => set('tobaccoPacksDay', e.target.value)} />
               </label>
               <label className="ifield">
                 <span>For how many years</span>
-                <input {...noAuto} value={d.tobaccoYears} onChange={(e) => set('tobaccoYears', e.target.value)} />
+                <input {...numPad} value={d.tobaccoYears} onChange={(e) => set('tobaccoYears', e.target.value)} />
               </label>
             </>
           )}
@@ -398,7 +424,7 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
           {d.homeO2 && (
             <label className="ifield">
               <span>Liters / min</span>
-              <input {...noAuto} value={d.homeO2Liters} onChange={(e) => set('homeO2Liters', e.target.value)} />
+              <input {...numPad} value={d.homeO2Liters} onChange={(e) => set('homeO2Liters', e.target.value)} />
             </label>
           )}
         </>
