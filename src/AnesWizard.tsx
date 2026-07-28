@@ -108,17 +108,35 @@ export default function AnesWizard(api: WizardApi) {
 
   // A continuously-running setting: pick a starting value and carry-forward
   // fills it across the chart until it is changed.
-  const settingRow = (label: string, cellKey: string, unit: string, opts: Array<string | number>) => (
+  const settingRow = (
+    label: string,
+    cellKey: string,
+    unit: string,
+    opts: Array<string | number>,
+    slider?: { min: number; max: number; inc: number; start: number },
+  ) => (
     <div className="igroup" key={cellKey}>
       <span>{label} <span className="awiz-unit">{unit}</span></span>
       <div className="chips wrap">
         {opts.map((o) =>
           chip(api.cells[cellKey] === String(o), () => api.setCell(cellKey, api.cells[cellKey] === String(o) ? '' : String(o)), String(o), cellKey + o),
         )}
+        {/* Tapping the box opens the same slider the chart cells use, so a
+            value between the chips can be dialled in rather than typed. */}
         <input
           {...numPad}
+          {...(slider
+            ? {
+                'data-step-min': slider.min,
+                'data-step-max': slider.max,
+                'data-step-inc': slider.inc,
+                'data-step-label': label,
+                'data-step-unit': unit === 'fraction' ? '' : unit,
+                'data-step-start': slider.start,
+              }
+            : {})}
           className="awiz-doseinput"
-          placeholder="other"
+          placeholder={slider ? 'slide…' : 'other'}
           value={opts.map(String).includes(api.cells[cellKey]) ? '' : (api.cells[cellKey] ?? '')}
           onChange={(e) => api.setCell(cellKey, e.target.value)}
         />
@@ -224,13 +242,13 @@ export default function AnesWizard(api: WizardApi) {
       hint: 'Starting settings — each one holds across the chart until you change it, so you only enter it again when it actually changes.',
       render: () => (
         <>
-          {settingRow('Oxygen', 'med0:0', 'L/min', [1, 2, 3, 4, 5])}
-          {settingRow('N₂O / Air', 'med1:0', 'L/min', [0, 1, 2, 3])}
-          {settingRow('ISO / SEVO', 'med2:0', 'ET%', [0.8, 1, 1.5, 2, 2.5])}
-          {settingRow('Rate', 'vent0:0', 'breaths/min', [8, 10, 12, 14, 16])}
-          {settingRow('Tidal volume', 'vent1:0', 'mL', [400, 450, 500, 550, 600])}
-          {settingRow('FiO₂', 'vent2:0', 'fraction', ['.3', '.4', '.5', '.6', '1.0'])}
-          {settingRow('Inspiratory pressure', 'vent3:0', 'cm H₂O', [15, 18, 20, 22, 25])}
+          {settingRow('Oxygen', 'med0:0', 'L/min', [1, 2, 3, 4, 5], { min: 0, max: 10, inc: 0.5, start: 2 })}
+          {settingRow('N₂O / Air', 'med1:0', 'L/min', [0, 1, 2, 3], { min: 0, max: 10, inc: 0.5, start: 2 })}
+          {settingRow('ISO / SEVO', 'med2:0', 'ET%', [0.8, 1, 1.5, 2, 2.5], { min: 0, max: 8, inc: 0.1, start: 1.5 })}
+          {settingRow('Rate', 'vent0:0', 'breaths/min', [8, 10, 12, 14, 16], { min: 4, max: 30, inc: 1, start: 12 })}
+          {settingRow('Tidal volume', 'vent1:0', 'mL', [400, 450, 500, 550, 600], { min: 200, max: 900, inc: 10, start: 500 })}
+          {settingRow('FiO₂', 'vent2:0', 'fraction', ['.3', '.4', '.5', '.6', '1.0'], { min: 0.21, max: 1, inc: 0.05, start: 0.5 })}
+          {settingRow('Inspiratory pressure', 'vent3:0', 'cm H₂O', [15, 18, 20, 22, 25], { min: 5, max: 40, inc: 1, start: 18 })}
         </>
       ),
     },
@@ -240,12 +258,12 @@ export default function AnesWizard(api: WizardApi) {
       hint: 'First readings off the monitor. These carry forward too — chart a new value only when it changes.',
       render: () => (
         <>
-          {settingRow('EtCO₂', 'mon0:0', 'mmHg', [30, 32, 34, 36, 38])}
-          {settingRow('SaO₂', 'mon1:0', '%', [96, 97, 98, 99, 100])}
+          {settingRow('EtCO₂', 'mon0:0', 'mmHg', [30, 32, 34, 36, 38], { min: 15, max: 65, inc: 1, start: 35 })}
+          {settingRow('SaO₂', 'mon1:0', '%', [96, 97, 98, 99, 100], { min: 70, max: 100, inc: 1, start: 99 })}
           {settingRow('Temp', 'mon2:0', '°C', [35.5, 36, 36.5, 37])}
           {settingRow('EKG', 'mon3:0', 'rhythm', ['NSR', 'ST', 'SB', 'AF'])}
           {settingRow('Position', 'mon6:0', '', ['Sup', 'Pron', 'Lat', 'Bch', 'Lith'])}
-          {settingRow('TO₄', 'mon7:0', 'twitches', [0, 1, 2, 3, 4])}
+          {settingRow('TO₄', 'mon7:0', 'twitches', [0, 1, 2, 3, 4], { min: 0, max: 4, inc: 1, start: 4 })}
         </>
       ),
     },
