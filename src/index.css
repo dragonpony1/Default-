@@ -2022,17 +2022,24 @@ input[type='checkbox']:checked::after {
 }
 
 .vg-glyph {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 900;
   line-height: 1;
+  /* A hair of shadow in the same ink thickens the glyph without blurring it. */
+  text-shadow: 0 0 0.4px currentColor, 0 0 0.4px currentColor;
 }
 
+/* The HR dot stays smaller and rounder than the BP chevrons so the three
+   series never read as the same mark. */
 .vg-hr .vg-glyph {
-  font-size: 8px;
+  font-size: 9px;
+  text-shadow: 0 0 0.3px currentColor;
 }
 
+/* Carried repeats stay lighter than real readings, but no longer so faint
+   that the trace looks broken. */
 .vg-mark:not(.explicit) .vg-glyph {
-  opacity: 0.5;
+  opacity: 0.75;
 }
 
 /* First-reading entry bar (screen only — hidden in print, no layout shift) */
@@ -2983,3 +2990,9 @@ input[type='checkbox']:checked::after {
     color: #000;
   }
 }
+
+/* Longer entries (100, 36.5, Lith) shrink to stay inside the narrow charting
+   cells instead of clipping. */
+.ar-cell.len3 { font-size: 6px; }
+.ar-cell.len4 { font-size: 5.4px; letter-spacing: -0.2px; }
+.ar-cell.len5 { font-size: 4.8px; letter-spacing: -0.3px; }

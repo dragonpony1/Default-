@@ -22,7 +22,9 @@ const MAX = 200;
 const STEP_V = 20; // one crosshatch row per 20 units
 const ROWS = MAX / STEP_V + 1; // 11 label rows (200..0)
 const SERIES: Series[] = ['sys', 'dia', 'hr'];
-const COLOR: Record<Series, string> = { sys: '#b02a2a', dia: '#2a5db0', hr: '#1a7a3a' };
+// Deep, saturated ink so the trace holds up on paper. HR keeps its own hue
+// and its solid dot glyph, so it stays distinguishable from the BP pair.
+const COLOR: Record<Series, string> = { sys: '#8f0f0f', dia: '#0f2f8f', hr: '#0b5a22' };
 const GLYPH: Record<Series, string> = { sys: '⌄', dia: '⌃', hr: '●' };
 
 // Displayed value at a column = most recent explicit entry at or before it.
@@ -102,7 +104,7 @@ export default function VitalsGraph({ cols, endCol, vitals, setVitals }: Props) 
     return (
       <div className="vg-series" key={series}>
         <svg className="vg-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-          <polyline points={poly} fill="none" stroke={COLOR[series]} strokeWidth="0.6" vectorEffect="non-scaling-stroke" />
+          <polyline points={poly} fill="none" stroke={COLOR[series]} strokeWidth={series === 'hr' ? 1.1 : 1.4} vectorEffect="non-scaling-stroke" />
         </svg>
         {points.map((p) => (
           <div

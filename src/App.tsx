@@ -7,6 +7,7 @@ import { clearDraft, loadDraft, saveDraft } from './storage';
 import Barcode39 from './Barcode39';
 import NumPad from './NumPad';
 import TempPad from './TempPad';
+import StepPad from './StepPad';
 import FieldByField from './FieldByField';
 import EditChoices from './EditChoices';
 import AnesRecord, { clearAnesDraft } from './AnesRecord';
@@ -363,6 +364,7 @@ export default function App() {
     <div className="app">
       <NumPad />
       <TempPad />
+      <StepPad />
       {signTarget && (
         <SignaturePad
           onSave={(sig) => {

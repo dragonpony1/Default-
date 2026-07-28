@@ -229,7 +229,7 @@ export default function AnesWizard(api: WizardApi) {
           {settingRow('ISO / SEVO', 'med2:0', 'ET%', [0.8, 1, 1.5, 2, 2.5])}
           {settingRow('Rate', 'vent0:0', 'breaths/min', [8, 10, 12, 14, 16])}
           {settingRow('Tidal volume', 'vent1:0', 'mL', [400, 450, 500, 550, 600])}
-          {settingRow('FiO₂', 'vent2:0', '%', [30, 40, 50, 60, 100])}
+          {settingRow('FiO₂', 'vent2:0', 'fraction', ['.3', '.4', '.5', '.6', '1.0'])}
           {settingRow('Inspiratory pressure', 'vent3:0', 'cm H₂O', [15, 18, 20, 22, 25])}
         </>
       ),
@@ -244,7 +244,7 @@ export default function AnesWizard(api: WizardApi) {
           {settingRow('SaO₂', 'mon1:0', '%', [96, 97, 98, 99, 100])}
           {settingRow('Temp', 'mon2:0', '°C', [35.5, 36, 36.5, 37])}
           {settingRow('EKG', 'mon3:0', 'rhythm', ['NSR', 'ST', 'SB', 'AF'])}
-          {settingRow('Position', 'mon6:0', '', ['Supine', 'Prone', 'Lateral', 'Beach', 'Litho'])}
+          {settingRow('Position', 'mon6:0', '', ['Sup', 'Pron', 'Lat', 'Bch', 'Lith'])}
           {settingRow('TO₄', 'mon7:0', 'twitches', [0, 1, 2, 3, 4])}
         </>
       ),
