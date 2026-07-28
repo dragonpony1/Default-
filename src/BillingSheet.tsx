@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import SigImg from './SigImg';
 import { noAuto, numPad } from './inputProps';
 import BillingWizard from './BillingWizard';
 import { useSigner, nowStamp } from './signer';
@@ -213,7 +214,7 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
         </div>
         <div className="bs-fline">
           <span className="b">CRNA</span>
-          {d.tx.sigImg ? <img className="sig-inline" src={d.tx.sigImg} alt="signature" /> : tx('crna', 'wide')}
+          {d.tx.sigImg ? <SigImg src={d.tx.sigImg} /> : tx('crna', 'wide')}
           {d.tx.sigDate && <span className="bs-sigdt">{d.tx.sigDate} {d.tx.sigTime}</span>}
           {signer.signature && (
             <button

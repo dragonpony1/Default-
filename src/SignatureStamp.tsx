@@ -1,4 +1,5 @@
 import { useSigner, nowStamp } from './signer';
+import SigImg from './SigImg';
 
 // A signature line for a form. When the clicked-in provider has a saved
 // signature, a "Sign as [II]" button stamps their signature image plus the
@@ -24,7 +25,7 @@ export default function SignatureStamp({ label, sig, date, time, onStamp, onClea
   return (
     <div className="sigstamp">
       <div className="sigstamp-line">
-        {sig ? <img className="sigstamp-img" src={sig} alt="signature" /> : <span className="sigstamp-blank" />}
+        {sig ? <SigImg src={sig} className="sigstamp-img" /> : <span className="sigstamp-blank" />}
       </div>
       <div className="sigstamp-foot">
         <span className="sigstamp-label">{label}</span>

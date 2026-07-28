@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SigImg from './SigImg';
 import { noAuto, numPad, tempPad } from './inputProps';
 import { nowStamp, useSigner } from './signer';
 import SignaturePad from './SignaturePad';
@@ -98,7 +99,7 @@ export default function PostAnesNote({ d, set }: Props) {
         {d.panSig && (
           <button type="button" className="chip" onClick={() => set('panSig', '')}>Clear signature</button>
         )}
-        {d.panSig && <img className="sig-inline" src={d.panSig} alt="signature" />}
+        {d.panSig && <SigImg src={d.panSig} />}
         {d.panDateTime && <span className="ihint">{d.panDateTime}</span>}
       </div>
       {padOpen && (

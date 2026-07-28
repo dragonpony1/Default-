@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import SigImg from './SigImg';
 import { noAuto, numPad, tempPad } from './inputProps';
 import { useCaseData, setCaseField } from './caseData';
 import VitalsGraph, { type VitalsData, type Series } from './VitalsGraph';
@@ -609,7 +610,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             <div className="ar-brow">
               <span className="lbl">Anesthetist</span>
               {d.tx.sigImg ? (
-                <img className="sig-inline" src={d.tx.sigImg} alt="signature" />
+                <SigImg src={d.tx.sigImg} />
               ) : (
                 tx('anesthetist', 'wide')
               )}
