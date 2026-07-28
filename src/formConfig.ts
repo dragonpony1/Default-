@@ -15,6 +15,33 @@ export function screenItems(s: SystemBand): string[] {
   return s.col1.concat(s.col2 ?? []).flatMap((l) => (l === 'OSA/CPAP' ? ['OSA', 'CPAP'] : [l]));
 }
 
+// Every condition selected in the systems review (built-in, custom-choice,
+// and per-patient custom entries), in band order — feeds the Problem List.
+export function selectedProblems(
+  checks: Record<string, boolean>,
+  customConditions: Record<string, string[]>,
+): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const push = (label: string) => {
+    if (label && !seen.has(label)) {
+      seen.add(label);
+      out.push(label);
+    }
+  };
+  for (const s of SYSTEMS) {
+    for (const [k, v] of Object.entries(checks)) {
+      if (v && k.startsWith(`${s.key}:`)) push(k.slice(s.key.length + 1));
+    }
+    for (const label of customConditions[s.key] ?? []) push(label);
+  }
+  // Anything checked under a band not in SYSTEMS (future-proofing)
+  for (const [k, v] of Object.entries(checks)) {
+    if (v && k.includes(':')) push(k.slice(k.indexOf(':') + 1));
+  }
+  return out;
+}
+
 export const SYSTEMS: SystemBand[] = [
   {
     key: 'resp',

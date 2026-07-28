@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { noAuto, numPad, tempPad } from './inputProps';
 import { emptyPreopEval, type PreopEval, type YesNo } from './types';
-import { SYSTEMS, type SystemBand } from './formConfig';
+import { SYSTEMS, selectedProblems, type SystemBand } from './formConfig';
 import { clearDraft, loadDraft, saveDraft } from './storage';
 import Barcode39 from './Barcode39';
 import NumPad from './NumPad';
@@ -135,6 +135,24 @@ export default function App() {
   // Borderless inline text input
   const txt = (k: StringKeys, cls = '') => (
     <input {...noAuto} className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
+  );
+
+  // Date/time blank with a one-tap "Now" stamp beside it.
+  const dtCell = (label: string, k: StringKeys, cls = 'w40') => (
+    <div className={`sigcell ${cls}`}>
+      <span className="lbl">{label}</span>
+      {txt(k)}
+      <button
+        type="button"
+        className="chip sig-btn screen-only"
+        onClick={() => {
+          const { date, time } = nowStamp();
+          set(k, `${date} ${time}`);
+        }}
+      >
+        🕐
+      </button>
+    </div>
   );
 
   // Signature cell: shows the stamped signature image; the clicked-in
@@ -552,7 +570,7 @@ export default function App() {
                 <div className="noteslot"><span className="b">NOTES:</span>{ta('panNotes', 2)}</div>
                 <div className="sigrow">
                   {sigCell('Signed', 'panSig', 'panDateTime')}
-                  <div className="sigcell w40"><span className="lbl">Date/Time</span>{txt('panDateTime')}</div>
+                  {dtCell('Date/Time', 'panDateTime', 'w40')}
                 </div>
               </div>
             </div>
@@ -565,7 +583,11 @@ export default function App() {
                 <div className="blmain grow">
                   <div className="cellrow">
                     <span className="lbl">Problem List / Diagnoses</span>
-                    {ta('problemList', 2)}
+                    {(() => {
+                      const probs = selectedProblems(d.checks, d.customConditions);
+                      return probs.length ? <div className="detline">{probs.join(', ')}</div> : null;
+                    })()}
+                    {ta('problemList', selectedProblems(d.checks, d.customConditions).length && !d.problemList ? 1 : 2, selectedProblems(d.checks, d.customConditions).length && !d.problemList ? 'np' : '')}
                   </div>
                   <div className="cellrow last">
                     <span className="lbl">Planned Anesthesia / Special Monitors</span>
@@ -590,7 +612,7 @@ export default function App() {
               </div>
               <div className="sigrow topline">
                 {sigCell('Evaluator Signature', 'evalSig', 'evalDateTime')}
-                <div className="sigcell w40 tall"><span className="lbl">Date/Time</span>{txt('evalDateTime')}</div>
+                {dtCell('Date/Time', 'evalDateTime', 'w40 tall')}
               </div>
             </div>
 
@@ -600,7 +622,7 @@ export default function App() {
               <div className="noteslot grow"><span className="b">NOTES:</span>{ta('inpNotes', 3)}</div>
               <div className="sigrow topline">
                 {sigCell('Signed', 'inpSig', 'inpDateTime')}
-                <div className="sigcell w40 tall"><span className="lbl">Date/Time</span>{txt('inpDateTime')}</div>
+                {dtCell('Date/Time', 'inpDateTime', 'w40 tall')}
               </div>
             </div>
           </div>

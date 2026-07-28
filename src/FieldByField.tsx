@@ -1,9 +1,10 @@
 import { useState, type ReactNode } from 'react';
 import { noAuto, numPad, tempPad } from './inputProps';
 import type { PreopEval, YesNo } from './types';
-import { SYSTEMS, screenItems, type SystemBand } from './formConfig';
+import { SYSTEMS, selectedProblems, screenItems, type SystemBand } from './formConfig';
 import type { CustomChoices } from './choices';
 import AddEntry from './AddEntry';
+import DateTimeField from './DateTimeField';
 import ProcedurePicker from './ProcedurePicker';
 import MedList from './MedList';
 import AllergyList from './AllergyList';
@@ -542,7 +543,26 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       ),
       summary: () => `${d.physicalStatus}${d.physicalStatusE ? 'E' : ''}`,
     },
-    { title: 'Problem list / diagnoses', render: () => area('problemList'), summary: () => d.problemList },
+    {
+      title: 'Problem list / diagnoses',
+      hint: 'Everything you checked in the systems review is carried here automatically and prints on the form. Use the box only for anything extra.',
+      render: () => (
+        <>
+          {selectedProblems(d.checks, d.customConditions).length > 0 && (
+            <div className="chips wrap">
+              {selectedProblems(d.checks, d.customConditions).map((l) => (
+                <span className="chip fixed" key={l}>{l}</span>
+              ))}
+            </div>
+          )}
+          {area('problemList')}
+        </>
+      ),
+      summary: () => {
+        const probs = selectedProblems(d.checks, d.customConditions);
+        return [probs.join(', '), d.problemList].filter(Boolean).join('; ');
+      },
+    },
     {
       title: 'Planned anesthesia / special monitors',
       hint: 'Tap to combine — selections join with "+". Edit the text for anything else.',
@@ -559,7 +579,12 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       render: () => area('preAnesthesiaMeds'),
       summary: () => d.preAnesthesiaMeds,
     },
-    textStep('Evaluation date/time', 'evalDateTime'),
+    {
+      title: 'Evaluation date/time',
+      hint: 'Tap Now to stamp the current date and time, or spin the wheels.',
+      render: () => <DateTimeField value={d.evalDateTime} onChange={(v) => set('evalDateTime', v)} />,
+      summary: () => d.evalDateTime,
+    },
   ];
 
   const done = step >= steps.length;
