@@ -2842,3 +2842,38 @@ input[type='checkbox']:checked::after {
   padding: 0.1rem 0.6rem;
   font-size: 0.85rem;
 }
+
+/* ---- Date/time picker (wizard) ---- */
+
+.dtf {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.dtf-wheels {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.dtf-wheel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
+}
+
+.dtf-wheel > span {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.dtf-wheel select {
+  font: inherit;
+  font-size: 1.1rem;
+  padding: 0.55rem 0.5rem;
+  border: 1.5px solid #98a3b3;
+  border-radius: 6px;
+  background: #fff;
+  min-height: 48px;
+}
