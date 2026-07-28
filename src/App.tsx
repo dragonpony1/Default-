@@ -10,6 +10,8 @@ import FieldByField from './FieldByField';
 import EditChoices from './EditChoices';
 import AnesRecord, { clearAnesDraft } from './AnesRecord';
 import PacuOrders, { clearPacuDraft } from './PacuOrders';
+import PostAnesNote from './PostAnesNote';
+import SignaturePad from './SignaturePad';
 import BillingSheet, { clearBillingDraft } from './BillingSheet';
 import { decodeChoices, loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 import { setCaseField, clearCase } from './caseData';
@@ -26,6 +28,7 @@ export default function App() {
   const [anesReset, setAnesReset] = useState(0);
   const [choices, setChoicesState] = useState<CustomChoices>(loadCustomChoices);
   const signer = useSigner();
+  const [signTarget, setSignTarget] = useState<{ sig: 'panSig' | 'evalSig' | 'inpSig'; dt: StringKeys } | null>(null);
 
   const setChoices = (c: CustomChoices) => {
     saveCustomChoices(c);
@@ -162,18 +165,20 @@ export default function App() {
       <span className="lbl">{label}</span>
       {d[sigKey] && <img className="sig-inline" src={d[sigKey]} alt="signature" />}
       <span className="sig-actions screen-only">
-        {signer.signature && (
-          <button
-            type="button"
-            className="chip sig-btn"
-            onClick={() => {
+        <button
+          type="button"
+          className="chip sig-btn"
+          onClick={() => {
+            if (signer.signature) {
               const { date, time } = nowStamp();
               setD((prev) => ({ ...prev, [sigKey]: signer.signature, [dtKey]: `${date} ${time}` }));
-            }}
-          >
-            {d[sigKey] ? '↻' : `✍ ${signer.initials}`}
-          </button>
-        )}
+            } else {
+              setSignTarget({ sig: sigKey, dt: dtKey });
+            }
+          }}
+        >
+          {d[sigKey] ? '↻' : signer.signature ? `✍ ${signer.initials}` : '✍ Sign'}
+        </button>
         {d[sigKey] && (
           <button type="button" className="chip sig-btn" onClick={() => setD((prev) => ({ ...prev, [sigKey]: '' }))}>✕</button>
         )}
@@ -337,6 +342,16 @@ export default function App() {
     <div className="app">
       <NumPad />
       <TempPad />
+      {signTarget && (
+        <SignaturePad
+          onSave={(sig) => {
+            const { date, time } = nowStamp();
+            setD((prev) => ({ ...prev, [signTarget.sig]: sig, [signTarget.dt]: `${date} ${time}` }));
+            setSignTarget(null);
+          }}
+          onCancel={() => setSignTarget(null)}
+        />
+      )}
       <header className="toolbar screen-only">
         <h1>Pre-Anesthesia Evaluation</h1>
         <div className="tabs">
@@ -378,6 +393,7 @@ export default function App() {
       )}
       {view === 'choices' && <EditChoices choices={choices} setChoices={setChoices} />}
       {view === 'anes' && <AnesRecord resetSignal={anesReset} />}
+      {view === 'pacu' && <PostAnesNote d={d} set={set} />}
       {view === 'pacu' && <PacuOrders resetSignal={anesReset} />}
       {view === 'billing' && <BillingSheet resetSignal={anesReset} />}
 
