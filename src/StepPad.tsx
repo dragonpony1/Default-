@@ -1,27 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
+import { loadPadPos, padStyle, posFromPointer, savePadPos, useViewport } from './viewportAnchor';
 
 // Floating slider for the continuously-running chart values — vent settings,
 // gas flows, EtCO2, SaO2, TO4. Nudge a value by one step or sweep the slider,
 // instead of retyping it. Range and step come from the focused cell, so each
 // row gets sensible limits. Draggable, and remembers where it was parked.
 
-const POS_KEY = 'steppad-pos-v1';
+const POS_KEY = 'steppad-pos-v2';
 
 function setNativeValue(el: HTMLInputElement, value: string) {
   const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
   setter?.call(el, value);
   el.dispatchEvent(new Event('input', { bubbles: true }));
-}
-
-function loadPos(): { x: number; y: number } | null {
-  try {
-    const raw = localStorage.getItem(POS_KEY);
-    if (!raw) return null;
-    const p = JSON.parse(raw) as { x: number; y: number };
-    return typeof p.x === 'number' && typeof p.y === 'number' ? p : null;
-  } catch {
-    return null;
-  }
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -32,6 +22,7 @@ interface Spec {
   inc: number;
   label: string;
   unit: string;
+  at: string; // clock time of the column being charted
 }
 
 function specOf(el: HTMLInputElement): Spec | null {
@@ -39,7 +30,7 @@ function specOf(el: HTMLInputElement): Spec | null {
   const max = Number(el.dataset.stepMax);
   const inc = Number(el.dataset.stepInc);
   if (!Number.isFinite(min) || !Number.isFinite(max) || !Number.isFinite(inc)) return null;
-  return { min, max, inc, label: el.dataset.stepLabel ?? '', unit: el.dataset.stepUnit ?? '' };
+  return { min, max, inc, label: el.dataset.stepLabel ?? '', unit: el.dataset.stepUnit ?? '', at: el.dataset.stepAt ?? '' };
 }
 
 // Match the step's precision so 0.05 steps don't produce 0.35000000000000003.
@@ -54,7 +45,8 @@ export default function StepPad() {
   const [target, setTarget] = useState<HTMLInputElement | null>(null);
   const [spec, setSpec] = useState<Spec | null>(null);
   const [val, setVal] = useState(0);
-  const [pos, setPos] = useState(loadPos);
+  const [pos, setPos] = useState(() => loadPadPos(POS_KEY));
+  const vp = useViewport();
   const padRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ dx: number; dy: number } | null>(null);
 
@@ -98,29 +90,23 @@ export default function StepPad() {
   };
 
   const startDrag = (e: React.PointerEvent) => {
-    const rect = padRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    drag.current = { dx: e.clientX - rect.left, dy: e.clientY - rect.top };
+    drag.current = { dx: 0, dy: 0 };
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
   const onDrag = (e: React.PointerEvent) => {
-    if (!drag.current || !padRef.current) return;
-    const w = padRef.current.offsetWidth;
-    const h = padRef.current.offsetHeight;
-    setPos({
-      x: clamp(e.clientX - drag.current.dx, 0, window.innerWidth - w),
-      y: clamp(e.clientY - drag.current.dy, 0, window.innerHeight - h),
-    });
+    if (!drag.current) return;
+    setPos(posFromPointer(vp, e.clientX, e.clientY));
   };
 
   const endDrag = () => {
-    if (drag.current && pos) localStorage.setItem(POS_KEY, JSON.stringify(pos));
+    if (drag.current && pos) savePadPos(POS_KEY, pos);
     drag.current = null;
   };
 
   const noFocus = (e: React.PointerEvent) => e.preventDefault();
-  const style = pos ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto' } : undefined;
+  const style = padStyle(vp, pos, 300, 230);
+
 
   return (
     <div className="np tp screen-only" ref={padRef} style={style}>
@@ -131,7 +117,7 @@ export default function StepPad() {
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
       >
-        <span className="np-grip">⠿ {spec.label}</span>
+        <span className="np-grip">⠿ {spec.label}{spec.at && <span className="np-at"> @ {spec.at}</span>}</span>
         <button type="button" className="np-close" onPointerDown={noFocus} onClick={done}>✕</button>
       </div>
       <div className="tp-value">

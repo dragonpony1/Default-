@@ -228,6 +228,9 @@ const STEP_SPECS: Record<string, { min: number; max: number; inc: number; label:
               'data-step-label': STEP_SPECS[rowKey].label,
               'data-step-unit': STEP_SPECS[rowKey].unit,
               'data-step-start': STEP_SPECS[rowKey].start,
+              // Shown on the pad, so the time slot being charted is readable
+              // without squinting at the grid.
+              'data-step-at': times[col] || `col ${col + 1}`,
             }
           : {})}
         key={col}
