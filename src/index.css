@@ -2877,3 +2877,39 @@ input[type='checkbox']:checked::after {
   background: #fff;
   min-height: 48px;
 }
+
+/* Signature images are drawn large and scaled down onto form lines, which
+   softens the strokes — push contrast back up so they read black on paper,
+   and give them a little more height to lose less detail. */
+.sig-inline,
+.sigstamp-img {
+  /* Ink-only PNGs; multiply also hides the white box on signatures saved
+     before the canvas went transparent. */
+  mix-blend-mode: multiply;
+  filter: contrast(1.9);
+}
+
+.sig-inline {
+  height: 28px;
+  max-height: 28px;
+}
+
+.sigstamp-img {
+  max-height: 46px;
+}
+
+@media print {
+  .sig-inline,
+  .sigstamp-img {
+    mix-blend-mode: multiply;
+    filter: contrast(2.2);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+/* White drawing surface for the pad comes from CSS, not painted pixels, so
+   the exported PNG stays transparent. */
+.sigpad-canvas {
+  background: #fff;
+}
