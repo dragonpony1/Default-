@@ -135,6 +135,20 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     summary: () => string;
   }
 
+  const choiceStep = (title: string, k: StringKeys, options: string[], hint?: string): Step => ({
+    title,
+    hint,
+    render: () => (
+      <>
+        <div className="chips wrap">
+          {options.map((v) => chip(d[k] === v, () => set(k, d[k] === v ? '' : v), v, v))}
+        </div>
+        <label className="ifield"><span>or type</span>{input(k)}</label>
+      </>
+    ),
+    summary: () => d[k],
+  });
+
   const textStep = (title: string, k: StringKeys, hint?: string): Step => ({
     title,
     hint,
@@ -383,8 +397,8 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       render: () => oneOf('mallampati', ['I', 'II', 'III', 'IV']),
       summary: () => d.mallampati,
     },
-    textStep('TMD', 'tmd', 'Airway / teeth / head and neck'),
-    textStep('ROM', 'rom', 'Airway / teeth / head and neck'),
+    choiceStep('TMD', 'tmd', ['2', '3', '4'], 'Airway / teeth / head and neck — fingerbreadths'),
+    choiceStep('ROM', 'rom', ['Full', 'Limited'], 'Airway / teeth / head and neck — neck range of motion'),
     systemStep(bySystem.resp),
     {
       title: 'Tobacco use',
