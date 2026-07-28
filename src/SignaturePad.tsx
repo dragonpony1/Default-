@@ -20,10 +20,11 @@ export default function SignaturePad({ initial, onSave, onCancel }: Props) {
     if (!c) return;
     const ctx = c.getContext('2d');
     if (!ctx) return;
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, c.width, c.height);
-    ctx.strokeStyle = '#12233f';
-    ctx.lineWidth = 2.2;
+    // Transparent background: the saved PNG carries ink only, so stamping it
+    // onto a form never paints a pale box over the ruled line.
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 6;
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
     if (initial) {
@@ -54,6 +55,9 @@ export default function SignaturePad({ initial, onSave, onCancel }: Props) {
     ctx.moveTo(last.current.x, last.current.y);
     ctx.lineTo(p.x, p.y);
     ctx.stroke();
+    // Second pass keeps thin fast strokes from washing out when the image is
+    // scaled down onto a form line.
+    ctx.stroke();
     last.current = p;
     dirty.current = true;
   };
@@ -66,8 +70,7 @@ export default function SignaturePad({ initial, onSave, onCancel }: Props) {
     const c = canvasRef.current;
     const ctx = c?.getContext('2d');
     if (!c || !ctx) return;
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.clearRect(0, 0, c.width, c.height);
     dirty.current = false;
   };
 
@@ -84,8 +87,8 @@ export default function SignaturePad({ initial, onSave, onCancel }: Props) {
         <canvas
           ref={canvasRef}
           className="sigpad-canvas"
-          width={600}
-          height={200}
+          width={900}
+          height={300}
           onPointerDown={down}
           onPointerMove={move}
           onPointerUp={up}
