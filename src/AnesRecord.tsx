@@ -175,16 +175,42 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     return Math.max(0, Math.min(COLS - 1, Math.floor(diff / STEP)));
   })();
 
-  // One tappable charting cell.
-  const cell = (rowKey: string, col: number) => (
-    <input
-      {...(rowKey === 'mon2' ? tempPad : numPad)}
-      key={col}
-      className="ar-cell"
-      value={d.cells[`${rowKey}:${col}`] ?? ''}
-      onChange={(e) => setCell(`${rowKey}:${col}`, e.target.value)}
-    />
-  );
+  // Continuously-running values: entered once, they hold until changed, the
+// way they are charted on paper. Boluses (drugs) and cumulative figures
+// (urine, EBL) are deliberately excluded.
+const CARRY_ROWS = new Set([
+  'med0', // Oxygen L/min
+  'med1', // N2O / Air L/min
+  'med2', // ISO/SEVO ET%
+  'vent0', 'vent1', 'vent2', 'vent3', // Rate, Volume, FiO2, Insp pressure
+  'mon0', 'mon1', 'mon2', 'mon3', 'mon6', 'mon7', // EtCO2, SaO2, Temp, EKG, POS, TO4
+]);
+
+// One tappable charting cell.
+  // Value carried into a column from the last entry at or before it. An
+  // explicitly blanked cell stops the carry, so turning something off works.
+  const carriedInto = (rowKey: string, col: number) => {
+    let v = '';
+    for (let c = 0; c < col; c++) {
+      const e = d.cells[`${rowKey}:${c}`];
+      if (e !== undefined) v = e;
+    }
+    return v;
+  };
+
+  const cell = (rowKey: string, col: number) => {
+    const own = d.cells[`${rowKey}:${col}`];
+    const carried = own === undefined && CARRY_ROWS.has(rowKey) && col <= endCol ? carriedInto(rowKey, col) : '';
+    return (
+      <input
+        {...(rowKey === 'mon2' ? tempPad : numPad)}
+        key={col}
+        className={`ar-cell${carried ? ' carried' : ''}`}
+        value={own ?? carried}
+        onChange={(e) => setCell(`${rowKey}:${col}`, e.target.value)}
+      />
+    );
+  };
 
   // Value row: label | tappable time-columns | totals input
   const crow = (label: ReactNode, key: string) => (

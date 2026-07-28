@@ -2008,9 +2008,17 @@ input[type='checkbox']:checked::after {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: ns-resize;
+  cursor: move;
   pointer-events: auto;
   touch-action: none;
+  /* Columns are ~30px apart, so an 18px box overlapped its neighbours and a
+     tap could grab the repeat next door instead of the reading aimed at. */
+  z-index: 1;
+}
+
+/* A real reading always wins a tie against the repeats carried from it. */
+.vg-mark.explicit {
+  z-index: 2;
 }
 
 .vg-glyph {
@@ -2961,5 +2969,17 @@ input[type='checkbox']:checked::after {
 @media print {
   .ar-rowlabel::placeholder {
     color: transparent;
+  }
+}
+
+/* Carried-forward values read lighter on screen so it is obvious which cells
+   were typed; they print as normal chart entries. */
+.ar-cell.carried {
+  color: #7b8794;
+}
+
+@media print {
+  .ar-cell.carried {
+    color: #000;
   }
 }
