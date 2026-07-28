@@ -2924,3 +2924,42 @@ input[type='checkbox']:checked::after {
   font-weight: 700;
   color: #2a5db0;
 }
+
+/* Editable label for a blank med row: looks like the printed labels, but
+   shows as a fillable slot on screen. */
+.ar-rowlabel {
+  font: inherit;
+  font-size: 6px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  min-width: 0;
+}
+
+.ar-rowlabel::placeholder {
+  color: #2a5db0;
+  font-style: italic;
+}
+
+.ar-rowlabel:focus {
+  outline: none;
+  background: #eef4ff;
+}
+
+.ar-rowctl {
+  display: inline-flex;
+  gap: 0.3rem;
+}
+
+.ar-rowctl .chip {
+  min-height: 34px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+@media print {
+  .ar-rowlabel::placeholder {
+    color: transparent;
+  }
+}

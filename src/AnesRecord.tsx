@@ -200,6 +200,35 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     </div>
   );
 
+  // Blank med rows for anything not preprinted on the form. Two are always
+  // available; more can be added mid-case from the chart itself, without
+  // going back through the wizard.
+  const customRowCount = Math.max(2, Number(d.tx.customRowCount ?? 2) || 2);
+
+  const customRow = (i: number) =>
+    crow(
+      <input
+        {...noAuto}
+        className="ar-rowlabel"
+        placeholder="add med…"
+        value={d.tx[`custMed${i}`] ?? ''}
+        onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, [`custMed${i}`]: e.target.value } }))}
+      />,
+      `cust${i}`,
+    );
+
+  const addCustomRow = () =>
+    setD((p) => ({ ...p, tx: { ...p.tx, customRowCount: String(customRowCount + 1) } }));
+
+  // Only offered when the last row is unused, so nothing charted is dropped.
+  const lastRowEmpty =
+    customRowCount > 2 &&
+    !(d.tx[`custMed${customRowCount - 1}`] ?? '').trim() &&
+    !Object.keys(d.cells).some((k) => k.startsWith(`cust${customRowCount - 1}:`) && d.cells[k].trim());
+
+  const removeCustomRow = () =>
+    setD((p) => ({ ...p, tx: { ...p.tx, customRowCount: String(customRowCount - 1) } }));
+
   // Vital-signs row: label | crosshatch for hand-drawn BP/HR ticks | totals
   const vrow = (n: number) => (
     <div className="ar-crow vs" key={`vs${n}`}>
@@ -252,6 +281,12 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
       <div className="awiz-switch screen-only">
         <button type="button" className="chip" onClick={() => setMode('wizard')}>⛑ Guided setup wizard</button>
         <span className="awiz-switch-hint">Walks you through setup, airway &amp; end-of-case. The grid stays tap-and-drag.</span>
+        <span className="ar-rowctl">
+          <button type="button" className="chip" onClick={addCustomRow}>＋ Add med row</button>
+          {lastRowEmpty && (
+            <button type="button" className="chip" onClick={removeCustomRow}>− Remove empty row</button>
+          )}
+        </span>
         <span className="ar-zoomctl">
           <button type="button" className="chip" onClick={() => bumpZoom(-0.2)} aria-label="Zoom out">−</button>
           <button type="button" className="chip ar-zoomval" onClick={() => setZoom(1)}>{Math.round(zoom * 100)}%</button>
@@ -485,6 +520,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                 {crow('ANCEF (cefazolin) g', 'oth6')}
                 {crow('DECADRON IV mg', 'oth7')}
                 {crow('LR/D5LR/NS', 'oth4')}
+                {Array.from({ length: customRowCount }, (_, i) => customRow(i))}
               </>
             ))}
             <div className="ar-band vsband">
