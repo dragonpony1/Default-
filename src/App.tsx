@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import SigImg from './SigImg';
 import { noAuto, numPad, tempPad } from './inputProps';
 import { emptyPreopEval, type PreopEval, type YesNo } from './types';
 import { SYSTEMS, selectedProblems, type SystemBand } from './formConfig';
@@ -163,7 +164,7 @@ export default function App() {
   const sigCell = (label: string, sigKey: 'panSig' | 'evalSig' | 'inpSig', dtKey: StringKeys) => (
     <div className="sigcell grow tall">
       <span className="lbl">{label}</span>
-      {d[sigKey] && <img className="sig-inline" src={d[sigKey]} alt="signature" />}
+      {d[sigKey] && <SigImg src={d[sigKey]} />}
       <span className="sig-actions screen-only">
         <button
           type="button"
