@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { noAuto } from './inputProps';
+import { noAuto, numPad } from './inputProps';
 import WizardShell, { type WizStep } from './WizardShell';
 import { PROCEDURE_CODES, BLOCK_CODES } from './BillingSheet';
 
@@ -22,7 +22,7 @@ export default function BillingWizard(api: BillingWizApi) {
   const field = (label: string, k: string, ph = '', cls = '') => (
     <label className={`ifield ${cls}`} key={k}>
       <span>{label}</span>
-      <input {...noAuto} value={api.tx[k] ?? ''} placeholder={ph} onChange={(e) => api.setTx(k, e.target.value)} />
+      <input {...(['dateM', 'dateD', 'dateY', 'startTime', 'endTime', 'addCode'].includes(k) ? numPad : noAuto)} value={api.tx[k] ?? ''} placeholder={ph} onChange={(e) => api.setTx(k, e.target.value)} />
     </label>
   );
 

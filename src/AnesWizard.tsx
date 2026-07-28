@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { composeNarrative } from './narrative';
-import { noAuto } from './inputProps';
+import { noAuto, numPad, tempPad } from './inputProps';
 
 // "0730"/"7:30"/"730" → minutes since midnight, or null.
 function parseHHMM(s: string): number | null {
@@ -77,7 +77,7 @@ export default function AnesWizard(api: WizardApi) {
   const field = (label: string, k: string, ph = '') => (
     <label className="ifield" key={k}>
       <span>{label}</span>
-      <input {...noAuto} value={api.tx[k] ?? ''} placeholder={ph} onChange={(e) => api.setTx(k, e.target.value)} />
+      <input {...(['recT'].includes(k) ? tempPad : ['anesStart', 'surgStart', 'tubeLength', 'ettTime', 'attempts', 'surgStop', 'anesStop', 'crystalloid', 'fluidEbl', 'fluidUrine', 'fluidBlood', 'recTime', 'recBp', 'recO2', 'recP', 'recR'].includes(k) ? numPad : noAuto)} value={api.tx[k] ?? ''} placeholder={ph} onChange={(e) => api.setTx(k, e.target.value)} />
     </label>
   );
   const group = (title: string, children: ReactNode) => (
@@ -90,7 +90,7 @@ export default function AnesWizard(api: WizardApi) {
       <div className="chips wrap">
         {opts.map((o) => chip(api.tx[k] === o, () => api.setTx(k, api.tx[k] === o ? '' : o), o, k + o))}
         {free && (
-          <input {...noAuto} className="awiz-doseinput" placeholder={ph || 'other'} value={opts.includes(api.tx[k]) ? '' : (api.tx[k] ?? '')} onChange={(e) => api.setTx(k, e.target.value)} />
+          <input {...numPad} className="awiz-doseinput" placeholder={ph || 'other'} value={opts.includes(api.tx[k]) ? '' : (api.tx[k] ?? '')} onChange={(e) => api.setTx(k, e.target.value)} />
         )}
       </div>
     </div>
@@ -101,7 +101,7 @@ export default function AnesWizard(api: WizardApi) {
       <span>{label} <span className="awiz-unit">{unit}</span></span>
       <div className="chips wrap">
         {doses.map((dv) => chip(api.cells[cellKey] === String(dv), () => api.setCell(cellKey, api.cells[cellKey] === String(dv) ? '' : String(dv)), String(dv), cellKey + dv))}
-        <input {...noAuto} className="awiz-doseinput" inputMode="numeric" placeholder="other" value={doses.map(String).includes(api.cells[cellKey]) ? '' : (api.cells[cellKey] ?? '')} onChange={(e) => api.setCell(cellKey, e.target.value)} />
+        <input {...numPad} className="awiz-doseinput" placeholder="other" value={doses.map(String).includes(api.cells[cellKey]) ? '' : (api.cells[cellKey] ?? '')} onChange={(e) => api.setCell(cellKey, e.target.value)} />
       </div>
     </div>
   );
