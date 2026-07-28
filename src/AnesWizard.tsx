@@ -243,7 +243,14 @@ export default function AnesWizard(api: WizardApi) {
       render: () => (
         <>
           {settingRow('Oxygen', 'med0:0', 'L/min', [1, 2, 3, 4, 5], { min: 0, max: 10, inc: 0.5, start: 2 })}
-          {settingRow('N₂O / Air', 'med1:0', 'L/min', [0, 1, 2, 3], { min: 0, max: 10, inc: 0.5, start: 2 })}
+          <div className="igroup" key="gaspick">
+            <span>Second gas <span className="awiz-unit">one or the other</span></span>
+            <div className="chips wrap">
+              {chip(!!api.ck.n2o, () => { api.setCk('n2o', !api.ck.n2o); api.setCk('airMed', false); }, 'N₂O', 'gasN2O')}
+              {chip(!!api.ck.airMed, () => { api.setCk('airMed', !api.ck.airMed); api.setCk('n2o', false); }, 'Air', 'gasAir')}
+            </div>
+          </div>
+          {settingRow(api.ck.airMed ? 'Air' : 'N₂O', 'med1:0', 'L/min', [0, 1, 2, 3], { min: 0, max: 10, inc: 0.5, start: 2 })}
           {settingRow('ISO / SEVO', 'med2:0', 'ET%', [0.8, 1, 1.5, 2, 2.5], { min: 0, max: 8, inc: 0.1, start: 1.5 })}
           {settingRow('Rate', 'vent0:0', 'breaths/min', [8, 10, 12, 14, 16], { min: 4, max: 30, inc: 1, start: 12 })}
           {settingRow('Tidal volume', 'vent1:0', 'mL', [400, 450, 500, 550, 600], { min: 200, max: 900, inc: 10, start: 500 })}

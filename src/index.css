@@ -3178,3 +3178,13 @@ input[type='checkbox']:checked::after {
   color: #1a7a3a;
   font-weight: 600;
 }
+
+/* Gas choice sits above its slider in the column pass */
+.cp-pick {
+  margin-bottom: 0.4rem;
+}
+
+.cp-pick .chip {
+  min-height: 40px;
+  padding: 0.35rem 1rem;
+}
