@@ -2983,3 +2983,9 @@ input[type='checkbox']:checked::after {
     color: #000;
   }
 }
+
+/* Longer entries (100, 36.5, Lith) shrink to stay inside the narrow charting
+   cells instead of clipping. */
+.ar-cell.len3 { font-size: 6px; }
+.ar-cell.len4 { font-size: 5.4px; letter-spacing: -0.2px; }
+.ar-cell.len5 { font-size: 4.8px; letter-spacing: -0.3px; }

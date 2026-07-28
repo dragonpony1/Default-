@@ -38,7 +38,13 @@ export default function NumPad() {
   useEffect(() => {
     const onFocusIn = (e: FocusEvent) => {
       const el = e.target;
-      if (el instanceof HTMLInputElement && el.dataset.np === '1' && el.dataset.osKb !== '1') {
+      if (
+        el instanceof HTMLInputElement &&
+        el.dataset.np === '1' &&
+        el.dataset.osKb !== '1' &&
+        // Cells with a slider get the slider, unless "123" was tapped on it.
+        (el.dataset.stepMin == null || el.dataset.useKeys === '1')
+      ) {
         setTarget(el);
       } else if (
         (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) &&
@@ -87,6 +93,7 @@ export default function NumPad() {
   };
 
   const done = () => {
+    delete target.dataset.useKeys;
     target.blur();
     setTarget(null);
   };
