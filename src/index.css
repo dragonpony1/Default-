@@ -3007,3 +3007,174 @@ input[type='checkbox']:checked::after {
   color: #2a5db0;
   font-weight: 700;
 }
+
+/* ---- Column pass: chart one time column top to bottom ---- */
+
+.cp {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  font-size: 16px;
+}
+
+.cp-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  background: #f1f4fa;
+  border: 1px solid #d3ddf0;
+  border-radius: 8px;
+}
+
+.cp-time {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+
+.cp-timeval {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #2a5db0;
+}
+
+.cp-timehint {
+  font-size: 0.75rem;
+  color: #667;
+}
+
+.cp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cp-row {
+  background: #fff;
+  border: 1px solid #ccd4e0;
+  border-left: 5px solid #2a5db0;
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+}
+
+/* A value inherited from an earlier column: shown so it is never missed, but
+   visibly not something entered this round. */
+.cp-row.carried {
+  border-left-color: #b6bec9;
+  background: #fafbfc;
+}
+
+.cp-row.empty {
+  border-left-color: #e0e4ea;
+}
+
+.cp-rowhead {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.cp-label {
+  font-weight: 700;
+  flex: 1;
+}
+
+.cp-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.cp-row.carried .cp-value {
+  color: #7b8794;
+  font-weight: 600;
+}
+
+.cp-unit {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #667;
+}
+
+.cp-carried {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #7b8794;
+  margin-left: 0.4rem;
+}
+
+.cp-clear {
+  font: inherit;
+  border: none;
+  background: transparent;
+  color: #b02a2a;
+  padding: 0 0.3rem;
+  cursor: pointer;
+  min-height: 32px;
+}
+
+.cp-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cp-nudge {
+  font: inherit;
+  font-size: 1.3rem;
+  width: 56px;
+  height: 48px;
+  border: 1px solid #b6bec9;
+  border-radius: 8px;
+  background: #f4f5f7;
+  cursor: pointer;
+  flex: none;
+}
+
+.cp-nudge:active {
+  background: #dbe6f5;
+}
+
+.cp-input {
+  font: inherit;
+  font-size: 1.2rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.4rem 0.6rem;
+  border: 1.5px solid #98a3b3;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.cp-chips {
+  gap: 0.35rem;
+}
+
+.cp-more {
+  align-self: flex-start;
+}
+
+.cp-foot {
+  display: flex;
+  justify-content: center;
+  padding: 0.4rem 0 1.2rem;
+}
+
+.cp-next {
+  font-size: 1.05rem;
+  padding: 0.7rem 1.4rem;
+}
+
+.cp-enter {
+  border-color: #1a7a3a;
+  color: #1a7a3a;
+  font-weight: 600;
+}
