@@ -2890,8 +2890,9 @@ input[type='checkbox']:checked::after {
 }
 
 .sig-inline {
-  height: 28px;
-  max-height: 28px;
+  height: 34px;
+  max-height: 34px;
+  width: auto;
 }
 
 .sigstamp-img {
