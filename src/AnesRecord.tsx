@@ -6,6 +6,8 @@ import VitalsGraph, { type VitalsData, type Series } from './VitalsGraph';
 import { useSigner, nowStamp } from './signer';
 import AnesWizard from './AnesWizard';
 import { composeNarrative } from './narrative';
+import ColumnPass from './ColumnPass';
+import { CARRY_ROWS, STEP_SPECS, carriedInto as carriedFrom } from './chartRows';
 
 // Intra-op Anesthesia Record replicating Mountain West Medical Center form
 // 170-165-MW250046HMS (03/08, Rev. 06/15), portrait US Letter, built from a
@@ -73,7 +75,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
   const [d, setD] = useState<AnesDraft>(loadAnes);
   const caseData = useCaseData(); // shared allergies (pre-populated from pre-op)
   const signer = useSigner();
-  const [mode, setMode] = useState<'chart' | 'wizard'>('chart');
+  const [mode, setMode] = useState<'chart' | 'wizard' | 'column'>('chart');
   const [zoom, setZoom] = useState(1);
   const bumpZoom = (delta: number) => setZoom((z) => Math.min(2.5, Math.max(0.8, Math.round((z + delta) * 10) / 10)));
   // Zoom via transform scale (not CSS `zoom`, which breaks pointer-drag math).
@@ -175,44 +177,10 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     return Math.max(0, Math.min(COLS - 1, Math.floor(diff / STEP)));
   })();
 
-  // Continuously-running values: entered once, they hold until changed, the
-// way they are charted on paper. Boluses (drugs) and cumulative figures
-// (urine, EBL) are deliberately excluded.
-const CARRY_ROWS = new Set([
-  'med0', // Oxygen L/min
-  'med1', // N2O / Air L/min
-  'med2', // ISO/SEVO ET%
-  'vent0', 'vent1', 'vent2', 'vent3', // Rate, Volume, FiO2, Insp pressure
-  'mon0', 'mon1', 'mon2', 'mon3', 'mon6', 'mon7', // EtCO2, SaO2, Temp, EKG, POS, TO4
-]);
-
-// Slider ranges for the continuously-running rows, so tapping a cell offers
-// a nudge/sweep instead of retyping. Values outside a range can still be
-// typed on the 10-key.
-const STEP_SPECS: Record<string, { min: number; max: number; inc: number; label: string; unit: string; start: number }> = {
-  med0: { min: 0, max: 10, inc: 0.5, label: 'Oxygen', unit: 'L/min', start: 2 },
-  med1: { min: 0, max: 10, inc: 0.5, label: 'N₂O / Air', unit: 'L/min', start: 2 },
-  med2: { min: 0, max: 8, inc: 0.1, label: 'ISO / SEVO', unit: 'ET%', start: 1.5 },
-  vent0: { min: 4, max: 30, inc: 1, label: 'Rate', unit: '/min', start: 12 },
-  vent1: { min: 200, max: 900, inc: 10, label: 'Tidal volume', unit: 'mL', start: 500 },
-  vent2: { min: 0.21, max: 1, inc: 0.05, label: 'FiO₂', unit: '', start: 0.5 },
-  vent3: { min: 5, max: 40, inc: 1, label: 'Insp. pressure', unit: 'cm H₂O', start: 18 },
-  mon0: { min: 15, max: 65, inc: 1, label: 'EtCO₂', unit: 'mmHg', start: 35 },
-  mon1: { min: 70, max: 100, inc: 1, label: 'SaO₂', unit: '%', start: 99 },
-  mon7: { min: 0, max: 4, inc: 1, label: 'TO₄', unit: 'twitches', start: 4 },
-};
-
 // One tappable charting cell.
   // Value carried into a column from the last entry at or before it. An
   // explicitly blanked cell stops the carry, so turning something off works.
-  const carriedInto = (rowKey: string, col: number) => {
-    let v = '';
-    for (let c = 0; c < col; c++) {
-      const e = d.cells[`${rowKey}:${c}`];
-      if (e !== undefined) v = e;
-    }
-    return v;
-  };
+  const carriedInto = (rowKey: string, col: number) => carriedFrom(d.cells, rowKey, col);
 
   const cell = (rowKey: string, col: number) => {
     const own = d.cells[`${rowKey}:${col}`];
@@ -311,6 +279,27 @@ const STEP_SPECS: Record<string, { min: number; max: number; inc: number; label:
     </div>
   );
 
+  if (mode === 'column') {
+    return (
+      <>
+        <div className="awiz-switch screen-only">
+          <button type="button" className="chip on" onClick={() => setMode('chart')}>← Back to full chart</button>
+        </div>
+        <ColumnPass
+          cells={d.cells}
+          vitals={d.vitals}
+          times={times}
+          cols={COLS}
+          endCol={endCol}
+          customLabels={Array.from({ length: customRowCount }, (_, i) => (d.tx[`custMed${i}`] ?? '').trim()).filter(Boolean)}
+          setCell={setCell}
+          setVitals={setVitals}
+          onExit={() => setMode('chart')}
+        />
+      </>
+    );
+  }
+
   if (mode === 'wizard') {
     return (
       <>
@@ -335,6 +324,7 @@ const STEP_SPECS: Record<string, { min: number; max: number; inc: number; label:
     <div className="ar-wrap">
       <div className="awiz-switch screen-only">
         <button type="button" className="chip" onClick={() => setMode('wizard')}>⛑ Guided setup wizard</button>
+        <button type="button" className="chip cp-enter" onClick={() => setMode('column')}>⏱ Chart a time column</button>
         <span className="awiz-switch-hint">Walks you through setup, airway &amp; end-of-case. The grid stays tap-and-drag.</span>
         <span className="ar-rowctl">
           <button type="button" className="chip" onClick={addCustomRow}>＋ Add med row</button>
