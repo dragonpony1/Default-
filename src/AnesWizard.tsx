@@ -106,6 +106,26 @@ export default function AnesWizard(api: WizardApi) {
     </div>
   );
 
+  // A continuously-running setting: pick a starting value and carry-forward
+  // fills it across the chart until it is changed.
+  const settingRow = (label: string, cellKey: string, unit: string, opts: Array<string | number>) => (
+    <div className="igroup" key={cellKey}>
+      <span>{label} <span className="awiz-unit">{unit}</span></span>
+      <div className="chips wrap">
+        {opts.map((o) =>
+          chip(api.cells[cellKey] === String(o), () => api.setCell(cellKey, api.cells[cellKey] === String(o) ? '' : String(o)), String(o), cellKey + o),
+        )}
+        <input
+          {...numPad}
+          className="awiz-doseinput"
+          placeholder="other"
+          value={opts.map(String).includes(api.cells[cellKey]) ? '' : (api.cells[cellKey] ?? '')}
+          onChange={(e) => api.setCell(cellKey, e.target.value)}
+        />
+      </div>
+    </div>
+  );
+
   const steps: Step[] = [
     // ---------- Phase 1: Start of case ----------
     {
@@ -195,6 +215,37 @@ export default function AnesWizard(api: WizardApi) {
           {group('Ease', <>{ckChip('easy', 'Easy')}{ckChip('difficult', 'Difficult')}{ckChip('atraumatic', 'Atraumatic')}{ckChip('traumatic', 'Traumatic')}</>)}
           {group('Breath sounds', <>{ckChip('bilateral', 'Bilateral')}{ckChip('equal', 'Equal')}</>)}
           {group('Other', <>{ckChip('arrivedIntubated', 'Arrived Intubated')}{ckChip('dentitionUnchanged', 'Dentition unchanged')}</>)}
+        </>
+      ),
+    },
+    {
+      phase: 'Airway & positioning',
+      title: 'Ventilator & gases',
+      hint: 'Starting settings — each one holds across the chart until you change it, so you only enter it again when it actually changes.',
+      render: () => (
+        <>
+          {settingRow('Oxygen', 'med0:0', 'L/min', [1, 2, 3, 4, 5])}
+          {settingRow('N₂O / Air', 'med1:0', 'L/min', [0, 1, 2, 3])}
+          {settingRow('ISO / SEVO', 'med2:0', 'ET%', [0.8, 1, 1.5, 2, 2.5])}
+          {settingRow('Rate', 'vent0:0', 'breaths/min', [8, 10, 12, 14, 16])}
+          {settingRow('Tidal volume', 'vent1:0', 'mL', [400, 450, 500, 550, 600])}
+          {settingRow('FiO₂', 'vent2:0', '%', [30, 40, 50, 60, 100])}
+          {settingRow('Inspiratory pressure', 'vent3:0', 'cm H₂O', [15, 18, 20, 22, 25])}
+        </>
+      ),
+    },
+    {
+      phase: 'Airway & positioning',
+      title: 'Opening monitor values',
+      hint: 'First readings off the monitor. These carry forward too — chart a new value only when it changes.',
+      render: () => (
+        <>
+          {settingRow('EtCO₂', 'mon0:0', 'mmHg', [30, 32, 34, 36, 38])}
+          {settingRow('SaO₂', 'mon1:0', '%', [96, 97, 98, 99, 100])}
+          {settingRow('Temp', 'mon2:0', '°C', [35.5, 36, 36.5, 37])}
+          {settingRow('EKG', 'mon3:0', 'rhythm', ['NSR', 'ST', 'SB', 'AF'])}
+          {settingRow('Position', 'mon6:0', '', ['Supine', 'Prone', 'Lateral', 'Beach', 'Litho'])}
+          {settingRow('TO₄', 'mon7:0', 'twitches', [0, 1, 2, 3, 4])}
         </>
       ),
     },
