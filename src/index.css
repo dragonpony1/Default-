@@ -2914,3 +2914,13 @@ input[type='checkbox']:checked::after {
 .sigpad-canvas {
   background: #fff;
 }
+
+.toolbar button.ghost {
+  background: #fff;
+  color: #2a5db0;
+}
+
+.build-stamp {
+  font-weight: 700;
+  color: #2a5db0;
+}

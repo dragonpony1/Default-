@@ -94,6 +94,26 @@ export default function App() {
 
   const set = <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => setD((prev) => ({ ...prev, [k]: v }));
 
+  // A cached build can otherwise persist across launches, making it look like
+  // a fix never shipped. This drops the service worker and every cache, then
+  // reloads. Entered data lives in localStorage and is untouched.
+  const forceUpdate = async () => {
+    if (!window.confirm('Reload the app and fetch the newest version? Needs internet. Your entered data is kept.')) return;
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+    } catch {
+      // fall through to the reload regardless
+    }
+    window.location.reload();
+  };
+
   // Two-tap clear: first tap arms the button (auto-disarms after 5s), a second
   // tap within that window shows a final confirm before wiping. Guards against
   // an accidental single tap mid-case.
@@ -377,6 +397,7 @@ export default function App() {
         </div>
         <div className="toolbar-actions">
           <button onClick={() => window.print()}>Print</button>
+          <button className="ghost" onClick={forceUpdate} title="Fetch the newest version">↻ Update</button>
           <button className={`danger${clearArmed ? ' armed' : ''}`} onClick={handleClear}>
             {clearArmed ? '⚠ Tap again to clear all' : 'Clear form'}
           </button>
