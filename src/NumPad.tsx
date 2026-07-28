@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { loadPadPos, padStyle, posFromPointer, savePadPos, useViewport } from './viewportAnchor';
 
 // Floating, draggable 10-key pad for numeric entry. Any input carrying the
 // numPad props (inputMode="none" + data-np) summons it on focus instead of
@@ -6,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 // anywhere by its handle and remembers its position per device. The ABC key
 // hands one field back to the OS keyboard when free text is needed.
 
-const POS_KEY = 'numpad-pos-v1';
+const POS_KEY = 'numpad-pos-v2';
 
 // React controlled inputs ignore direct .value writes; go through the native
 // setter and fire an input event so onChange handlers run normally.
@@ -16,22 +17,10 @@ function setNativeValue(el: HTMLInputElement, value: string) {
   el.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-function loadPos(): { x: number; y: number } | null {
-  try {
-    const raw = localStorage.getItem(POS_KEY);
-    if (!raw) return null;
-    const p = JSON.parse(raw) as { x: number; y: number };
-    return typeof p.x === 'number' && typeof p.y === 'number' ? p : null;
-  } catch {
-    return null;
-  }
-}
-
-const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-
 export default function NumPad() {
   const [target, setTarget] = useState<HTMLInputElement | null>(null);
-  const [pos, setPos] = useState(loadPos);
+  const [pos, setPos] = useState(() => loadPadPos(POS_KEY));
+  const vp = useViewport();
   const padRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ dx: number; dy: number } | null>(null);
 
@@ -109,28 +98,23 @@ export default function NumPad() {
   };
 
   const startDrag = (e: React.PointerEvent) => {
-    const rect = padRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    drag.current = { dx: e.clientX - rect.left, dy: e.clientY - rect.top };
+    drag.current = { dx: 0, dy: 0 };
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
   const onDrag = (e: React.PointerEvent) => {
-    if (!drag.current || !padRef.current) return;
-    const w = padRef.current.offsetWidth;
-    const h = padRef.current.offsetHeight;
-    const x = clamp(e.clientX - drag.current.dx, 0, window.innerWidth - w);
-    const y = clamp(e.clientY - drag.current.dy, 0, window.innerHeight - h);
-    setPos({ x, y });
+    if (!drag.current) return;
+    setPos(posFromPointer(vp, e.clientX, e.clientY));
   };
 
   const endDrag = () => {
-    if (drag.current && pos) localStorage.setItem(POS_KEY, JSON.stringify(pos));
+    if (drag.current && pos) savePadPos(POS_KEY, pos);
     drag.current = null;
   };
 
   // Taps on pad buttons must not steal focus from the input.
   const noFocus = (e: React.PointerEvent) => e.preventDefault();
+  const style = padStyle(vp, pos, 240, 300);
 
   const key = (label: string, act: () => void, cls = '') => (
     <button
@@ -143,9 +127,7 @@ export default function NumPad() {
     </button>
   );
 
-  const style = pos
-    ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto' }
-    : undefined;
+
 
   return (
     <div className="np screen-only" ref={padRef} style={style}>

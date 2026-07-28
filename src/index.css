@@ -2996,3 +2996,14 @@ input[type='checkbox']:checked::after {
 .ar-cell.len3 { font-size: 6px; }
 .ar-cell.len4 { font-size: 5.4px; letter-spacing: -0.2px; }
 .ar-cell.len5 { font-size: 4.8px; letter-spacing: -0.3px; }
+
+/* Floating pads counter page zoom, so give them a solid edge that reads at
+   any scale. */
+.np {
+  will-change: left, top, transform;
+}
+
+.np-at {
+  color: #2a5db0;
+  font-weight: 700;
+}
