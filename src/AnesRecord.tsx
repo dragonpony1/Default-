@@ -130,6 +130,20 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     />
   );
 
+  // One of a printed pair: ticking one clears its partner.
+  const xck = (k: string, other: string, label: string) => (
+    <label className="ck" key={k}>
+      <input
+        type="checkbox"
+        checked={!!d.ck[k]}
+        onChange={(e) =>
+          setD((p) => ({ ...p, ck: { ...p.ck, [k]: e.target.checked, [other]: false } }))
+        }
+      />
+      <span>{label}</span>
+    </label>
+  );
+
   const tx = (k: string, cls = '') => (
     <input
       {...noAuto}
@@ -287,6 +301,8 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
         </div>
         <ColumnPass
           cells={d.cells}
+          ck={d.ck}
+          setCk={(k, v) => setD((p) => ({ ...p, ck: { ...p.ck, [k]: v } }))}
           vitals={d.vitals}
           times={times}
           cols={COLS}
@@ -545,7 +561,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             {band('Medications', (
               <>
                 {crow('Oxygen (L/minute)', 'med0')}
-                {crow(<span className="ar-inlineck">{ck('n2o', 'N₂O')}{ck('airMed', 'Air')} (L/minute)</span>, 'med1')}
+                {crow(<span className="ar-inlineck">{xck('n2o', 'airMed', 'N₂O')}{xck('airMed', 'n2o', 'Air')} (L/minute)</span>, 'med1')}
                 {crow('ISO/SEVO/ET%', 'med2')}
                 {crow('PROPOFOL IV mg', 'med3')}
                 {crow('ANECTINE IV mg', 'med4')}

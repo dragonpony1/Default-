@@ -18,6 +18,8 @@ import type { VitalsData, Series } from './VitalsGraph';
 
 interface Props {
   cells: Record<string, string>;
+  ck: Record<string, boolean>;
+  setCk: (key: string, value: boolean) => void;
   vitals: VitalsData;
   times: string[];
   cols: number;
@@ -40,6 +42,8 @@ const TEMP_RANGE = { F: { min: 93, max: 106, start: 98.6 }, C: { min: 34, max: 4
 
 export default function ColumnPass({
   cells,
+  ck,
+  setCk,
   vitals,
   times,
   cols,
@@ -180,12 +184,19 @@ export default function ColumnPass({
     );
   };
 
+  // One gas or the other — picking one clears the other, matching the pair of
+  // boxes printed on the form.
+  const pickExclusive = (r: PassRow, chosen: string) => {
+    (r.exclusiveCk ?? []).forEach((o) => setCk(o.ck, o.ck === chosen ? !ck[chosen] : false));
+  };
+
   const rowCard = (r: PassRow) => {
     const { value, carried } = shownValue(r);
+    const chosen = (r.exclusiveCk ?? []).find((o) => ck[o.ck]);
     return (
       <div className={`cp-row${carried ? ' carried' : ''}${value === '' ? ' empty' : ''}`} key={r.key}>
         <div className="cp-rowhead">
-          <span className="cp-label">{r.label}</span>
+          <span className="cp-label">{chosen ? chosen.label : r.label}</span>
           <span className="cp-value">
             {value === '' ? '—' : value}
             {value !== '' && r.unit ? <span className="cp-unit"> {r.unit}</span> : null}
@@ -195,6 +206,21 @@ export default function ColumnPass({
             <button type="button" className="cp-clear" onClick={() => write(r, '')} aria-label="clear">✕</button>
           )}
         </div>
+        {r.exclusiveCk && (
+          <div className="chips wrap cp-pick">
+            {r.exclusiveCk.map((o) => (
+              <button
+                key={o.ck}
+                type="button"
+                className={`chip${ck[o.ck] ? ' on' : ''}`}
+                onClick={() => pickExclusive(r, o.ck)}
+              >
+                {o.label}
+              </button>
+            ))}
+            {!chosen && <span className="ihint">pick one</span>}
+          </div>
+        )}
         {rowControl(r)}
       </div>
     );

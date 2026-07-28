@@ -46,6 +46,9 @@ export interface PassRow {
   unit?: string;
   options?: string[]; // for 'chips'
   spec?: StepSpec; // for 'vital'
+  // Rows whose printed label is a pair of boxes — one gas or the other, never
+  // both. Picking one ticks its box on the record and unticks the other.
+  exclusiveCk?: Array<{ ck: string; label: string }>;
 }
 
 // The rounds pass: what gets looked at every five minutes.
@@ -54,7 +57,16 @@ export const PASS_ROWS: PassRow[] = [
   { key: 'dia', label: 'Diastolic', kind: 'vital', unit: 'mmHg', spec: { min: 20, max: 140, inc: 2, label: 'Diastolic', unit: 'mmHg', start: 70 } },
   { key: 'hr', label: 'Heart rate', kind: 'vital', unit: 'bpm', spec: { min: 20, max: 180, inc: 1, label: 'Heart rate', unit: 'bpm', start: 70 } },
   { key: 'med0', label: 'Oxygen', kind: 'slider', unit: 'L/min' },
-  { key: 'med1', label: 'N₂O / Air', kind: 'slider', unit: 'L/min' },
+  {
+    key: 'med1',
+    label: 'N₂O / Air',
+    kind: 'slider',
+    unit: 'L/min',
+    exclusiveCk: [
+      { ck: 'n2o', label: 'N₂O' },
+      { ck: 'airMed', label: 'Air' },
+    ],
+  },
   { key: 'med2', label: 'ISO / SEVO', kind: 'slider', unit: 'ET%' },
   { key: 'vent0', label: 'Rate', kind: 'slider', unit: '/min' },
   { key: 'vent1', label: 'Tidal volume', kind: 'slider', unit: 'mL' },
