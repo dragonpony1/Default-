@@ -135,7 +135,18 @@ export default function TempPad() {
         />
         <button type="button" className="np-key tp-nudge" onPointerDown={noFocus} onClick={() => apply(clamp(val + 0.1, r.min, r.max))}>+0.1</button>
       </div>
-      <div className="np-bottom tp-bottom">
+      <div className="np-bottom">
+        <button
+          type="button"
+          className="np-key np-fn np-small"
+          onPointerDown={noFocus}
+          onClick={() => {
+            setNativeValue(target, '');
+            done();
+          }}
+        >
+          Clear
+        </button>
         <button type="button" className="np-key np-done" onPointerDown={noFocus} onClick={done}>Done</button>
       </div>
     </div>

@@ -3339,3 +3339,8 @@ input[type='checkbox']:checked::after {
     display: none;
   }
 }
+
+/* Slider pad with Clear · 123 · Done */
+.np-bottom3 {
+  grid-template-columns: 1fr 1fr 2fr;
+}
