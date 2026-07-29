@@ -3209,6 +3209,16 @@ button.po-num.on {
   padding: 0.4rem 0 1.2rem;
 }
 
+/* The controls sit at both ends of the list. Only the top set sticks; two
+   sticky bars would fight each other for the same edge. */
+.cp-bottom .cp-bar {
+  position: static;
+}
+
+.cp-top .cp-foot {
+  padding-bottom: 0.5rem;
+}
+
 .cp-next {
   font-size: 1.05rem;
   padding: 0.7rem 1.4rem;

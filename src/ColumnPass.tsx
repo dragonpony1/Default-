@@ -315,11 +315,12 @@ export default function ColumnPass({
     );
   };
 
-  return (
-    <div className="cp screen-only">
+  // The same set of controls sits above and below the list, so a column can be
+  // moved through or written down from whichever end of it you happen to be at.
+  const controls = (where: 'top' | 'bottom') => (
+    <div className={`cp-controls cp-${where}`} key={where}>
       <div className="cp-bar">
-        {/* Navigation, not charting: named so it cannot be mistaken for the
-            Fill button at the foot of the list. */}
+        {/* Navigation, not charting: named so it cannot be mistaken for Fill. */}
         <button
           type="button"
           className="chip cp-move"
@@ -356,10 +357,41 @@ export default function ColumnPass({
         <button type="button" className="chip on cp-done" onClick={onExit}>Done</button>
       </div>
 
+      <div className="cp-foot">
+        <button type="button" className="chip cp-wipe" onClick={clearColumn}>
+          🗑 Clear this column
+        </button>
+        <button
+          type="button"
+          className="chip cp-fill"
+          onClick={fillColumn}
+          disabled={fillableCount === 0}
+          title="Write every value showing here down as entries for this time"
+        >
+          {fillableCount ? `✓ Fill in ${at} (${fillableCount})` : 'Nothing to fill yet'}
+        </button>
+        <button
+          type="button"
+          className="chip on cp-next"
+          onClick={() => {
+            fillColumn();
+            setCol((c) => Math.min(cols - 1, c + 1));
+          }}
+        >
+          Fill &amp; next ({times[Math.min(cols - 1, col + 1)] || `+${stepMin} min`}) →
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="cp screen-only">
+      {controls('top')}
+
       {noClock && (
         <div className="cp-nostart">
           <span>
-            The case has no surgery start time, so the columns have no clock times to show.
+            The case has no anesthesia start time, so the columns have no clock times to show.
           </span>
           <button type="button" className="chip on" onClick={onStartNow}>🕐 Start the case now</button>
         </div>
@@ -367,10 +399,10 @@ export default function ColumnPass({
 
       <div className="cp-list" ref={listRef}>
         <p className="cp-howto">
-          <b>Fill &amp; next</b>, at the foot of this list, is what charts a column: it writes down
-          everything showing here and moves on. <b>Back</b> and <b>Skip</b> at the top only move
-          between times — they write nothing. A row showing <b>—</b> has never been set, so there is
-          nothing for Fill to write: tap <b>Set</b> to start it.
+          <b>Fill &amp; next</b> is what charts a column: it writes down everything showing here and
+          moves on. <b>Back</b> and <b>Skip</b> only move between times — they write nothing. The
+          same buttons sit at both ends of this list. A row showing <b>—</b> has never been set, so
+          there is nothing for Fill to write: tap <b>Set</b> to start it.
         </p>
         {rows.map(rowCard)}
 
@@ -379,30 +411,7 @@ export default function ColumnPass({
         </button>
         {showAsNeeded && AS_NEEDED_ROWS.map(rowCard)}
 
-        <div className="cp-foot">
-          <button type="button" className="chip cp-wipe" onClick={clearColumn}>
-            🗑 Clear this column
-          </button>
-          <button
-            type="button"
-            className="chip cp-fill"
-            onClick={fillColumn}
-            disabled={fillableCount === 0}
-            title="Write every value showing here down as entries for this time"
-          >
-            {fillableCount ? `✓ Fill in ${at} (${fillableCount})` : 'Nothing to fill yet'}
-          </button>
-          <button
-            type="button"
-            className="chip on cp-next"
-            onClick={() => {
-              fillColumn();
-              setCol((c) => Math.min(cols - 1, c + 1));
-            }}
-          >
-            Fill &amp; next ({times[Math.min(cols - 1, col + 1)] || `+${stepMin} min`}) →
-          </button>
-        </div>
+        {controls('bottom')}
       </div>
     </div>
   );
