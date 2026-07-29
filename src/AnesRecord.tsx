@@ -90,6 +90,14 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     localStorage.setItem(KEY, JSON.stringify(d));
   }, [d]);
 
+  // The record is where the case date and the anesthesia times are entered;
+  // the billing sheet needs the same facts, so they go on the shared case.
+  useEffect(() => {
+    if (d.tx.date?.trim()) setCaseField('caseDate', d.tx.date.trim());
+    if (d.tx.anesStart?.trim()) setCaseField('anesStart', d.tx.anesStart.trim());
+    if (d.tx.anesStop?.trim()) setCaseField('anesStop', d.tx.anesStop.trim());
+  }, [d.tx.date, d.tx.anesStart, d.tx.anesStop]);
+
   // Clear form bumps resetSignal — reload from the (now-cleared) storage
   // directly so the mounted record can't autosave stale data back.
   const seenReset = useRef(resetSignal);

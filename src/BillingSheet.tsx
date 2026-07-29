@@ -3,7 +3,7 @@ import SigImg from './SigImg';
 import { noAuto, numPad } from './inputProps';
 import BillingWizard from './BillingWizard';
 import { useSigner, nowStamp } from './signer';
-import { useCaseData, setCaseField } from './caseData';
+import { useCaseData } from './caseData';
 
 // Deseret Peak Anesthesia Billing Information sheet, built from a flat scan
 // of the original. Tap the box beside a CPT code to mark it; header fields
@@ -131,6 +131,30 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
     localStorage.setItem(KEY, JSON.stringify(d));
   }, [d]);
 
+  useEffect(() => {
+    const [m = '', dd = '', y = ''] = (caseData.caseDate || '').split('/');
+    setD((p) => {
+      const tx = { ...p.tx };
+      let changed = false;
+      const fill = (k: string, v: string) => {
+        if (v && !(tx[k] ?? '').trim()) {
+          tx[k] = v;
+          changed = true;
+        }
+      };
+      fill('procedure', caseData.procedure);
+      fill('surgeon', caseData.surgeon);
+      fill('dx', caseData.diagnosis);
+      fill('startTime', caseData.anesStart);
+      fill('endTime', caseData.anesStop);
+      fill('crna', signer.name || signer.initials);
+      fill('dateM', m);
+      fill('dateD', dd);
+      fill('dateY', y);
+      return changed ? { ...p, tx } : p;
+    });
+  }, [caseData, signer.name, signer.initials]);
+
   const seenReset = useRef(resetSignal);
   useEffect(() => {
     if (resetSignal !== seenReset.current) {
@@ -212,13 +236,7 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
         <div className="bs-fline"><span className="b">Procedure:</span>{tx('procedure', 'grow')}</div>
         <div className="bs-fline">
           <span className="b">Surgeon</span>{tx('surgeon', 'wide')}
-          <span className="b">Dx:</span>
-          <input
-            {...noAuto}
-            className="t u grow"
-            value={caseData.diagnosis}
-            onChange={(e) => setCaseField('diagnosis', e.target.value)}
-          />
+          <span className="b">Dx:</span>{tx('dx', 'grow')}
         </div>
         <div className="bs-fline">
           <span className="b">CRNA</span>

@@ -16,10 +16,13 @@ export interface CaseData {
   procedure: string; // proposed procedure, from the pre-op
   diagnosis: string; // problem list / diagnoses, from the pre-op
   surgeon: string;
+  caseDate: string; // MM/DD/YY
+  anesStart: string; // HHMM
+  anesStop: string; // HHMM
 }
 
 const KEY = 'anes-case-v1';
-const empty: CaseData = { allergies: '', weight: '', weightKg: '', height: '', procedure: '', diagnosis: '', surgeon: '' };
+const empty: CaseData = { allergies: '', weight: '', weightKg: '', height: '', procedure: '', diagnosis: '', surgeon: '', caseDate: '', anesStart: '', anesStop: '' };
 
 function read(): CaseData {
   try {
