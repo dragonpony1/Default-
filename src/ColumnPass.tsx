@@ -184,6 +184,46 @@ export default function ColumnPass({
     );
   };
 
+  // Write the whole column down as it stands — the values just adjusted plus
+  // the ones carried in — exactly as a column is filled in on paper, so every
+  // five-minute slot on the printed chart carries its own figures.
+  const fillColumn = () => {
+    rows.forEach((r) => {
+      const { value, carried } = shownValue(r);
+      if (value === '' || !carried) return; // already an entry of its own
+      write(r, value);
+    });
+  };
+
+  const filledCount = rows.filter((r) => {
+    const { value, carried } = shownValue(r);
+    return value !== '' && !carried;
+  }).length;
+
+  const carriedCount = rows.filter((r) => shownValue(r).carried).length;
+
+  // Wipe this time column — every row of it, including the drugs and totals —
+  // for a column charted in the wrong slot.
+  const clearColumn = () => {
+    const entries = [...rows, ...AS_NEEDED_ROWS].filter((r) => {
+      if (r.kind === 'vital') return vitals[r.key as Series]?.[col] != null;
+      return cells[`${r.key}:${col}`] !== undefined;
+    });
+    if (!entries.length) return;
+    if (!window.confirm(`Clear everything charted at ${at}? ${entries.length} entr${entries.length === 1 ? 'y' : 'ies'} will be removed.`)) return;
+    const nextVitals = { sys: { ...vitals.sys }, dia: { ...vitals.dia }, hr: { ...vitals.hr } };
+    let touchedVitals = false;
+    entries.forEach((r) => {
+      if (r.kind === 'vital') {
+        delete nextVitals[r.key as Series][col];
+        touchedVitals = true;
+      } else {
+        setCell(`${r.key}:${col}`, '');
+      }
+    });
+    if (touchedVitals) setVitals(nextVitals);
+  };
+
   // One gas or the other — picking one clears the other, matching the pair of
   // boxes printed on the form.
   const pickExclusive = (r: PassRow, chosen: string) => {
@@ -233,7 +273,11 @@ export default function ColumnPass({
         <span className="cp-time">
           <span className="cp-timeval">{at}</span>
           <span className="cp-timehint">
-            {col > endCol ? 'after anesthesia stop' : `column ${col + 1} of ${cols}`}
+            {col > endCol
+              ? 'after anesthesia stop'
+              : filledCount
+                ? `${filledCount} charted here`
+                : `column ${col + 1} of ${cols}`}
           </span>
         </span>
         <button type="button" className="chip" onClick={() => setCol((c) => Math.min(cols - 1, c + 1))}>later →</button>
@@ -249,12 +293,27 @@ export default function ColumnPass({
         {showAsNeeded && AS_NEEDED_ROWS.map(rowCard)}
 
         <div className="cp-foot">
+          <button type="button" className="chip cp-wipe" onClick={clearColumn}>
+            🗑 Clear this column
+          </button>
+          <button
+            type="button"
+            className="chip cp-fill"
+            onClick={fillColumn}
+            disabled={carriedCount === 0}
+            title="Write the carried values down as entries for this time"
+          >
+            ✓ Fill in {at}{carriedCount ? ` (${carriedCount})` : ''}
+          </button>
           <button
             type="button"
             className="chip on cp-next"
-            onClick={() => setCol((c) => Math.min(cols - 1, c + 1))}
+            onClick={() => {
+              fillColumn();
+              setCol((c) => Math.min(cols - 1, c + 1));
+            }}
           >
-            Next column ({times[Math.min(cols - 1, col + 1)] || '—'}) →
+            Fill &amp; next ({times[Math.min(cols - 1, col + 1)] || '—'}) →
           </button>
         </div>
       </div>

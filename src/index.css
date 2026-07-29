@@ -3385,3 +3385,26 @@ button.po-num.on {
 .np-bottom3 {
   grid-template-columns: 1fr 1fr 2fr;
 }
+
+.cp-foot {
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cp-fill {
+  border-color: #1a7a3a;
+  color: #1a7a3a;
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding: 0.7rem 1.2rem;
+}
+
+.cp-fill:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.cp-wipe {
+  border-color: #b02a2a;
+  color: #b02a2a;
+}
