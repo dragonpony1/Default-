@@ -576,7 +576,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             <div className="ar-line"><span>Length</span>{txn('tubeLength', 'xshort')} <span>cm (Lip)</span></div>
             <div className="ar-line"><span>Blade</span>{tx('blade', 'short')}{txn('bladeSize', 'xshort')}</div>
             <div className="ar-line ind">{ck('lubricant', 'Lubricant')}{ck('trachSpray', 'Trach Spray')}</div>
-            <div className="ar-line ind">{ck('rapidSequence', 'Rapid Sequence')}</div>
+            <div className="ar-line ind">{xck('rapidSequence', 'controlled', 'Rapid Sequence')}{xck('controlled', 'rapidSequence', 'Controlled')}</div>
             <div className="ar-line ind">{ck('cricoid', 'Cricoid Pressure')}</div>
             <div className="ar-line"><span className="b">CUFF:</span>{ck('cuffNone', 'None')}{ck('cuffInflated', 'Inflated')}</div>
             <div className="ar-line ind">{ck('easy', 'Easy')}{ck('difficult', 'Difficult')}</div>

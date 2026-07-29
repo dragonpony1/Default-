@@ -77,6 +77,13 @@ export default function AnesWizard(api: WizardApi) {
     </button>
   );
   const ckChip = (k: string, label: string) => chip(!!api.ck[k], () => api.setCk(k, !api.ck[k]), label, k);
+  // One of a pair: ticking this one unticks its opposite.
+  const xckChip = (k: string, other: string, label: string) =>
+    chip(!!api.ck[k], () => {
+      const next = !api.ck[k];
+      api.setCk(k, next);
+      if (next) api.setCk(other, false);
+    }, label, k);
   const field = (label: string, k: string, ph = '') => (
     <label className="ifield" key={k}>
       <span>{label}</span>
@@ -235,7 +242,8 @@ export default function AnesWizard(api: WizardApi) {
             {field('Time', 'ettTime', 'HHMM')}
             {field('# Attempts', 'attempts')}
           </div>
-          {group('Technique', <>{ckChip('rapidSequence', 'Rapid Sequence')}{ckChip('cricoid', 'Cricoid Pressure')}{ckChip('lubricant', 'Lubricant')}{ckChip('trachSpray', 'Trach Spray')}</>)}
+          {/* An induction is one or the other, so picking one drops the other. */}
+          {group('Technique', <>{xckChip('rapidSequence', 'controlled', 'Rapid Sequence')}{xckChip('controlled', 'rapidSequence', 'Controlled')}{ckChip('cricoid', 'Cricoid Pressure')}{ckChip('lubricant', 'Lubricant')}{ckChip('trachSpray', 'Trach Spray')}</>)}
           {group('Cuff', <>{ckChip('cuffNone', 'None')}{ckChip('cuffInflated', 'Inflated')}</>)}
           {group('Ease', <>{ckChip('easy', 'Easy')}{ckChip('difficult', 'Difficult')}{ckChip('atraumatic', 'Atraumatic')}{ckChip('traumatic', 'Traumatic')}</>)}
           {api.ck.difficult && pick('Difficult airway — what was used', 'difficultAid', ['Bougie', 'McGrath', 'Glidescope', 'Stylet', 'Two-person mask', 'Fiberoptic'], true, 'other')}
