@@ -79,7 +79,11 @@ export default function TempPad() {
     apply(clamp(Math.round(converted * 10) / 10, nr.min, nr.max));
   };
 
+  // The pad opens showing a temperature — 98.6 unless the box already holds
+  // one. Done takes what is shown: a normal temperature should not have to be
+  // nudged off and back before the box will accept it.
   const done = () => {
+    if (!target.value.trim()) setNativeValue(target, val.toFixed(1));
     target.blur();
     setTarget(null);
   };

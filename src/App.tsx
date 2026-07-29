@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import SigImg from './SigImg';
-import { noAuto, numPad, tempPad } from './inputProps';
+import { noAuto, numPad, tempPad, timePad } from './inputProps';
 import { emptyPreopEval, type PreopEval, type YesNo } from './types';
 import { SYSTEMS, selectedProblems, type SystemBand } from './formConfig';
 import { clearDraft, loadDraft, saveDraft } from './storage';
@@ -197,6 +197,11 @@ export default function App() {
     <input {...noAuto} className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
   );
 
+  // Clock times: the 10-key with a Now key on it.
+  const txtime = (k: StringKeys, cls = '') => (
+    <input {...timePad} className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
+  );
+
   // Date/time blank with a one-tap "Now" stamp beside it.
   const dtCell = (label: string, k: StringKeys, cls = 'w40') => (
     <div className={`sigcell ${cls}`}>
@@ -277,7 +282,7 @@ export default function App() {
   );
 
   // Mutually-exclusive checkbox group (paper-style: check one, re-click to clear)
-  const xbx = <K extends 'sex' | 'heightUnit' | 'weightUnit' | 'physicalStatus'>(
+  const xbx = <K extends 'sex' | 'heightUnit' | 'weightUnit' | 'physicalStatus' | 'hcg'>(
     k: K,
     v: PreopEval[K],
     label: string,
@@ -694,7 +699,7 @@ export default function App() {
               <div>
                 <span className="b caps">Airway / Teeth / Head and Neck</span>
                 <span className="b gap">Mallampati Class</span>{txt('mallampati', 'u med')}
-                <span className="b gap">NPO</span>{txt('npo', 'u med')}
+                <span className="b gap">NPO</span>{txtime('npo', 'u med')}
               </div>
               <div>
                 <span className="b">TMD</span>{txt('tmd', 'u med')}
@@ -772,6 +777,14 @@ export default function App() {
                 {rslot('Hgb / Hct / CBC', 'labHgb')}
                 {rslot('Electrolytes', 'labElectrolytes')}
                 {rslot('Urinalysis', 'labUrinalysis')}
+                <div className="rslot hcgslot">
+                  <span className="rlabel">hCG</span>
+                  <span className="opts">
+                    {xbx('hcg', 'pos', 'Pos')}
+                    {xbx('hcg', 'neg', 'Neg')}
+                    {xbx('hcg', 'na', 'Not needed')}
+                  </span>
+                </div>
                 {rslot('Other', 'labOther')}
               </div>
               <div className="rbox last">

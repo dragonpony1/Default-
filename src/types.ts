@@ -80,6 +80,7 @@ export interface PreopEval {
   dxOther: string;
 
   // Laboratory studies
+  hcg: '' | 'pos' | 'neg' | 'na'; // pregnancy test: positive, negative, not needed
   labHgb: string;
   labElectrolytes: string;
   labUrinalysis: string;
@@ -181,6 +182,7 @@ export const emptyPreopEval: PreopEval = {
   dxCxr: '',
   dxPulm: '',
   dxOther: '',
+  hcg: '',
   labHgb: '',
   labElectrolytes: '',
   labUrinalysis: '',

@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { composeNarrative } from './narrative';
-import { noAuto, numPad, tempPad } from './inputProps';
+import { noAuto, numPad, tempPad, timePad } from './inputProps';
 
 // "0730"/"7:30"/"730" → minutes since midnight, or null.
 function parseHHMM(s: string): number | null {
@@ -53,6 +53,9 @@ const NAV_SHORT: Record<string, string> = {
   'Recovery & handoff': 'Recovery',
 };
 
+// Every box that holds a clock time — they all get the Now key.
+const TIME_FIELDS = ['anesStart', 'anesStop', 'surgStart', 'surgStop', 'ettTime', 'recTime', 'condTime', 'remarkTime'];
+
 export default function AnesWizard(api: WizardApi) {
   const [step, setStep] = useState(0);
 
@@ -77,7 +80,7 @@ export default function AnesWizard(api: WizardApi) {
   const field = (label: string, k: string, ph = '') => (
     <label className="ifield" key={k}>
       <span>{label}</span>
-      <input {...(['recT'].includes(k) ? tempPad : ['anesStart', 'surgStart', 'tubeLength', 'ettTime', 'attempts', 'surgStop', 'anesStop', 'crystalloid', 'fluidEbl', 'fluidUrine', 'fluidBlood', 'recTime', 'recBp', 'recO2', 'recP', 'recR'].includes(k) ? numPad : noAuto)} value={api.tx[k] ?? ''} placeholder={ph} onChange={(e) => api.setTx(k, e.target.value)} />
+      <input {...(['recT'].includes(k) ? tempPad : TIME_FIELDS.includes(k) ? timePad : ['tubeLength', 'attempts', 'crystalloid', 'fluidEbl', 'fluidUrine', 'fluidBlood', 'recBp', 'recO2', 'recP', 'recR', 'recRoom'].includes(k) ? numPad : noAuto)} value={api.tx[k] ?? ''} placeholder={ph} onChange={(e) => api.setTx(k, e.target.value)} />
     </label>
   );
   const group = (title: string, children: ReactNode) => (
@@ -223,6 +226,8 @@ export default function AnesWizard(api: WizardApi) {
         <>
           {group('Type', <>{ckChip('ettOral', 'Oral')}{ckChip('ettNasal', 'Nasal')}{ckChip('ettRae', 'RAE')}{ckChip('lma', 'LMA')}</>)}
           {pick('Tube size (mm)', 'tubeSize', ['6.0', '6.5', '7.0', '7.5', '8.0'], true, 'other')}
+          {pick('Blade', 'blade', ['Mac', 'Miller', 'McGrath', 'Glidescope'], true, 'other')}
+          {pick('Blade size', 'bladeSize', ['2', '3', '4'], true, 'other')}
           <div className="irow">
             {field('Length (lip)', 'tubeLength', 'cm')}
             {field('Time', 'ettTime', 'HHMM')}
@@ -231,6 +236,13 @@ export default function AnesWizard(api: WizardApi) {
           {group('Technique', <>{ckChip('rapidSequence', 'Rapid Sequence')}{ckChip('cricoid', 'Cricoid Pressure')}{ckChip('lubricant', 'Lubricant')}{ckChip('trachSpray', 'Trach Spray')}</>)}
           {group('Cuff', <>{ckChip('cuffNone', 'None')}{ckChip('cuffInflated', 'Inflated')}</>)}
           {group('Ease', <>{ckChip('easy', 'Easy')}{ckChip('difficult', 'Difficult')}{ckChip('atraumatic', 'Atraumatic')}{ckChip('traumatic', 'Traumatic')}</>)}
+          {api.ck.difficult && pick('Difficult airway — what was used', 'difficultAid', ['Bougie', 'McGrath', 'Glidescope', 'Stylet', 'Two-person mask', 'Fiberoptic'], true, 'other')}
+          {api.ck.traumatic && (
+            <label className="ifield" key="traumaDetail">
+              <span>Trauma — what happened</span>
+              <input {...noAuto} value={api.tx.traumaDetail ?? ''} placeholder="e.g. lip abrasion" onChange={(e) => api.setTx('traumaDetail', e.target.value)} />
+            </label>
+          )}
           {group('Breath sounds', <>{ckChip('bilateral', 'Bilateral')}{ckChip('equal', 'Equal')}</>)}
           {group('Other', <>{ckChip('arrivedIntubated', 'Arrived Intubated')}{ckChip('dentitionUnchanged', 'Dentition unchanged')}</>)}
         </>
@@ -292,9 +304,9 @@ export default function AnesWizard(api: WizardApi) {
       hint: 'Doses drop into the grid near the anesthesia stop time.',
       render: () => (
         <>
-          {drugDoses('Sugammadex', `oth3:${api.endCol}`, 'mg', [200, 500])}
+          {drugDoses('Sugammadex', `oth3:${api.endCol}`, 'mg', [200, 400])}
           {drugDoses('Zofran (ondansetron)', `med8:${api.endCol}`, 'mg', [4])}
-          {drugDoses('Decadron (dexamethasone)', `oth7:${api.endCol}`, 'mg', [4, 10])}
+          {drugDoses('Decadron (dexamethasone)', `oth7:${api.endCol}`, 'mg', [4, 8, 10])}
         </>
       ),
     },
@@ -326,8 +338,14 @@ export default function AnesWizard(api: WizardApi) {
       title: 'Recovery & handoff',
       render: () => (
         <>
+          {pick('To', 'recLocation', ['PACU', 'Unit'], true, 'other')}
+          {api.tx.recLocation === 'Unit' && (
+            <label className="ifield" key="recRoom">
+              <span>Room</span>
+              <input {...numPad} value={api.tx.recRoom ?? ''} placeholder="room #" onChange={(e) => api.setTx('recRoom', e.target.value)} />
+            </label>
+          )}
           <div className="irow">
-            {field('Location', 'recLocation')}
             {field('Time', 'recTime', 'HHMM')}
             {field('BP', 'recBp')}
             {field('O₂ Sat', 'recO2')}
@@ -336,7 +354,7 @@ export default function AnesWizard(api: WizardApi) {
             {field('T', 'recT')}
           </div>
           {group('Status', <>{ckChip('awake', 'Awake')}{ckChip('drowsy', 'Drowsy')}{ckChip('somnolent', 'Somnolent')}{ckChip('stable', 'Stable')}{ckChip('unstable', 'Unstable')}</>)}
-          {group('Airway / O₂', <>{ckChip('recNasalO2', 'Nasal O₂')}{ckChip('maskO2', 'Mask O₂')}{ckChip('recIntubated', 'Intubated')}{ckChip('tPiece', 'T-piece')}{ckChip('recVentilator', 'Ventilator')}{ckChip('oralNasalAirway', 'Oral/Nasal Airway')}</>)}
+          {group('Airway / O₂', <>{ckChip('recNasalO2', 'Nasal O₂')}{ckChip('maskO2', 'Mask O₂')}{ckChip('recIntubated', 'Intubated')}{ckChip('tPiece', 'T-piece')}{ckChip('recVentilator', 'Ventilator')}{ckChip('oralNasalAirway', 'Oral/Nasal Airway')}{ckChip('recLma', 'LMA')}</>)}
           {group('Handoff', <>{ckChip('reportToRn', 'Report to RN')}{ckChip('recDentition', 'Dentition unchanged')}</>)}
         </>
       ),

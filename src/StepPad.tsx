@@ -84,7 +84,10 @@ export default function StepPad() {
     setNativeValue(target, format(next, spec.inc));
   };
 
+  // Same as the temp pad: the value on the dial is an answer, even if the
+  // dial was not moved.
   const done = () => {
+    if (!target.value.trim()) setNativeValue(target, format(val, spec.inc));
     target.blur();
     setTarget(null);
   };

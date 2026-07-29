@@ -159,8 +159,14 @@ export default function NumPad() {
         {key('Clear', clearAll, 'np-fn np-small')}
         {key('-', () => type('-'), 'np-fn')}
       </div>
-      <div className="np-bottom">
+      <div className={`np-bottom${target.dataset.timefield === '1' ? ' np-bottom3' : ''}`}>
         {key('ABC', abc, 'np-fn np-small')}
+        {/* Times are nearly always "right now" — one key beats four taps. */}
+        {target.dataset.timefield === '1' &&
+          key('🕐 Now', () => {
+            const n = new Date();
+            setNativeValue(target, `${String(n.getHours()).padStart(2, '0')}${String(n.getMinutes()).padStart(2, '0')}`);
+          }, 'np-fn np-now')}
         {key('Done', done, 'np-done')}
       </div>
     </div>

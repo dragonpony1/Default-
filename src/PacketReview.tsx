@@ -178,6 +178,20 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
   study('dxPulm', 'Pulmonary studies');
   const lab = (id: 'labHgb' | 'labElectrolytes' | 'labUrinalysis', label: string) =>
     need({ id, label, sheet: 'Pre-Op', tab: 'fields', kind: 'text', value: d[id], set: (v) => set(id, v) }, filled(d[id]));
+  need(
+    {
+      id: 'hcg',
+      label: 'Pregnancy test (hCG)',
+      sheet: 'Pre-Op',
+      tab: 'fields',
+      kind: 'choice',
+      options: ['Positive', 'Negative', 'Not needed'],
+      value: ({ pos: 'Positive', neg: 'Negative', na: 'Not needed' } as Record<string, string>)[d.hcg] ?? '',
+      set: (v) => set('hcg', ({ Positive: 'pos', Negative: 'neg', 'Not needed': 'na' } as Record<string, PreopEval['hcg']>)[v] ?? ''),
+      na: () => set('hcg', 'na'),
+    },
+    !!d.hcg,
+  );
   lab('labHgb', 'Hgb / Hct / CBC');
   lab('labElectrolytes', 'Electrolytes');
   lab('labUrinalysis', 'Urinalysis');
