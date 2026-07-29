@@ -261,6 +261,18 @@ export default function ColumnPass({
     (r.exclusiveCk ?? []).forEach((o) => setCk(o.ck, o.ck === chosen ? !ck[chosen] : false));
   };
 
+  // The value a row starts at when it has never been set: a tidal volume of
+  // 500, an FiO2 of .5, 98.6 for a temperature. Nothing is written until it is
+  // tapped — Fill only writes what is showing, so a row left at — stays blank.
+  const startFor = (r: PassRow): string => {
+    if (r.kind === 'temp') {
+      const scale = localStorage.getItem('temppad-scale-v1') === 'C' ? 'C' : 'F';
+      return TEMP_RANGE[scale].start.toFixed(1);
+    }
+    const spec = specFor(r);
+    return spec ? format(spec.start, spec.inc) : '';
+  };
+
   const rowCard = (r: PassRow) => {
     const { value, carried } = shownValue(r);
     const chosen = (r.exclusiveCk ?? []).find((o) => ck[o.ck]);
@@ -273,7 +285,13 @@ export default function ColumnPass({
             {value !== '' && r.unit ? <span className="cp-unit"> {r.unit}</span> : null}
             {carried && <span className="cp-carried">carried</span>}
           </span>
-          {value !== '' && (
+          {value === '' ? (
+            startFor(r) && (
+              <button type="button" className="chip cp-start" onClick={() => write(r, startFor(r))}>
+                Set {startFor(r)}{r.unit ? ` ${r.unit}` : ''}
+              </button>
+            )
+          ) : (
             <button type="button" className="cp-clear" onClick={() => write(r, '')} aria-label="clear">✕</button>
           )}
         </div>
@@ -336,6 +354,11 @@ export default function ColumnPass({
       )}
 
       <div className="cp-list" ref={listRef}>
+        <p className="cp-howto">
+          <b>Fill &amp; next</b> writes down everything showing here and moves on a column.
+          The arrows above only move — nothing is written. A row showing <b>—</b> has never been
+          set, so there is nothing to write: tap <b>Set</b> to start it.
+        </p>
         {rows.map(rowCard)}
 
         <button type="button" className="chip cp-more" onClick={() => setShowAsNeeded(!showAsNeeded)}>
