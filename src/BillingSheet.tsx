@@ -3,6 +3,7 @@ import SigImg from './SigImg';
 import { noAuto, numPad } from './inputProps';
 import BillingWizard from './BillingWizard';
 import { useSigner, nowStamp } from './signer';
+import { useCaseData, setCaseField } from './caseData';
 
 // Deseret Peak Anesthesia Billing Information sheet, built from a flat scan
 // of the original. Tap the box beside a CPT code to mark it; header fields
@@ -124,6 +125,7 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
   const [d, setD] = useState<BillingDraft>(loadBilling);
   const [mode, setMode] = useState<'form' | 'wizard'>('form');
   const signer = useSigner();
+  const caseData = useCaseData();
 
   useEffect(() => {
     localStorage.setItem(KEY, JSON.stringify(d));
@@ -210,7 +212,13 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
         <div className="bs-fline"><span className="b">Procedure:</span>{tx('procedure', 'grow')}</div>
         <div className="bs-fline">
           <span className="b">Surgeon</span>{tx('surgeon', 'wide')}
-          <span className="b">Dx:</span>{tx('dx', 'grow')}
+          <span className="b">Dx:</span>
+          <input
+            {...noAuto}
+            className="t u grow"
+            value={caseData.diagnosis}
+            onChange={(e) => setCaseField('diagnosis', e.target.value)}
+          />
         </div>
         <div className="bs-fline">
           <span className="b">CRNA</span>

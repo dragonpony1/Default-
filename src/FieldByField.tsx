@@ -244,6 +244,12 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       ),
       summary: () => d.proposedProcedure,
     },
+    {
+      title: 'Surgical diagnosis',
+      hint: 'What the operation is for — the indication, not the medical problem list. Prints as Diagnosis on the anesthesia record and billing sheet.',
+      render: () => input('surgicalDx', 'e.g. OA right knee, acute appendicitis…'),
+      summary: () => d.surgicalDx,
+    },
     numStep('Age', 'age'),
     { title: 'Sex', render: () => oneOf('sex', ['M', 'F']), summary: () => d.sex },
     {

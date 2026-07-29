@@ -99,12 +99,13 @@ export default function App() {
     if (p) setCaseField('procedure', p);
   }, [d.proposedProcedure]);
 
+  // The record's and billing sheet's Diagnosis is the surgical indication, not
+  // the patient's medical problem list — those are different fields on paper
+  // and must not be conflated.
   useEffect(() => {
-    const dx = [selectedProblems(d.checks, d.customConditions).join(', '), d.problemList.trim()]
-      .filter(Boolean)
-      .join('; ');
+    const dx = d.surgicalDx.trim();
     if (dx) setCaseField('diagnosis', dx);
-  }, [d.checks, d.customConditions, d.problemList]);
+  }, [d.surgicalDx]);
 
 
   const set = <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => setD((prev) => ({ ...prev, [k]: v }));
