@@ -3288,3 +3288,63 @@ button.po-num.on {
   min-height: 40px;
   padding: 0.3rem 0.85rem;
 }
+
+/* Post-anesthesia note: one-touch answers, then a sign-off box laid out like
+   the printed line — signature, date, time. */
+.pan-chips {
+  gap: 0.35rem;
+}
+
+.pan-other {
+  margin-top: 0.35rem;
+}
+
+.pan-signoff {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+  padding: 0.7rem;
+  background: #f7f9fc;
+  border: 1px solid #d3ddf0;
+  border-radius: 8px;
+}
+
+.pan-sigcell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.pan-sigcell:first-child {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.pan-siglabel {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #2a5db0;
+}
+
+.pan-sigslot {
+  border-bottom: 1.5px solid #000;
+  min-height: 40px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.pan-blank {
+  display: block;
+  height: 38px;
+}
+
+.pan-stampval {
+  font-size: 1.3rem;
+  font-weight: 700;
+  border-bottom: 1.5px solid #000;
+  min-width: 6rem;
+  min-height: 40px;
+  display: flex;
+  align-items: flex-end;
+}
