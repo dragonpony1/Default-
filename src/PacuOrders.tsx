@@ -262,9 +262,9 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
         ))}
         {item(12, (
           <div className="po-line">
-            <span>Demerol (Meperidine)</span>
-            {txn('demerol')}
-            <span>mg IV PRN post-operative shivering. May repeat times 1 15 minutes after first dose.</span>
+            <span>Inapsine (Droperidol)</span>
+            {txn('inapsine')}
+            <span>mg IV PRN post-operative nausea/vomiting may repeat times 1 15 minutes after first dose. (first, second)</span>
           </div>
         ))}
         {item(13, (

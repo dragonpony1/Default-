@@ -3404,6 +3404,19 @@ input[type='checkbox']:checked::after {
   font-size: 0.85rem;
 }
 
+/* Pregnancy test: three boxes on one line rather than a text slot. */
+.hcgslot {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.hcgslot .opts {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
 /* The typed name that rides with a signature, so a reader can make it out. */
 .signame {
   font-size: 0.72rem;

@@ -74,10 +74,16 @@ export function composeNarrative(ck: Ck, tx: Tx, cells: Cells): string {
     .join(', ');
   const o2 = ck.recNasalO2 ? ' on nasal O₂' : ck.maskO2 ? ' on mask O₂' : '';
   if (status || tx.recLocation || o2) {
-    add(`Transported to ${tx.recLocation || 'PACU'}${status ? ` ${status}` : ''}${o2}${tx.recTime ? ` at ${tx.recTime}` : ''}.`);
+    const dest = `${tx.recLocation || 'PACU'}${tx.recRoom ? ` room ${tx.recRoom}` : ''}`;
+    add(`Transported to ${dest}${status ? ` ${status}` : ''}${o2}${tx.recTime ? ` at ${tx.recTime}` : ''}.`);
   }
   if (ck.reportToRn) add('Report given to receiving RN.');
   if (tx.anesStop) add(`Anesthesia stop ${tx.anesStop}.`);
+
+  // How the case ended is the point of the note, so it closes on it. An
+  // unstable patient is never described as stable — that is charted as it was.
+  if (ck.unstable) add('Patient unstable on transfer of care; condition as charted above.');
+  else add('Patient stable.');
 
   return out.join(' ');
 }

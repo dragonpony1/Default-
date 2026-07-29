@@ -16,6 +16,14 @@ export const numPad = {
   'data-np': '1',
 } as const;
 
+// Time boxes: the 10-key, plus a Now key that stamps the current HHMM.
+export const timePad = {
+  ...noAuto,
+  inputMode: 'none',
+  'data-np': '1',
+  'data-timefield': '1',
+} as const;
+
 // Date boxes: floating date picker (Today plus wheels) instead of typing.
 export const datePad = {
   ...noAuto,

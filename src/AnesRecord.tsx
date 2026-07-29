@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import SigImg from './SigImg';
-import { datePad, noAuto, numPad, tempPad } from './inputProps';
+import { datePad, noAuto, numPad, tempPad, timePad } from './inputProps';
 import { useCaseData, setCaseField } from './caseData';
 import VitalsGraph, { type VitalsData, type Series } from './VitalsGraph';
 import { useSigner, nowStamp } from './signer';
@@ -129,6 +129,16 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
   const txtemp = (k: string, cls = '') => (
     <input
       {...tempPad}
+      className={`t u ${cls}`}
+      value={d.tx[k] ?? ''}
+      onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: e.target.value } }))}
+    />
+  );
+
+  // Time boxes: the 10-key with a Now key on it.
+  const txt = (k: string, cls = '') => (
+    <input
+      {...timePad}
       className={`t u ${cls}`}
       value={d.tx[k] ?? ''}
       onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: e.target.value } }))}
@@ -544,15 +554,18 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             <div className="ar-line">{ck('ettOral', 'Oral')}{ck('ettNasal', 'Nasal')}{ck('ettRae', 'RAE')}</div>
             <div className="ar-line"><span>Tube size.</span>{txn('tubeSize', 'xshort')} <span>mm</span></div>
             <div className="ar-line"><span>Length</span>{txn('tubeLength', 'xshort')} <span>cm (Lip)</span></div>
+            <div className="ar-line"><span>Blade</span>{tx('blade', 'short')}{txn('bladeSize', 'xshort')}</div>
             <div className="ar-line ind">{ck('lubricant', 'Lubricant')}{ck('trachSpray', 'Trach Spray')}</div>
             <div className="ar-line ind">{ck('rapidSequence', 'Rapid Sequence')}</div>
             <div className="ar-line ind">{ck('cricoid', 'Cricoid Pressure')}</div>
             <div className="ar-line"><span className="b">CUFF:</span>{ck('cuffNone', 'None')}{ck('cuffInflated', 'Inflated')}</div>
             <div className="ar-line ind">{ck('easy', 'Easy')}{ck('difficult', 'Difficult')}</div>
+            <div className="ar-line ind">{tx('difficultAid', 'grow')}</div>
             <div className="ar-line ind">{ck('atraumatic', 'Atraumatic')}{ck('traumatic', 'Traumatic')}</div>
+            <div className="ar-line ind">{tx('traumaDetail', 'grow')}</div>
             <div className="ar-line"><span className="b">BREATH SOUNDS:</span></div>
             <div className="ar-line ind">{ck('bilateral', 'Bilateral')}{ck('equal', 'Equal')}</div>
-            <div className="ar-line"><span className="b">TIME:</span>{txn('ettTime', 'short')}</div>
+            <div className="ar-line"><span className="b">TIME:</span>{txt('ettTime', 'short')}</div>
             <div className="ar-line">{ck('attemptsCk', '# Attempts')}{txn('attempts', 'xshort')}</div>
             {ck('arrivedIntubated', 'Arrived Intubated')}
             {ck('dentitionUnchanged', 'Dentition unchanged')}
@@ -623,7 +636,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                 <div className="ar-line">{ck('siteCk', 'Site')}{tx('site', 'short')}</div>
                 {ck('paresthesia', 'Paresthesia')}
                 {ck('cffcsf', 'CFFCSF')}
-                <div className="ar-line">{ck('condTimeCk', 'Time')}{txn('condTime', 'short')}</div>
+                <div className="ar-line">{ck('condTimeCk', 'Time')}{txt('condTime', 'short')}</div>
               </div>
             </div>
             <div className="ar-line"><span>Lot #</span>{tx('lotNum', 'grow')} <span>Expiration Date:</span>{tx('expDate', 'grow')}</div>
@@ -774,7 +787,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
               >
                 ⚡ Draft from chart
               </button>
-              <div className="ar-line"><span className="b">TIME:</span>{txn('remarkTime', 'grow')}</div>
+              <div className="ar-line"><span className="b">TIME:</span>{txt('remarkTime', 'grow')}</div>
               {ck('preInduction', 'Pre-induction anesthestic reassessment')}
               <textarea
                 {...noAuto}
@@ -793,8 +806,8 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             </div>
             <div className="ar-rbox">
               <div className="ar-h">Recovery</div>
-              <div className="ar-line"><span>Location</span>{tx('recLocation', 'grow')}</div>
-              <div className="ar-line"><span>Time</span>{txn('recTime', 'grow')}</div>
+              <div className="ar-line"><span>Location</span>{tx('recLocation', 'short')}{txn('recRoom', 'xshort')}</div>
+              <div className="ar-line"><span>Time</span>{txt('recTime', 'grow')}</div>
               <div className="ar-line"><span>BP</span>{txn('recBp', 'grow')}</div>
               <div className="ar-line"><span>O&#8322; Sat</span>{txn('recO2', 'grow')}</div>
               <div className="ar-line"><span>P</span>{txn('recP', 'grow')}</div>
@@ -807,6 +820,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
               <div className="ar-line">{ck('somnolent', 'Somnolent')}{ck('recIntubated', 'Intubated')}</div>
               <div className="ar-line">{ck('tPiece', 'T-piece Oxygen')}{ck('unarousable', 'Unarousable')}</div>
               <div className="ar-line">{ck('recVentilator', 'Ventilator')}{ck('oralNasalAirway', 'Oral/Nasal Airway')}</div>
+              <div className="ar-line">{ck('recLma', 'LMA')}</div>
             </div>
           </div>
         </div>
@@ -876,8 +890,8 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             <div className="ar-btable">
               <div className="ar-times">
                 <div className="ar-trow head"><span /><span>Start</span><span>Stop</span></div>
-                <div className="ar-trow"><span className="lbl">Anesthesia</span>{txn('anesStart', 'cellu')}{txn('anesStop', 'cellu')}</div>
-                <div className="ar-trow"><span className="lbl">Surgery</span>{txn('surgStart', 'cellu')}{txn('surgStop', 'cellu')}</div>
+                <div className="ar-trow"><span className="lbl">Anesthesia</span>{txt('anesStart', 'cellu')}{txt('anesStop', 'cellu')}</div>
+                <div className="ar-trow"><span className="lbl">Surgery</span>{txt('surgStart', 'cellu')}{txt('surgStop', 'cellu')}</div>
               </div>
               <div className="ar-dx">
                 <span className="lbl">Diagnosis</span>

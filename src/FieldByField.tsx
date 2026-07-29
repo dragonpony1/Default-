@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { noAuto, numPad, tempPad } from './inputProps';
+import { noAuto, numPad, tempPad, timePad } from './inputProps';
 import type { PreopEval, YesNo } from './types';
 import { SYSTEMS, selectedProblems, screenItems, type SystemBand } from './formConfig';
 import type { CustomChoices } from './choices';
@@ -150,13 +150,6 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     summary: () => d[k],
   });
 
-  const textStep = (title: string, k: StringKeys, hint?: string): Step => ({
-    title,
-    hint,
-    render: () => input(k),
-    summary: () => d[k],
-  });
-
   const numStep = (title: string, k: StringKeys, hint?: string): Step => ({
     title,
     hint,
@@ -276,7 +269,16 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     numStep('Pulse', 'p', 'Pre-procedure vital signs'),
     numStep('Respirations', 'r', 'Pre-procedure vital signs'),
     { title: 'Temperature', hint: 'Pre-procedure vital signs', render: () => tempInput('t'), summary: () => d.t },
-    textStep('NPO since', 'npo'),
+    {
+      title: 'NPO since',
+      render: () => (
+        <label className="ifield">
+          <span>NPO since</span>
+          <input {...timePad} value={d.npo} placeholder="HHMM" onChange={(e) => set('npo', e.target.value)} />
+        </label>
+      ),
+      summary: () => d.npo,
+    },
     {
       title: 'Previous anesthesia / operations',
       hint: 'Type to search — surgeries and anesthesia events. Airway, MH, and PONV history get flagged.',
@@ -520,6 +522,18 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
               ['Pulmonary', d.dxPulm],
               ['Other', d.dxOther],
             ]),
+    },
+    {
+      title: 'Pregnancy test (hCG)',
+      hint: 'Positive, negative, or not needed for this patient.',
+      render: () => (
+        <div className="chips">
+          {chip(d.hcg === 'pos', () => set('hcg', d.hcg === 'pos' ? '' : 'pos'), 'Positive', 'pos')}
+          {chip(d.hcg === 'neg', () => set('hcg', d.hcg === 'neg' ? '' : 'neg'), 'Negative', 'neg')}
+          {chip(d.hcg === 'na', () => set('hcg', d.hcg === 'na' ? '' : 'na'), 'Not needed', 'na')}
+        </div>
+      ),
+      summary: () => ({ pos: 'Positive', neg: 'Negative', na: 'Not needed', '': '' })[d.hcg],
     },
     {
       title: 'Laboratory studies',

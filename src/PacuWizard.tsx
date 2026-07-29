@@ -159,13 +159,13 @@ export default function PacuWizard(api: PacuWizApi) {
       ),
     },
     {
-      title: 'Nausea & shivering',
+      title: 'Nausea',
       nav: 'Nausea',
       render: () => (
         <>
           {dose('Zofran (ondansetron)', 'zofran', 'mg', [4])}
           {dose('Reglan (metoclopramide)', 'reglan', 'mg', [10])}
-          {dose('Demerol (meperidine) — shivering', 'demerol', 'mg', [12.5, 25])}
+          {dose('Inapsine (droperidol)', 'inapsine', 'mg', [0.625, 1.25])}
         </>
       ),
     },

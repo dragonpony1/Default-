@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import SigImg from './SigImg';
-import { noAuto, numPad } from './inputProps';
+import { noAuto, numPad, timePad } from './inputProps';
 import BillingWizard from './BillingWizard';
 import { useSigner, nowStamp } from './signer';
-import { useCaseData } from './caseData';
-import { nameForSignature } from './providers';
+import { useCaseData, setCaseField } from './caseData';
+import { loadProviders, nameForSignature } from './providers';
 import SignaturePad from './SignaturePad';
 
 // Deseret Peak Anesthesia Billing Information sheet, built from a flat scan
@@ -134,29 +134,27 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
     localStorage.setItem(KEY, JSON.stringify(d));
   }, [d]);
 
+  // The case fields — date, procedure, surgeon, diagnosis and the anesthesia
+  // times — are read straight off the shared case rather than copied into this
+  // sheet once. Copying meant a fact entered after the billing sheet had been
+  // opened never arrived. Editing here edits the case, so the record and the
+  // billing sheet cannot disagree.
+  const [dm = '', dd = '', dy = ''] = (caseData.caseDate || '').split('/');
+  const setDatePart = (part: 0 | 1 | 2, v: string) => {
+    const parts = [dm, dd, dy];
+    parts[part] = v;
+    setCaseField('caseDate', parts.every((x) => !x) ? '' : parts.join('/'));
+  };
+
+  // The CRNA who did the case is not always the one holding the tablet, so the
+  // line takes any provider — picked by initials, printed by name.
+  const providers = loadProviders();
+
   useEffect(() => {
-    const [m = '', dd = '', y = ''] = (caseData.caseDate || '').split('/');
-    setD((p) => {
-      const tx = { ...p.tx };
-      let changed = false;
-      const fill = (k: string, v: string) => {
-        if (v && !(tx[k] ?? '').trim()) {
-          tx[k] = v;
-          changed = true;
-        }
-      };
-      fill('procedure', caseData.procedure);
-      fill('surgeon', caseData.surgeon);
-      fill('dx', caseData.diagnosis);
-      fill('startTime', caseData.anesStart);
-      fill('endTime', caseData.anesStop);
-      fill('crna', signer.name || signer.initials);
-      fill('dateM', m);
-      fill('dateD', dd);
-      fill('dateY', y);
-      return changed ? { ...p, tx } : p;
-    });
-  }, [caseData, signer.name, signer.initials]);
+    if (!(d.tx.crna ?? '').trim() && (signer.name || signer.initials)) {
+      setD((p) => ({ ...p, tx: { ...p.tx, crna: signer.name || signer.initials } }));
+    }
+  }, [signer.name, signer.initials, d.tx.crna]);
 
   const seenReset = useRef(resetSignal);
   useEffect(() => {
@@ -244,24 +242,44 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
       <div className="bs-fields">
         <div className="bs-fline">
           <span className="b">Date:</span>
-          {txn('dateM', 'xshort')}<span>/</span>{txn('dateD', 'xshort')}<span>/</span>{txn('dateY', 'xshort')}
+          <input {...numPad} className="t u xshort" value={dm} onChange={(e) => setDatePart(0, e.target.value)} />
+          <span>/</span>
+          <input {...numPad} className="t u xshort" value={dd} onChange={(e) => setDatePart(1, e.target.value)} />
+          <span>/</span>
+          <input {...numPad} className="t u xshort" value={dy} onChange={(e) => setDatePart(2, e.target.value)} />
         </div>
-        <div className="bs-fline"><span className="b">Procedure:</span>{tx('procedure', 'grow')}</div>
         <div className="bs-fline">
-          <span className="b">Surgeon</span>{tx('surgeon', 'wide')}
-          <span className="b">Dx:</span>{tx('dx', 'grow')}
+          <span className="b">Procedure:</span>
+          <input {...noAuto} className="t u grow" value={caseData.procedure} onChange={(e) => setCaseField('procedure', e.target.value)} />
+        </div>
+        <div className="bs-fline">
+          <span className="b">Surgeon</span>
+          <input {...noAuto} className="t u wide" value={caseData.surgeon} onChange={(e) => setCaseField('surgeon', e.target.value)} />
+          <span className="b">Dx:</span>
+          <input {...noAuto} className="t u grow" value={caseData.diagnosis} onChange={(e) => setCaseField('diagnosis', e.target.value)} />
         </div>
         <div className="bs-fline">
           <span className="b">CRNA</span>
-          {d.tx.sigImg ? (
-            <>
-              <SigImg src={d.tx.sigImg} />
-              {nameForSignature(d.tx.sigImg, d.tx.sigName) && (
-                <span className="signame">{nameForSignature(d.tx.sigImg, d.tx.sigName)}</span>
-              )}
-            </>
-          ) : (
-            tx('crna', 'wide')
+          <select
+            className="chip bs-crnapick screen-only"
+            value=""
+            onChange={(e) => {
+              const p = providers.find((x) => x.id === e.target.value);
+              if (p) setD((prev) => ({ ...prev, tx: { ...prev.tx, crna: p.prefs.providerName || p.initials } }));
+            }}
+          >
+            <option value="">Who…</option>
+            {providers.map((p) => (
+              <option key={p.id} value={p.id}>{p.initials}{p.prefs.providerName ? ` — ${p.prefs.providerName}` : ''}</option>
+            ))}
+          </select>
+          {/* The name on the line is whoever did the case; the signature beside
+              it is whoever signed. Usually the same person — when a case is
+              taken over they are not, and the sheet has to show both. */}
+          {tx('crna', 'wide')}
+          {d.tx.sigImg && <SigImg src={d.tx.sigImg} />}
+          {d.tx.sigImg && nameForSignature(d.tx.sigImg, d.tx.sigName) !== (d.tx.crna ?? '') && (
+            <span className="signame">{nameForSignature(d.tx.sigImg, d.tx.sigName)}</span>
           )}
           {d.tx.sigDate && <span className="bs-sigdt">{d.tx.sigDate} {d.tx.sigTime}</span>}
           {
@@ -291,8 +309,10 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
               {d.tx.sigImg ? '✕' : signer.signature ? `✍ Sign ${signer.initials}` : '✍ Sign'}
             </button>
           }
-          <span className="b">Start Time</span>{txn('startTime', 'med')}
-          <span className="b">End Time</span>{txn('endTime', 'med')}
+          <span className="b">Start Time</span>
+          <input {...timePad} className="t u med" value={caseData.anesStart} onChange={(e) => setCaseField('anesStart', e.target.value)} />
+          <span className="b">End Time</span>
+          <input {...timePad} className="t u med" value={caseData.anesStop} onChange={(e) => setCaseField('anesStop', e.target.value)} />
         </div>
       </div>
 
