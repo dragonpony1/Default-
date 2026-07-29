@@ -92,6 +92,20 @@ export default function App() {
     if (h) setCaseField('height', d.heightUnit ? `${h} ${d.heightUnit}` : h);
   }, [d.height, d.heightUnit]);
 
+  // The record's Procedure and Diagnosis lines are the same facts the pre-op
+  // already captured, so they flow across rather than being typed twice.
+  useEffect(() => {
+    const p = d.proposedProcedure.trim();
+    if (p) setCaseField('procedure', p);
+  }, [d.proposedProcedure]);
+
+  useEffect(() => {
+    const dx = [selectedProblems(d.checks, d.customConditions).join(', '), d.problemList.trim()]
+      .filter(Boolean)
+      .join('; ');
+    if (dx) setCaseField('diagnosis', dx);
+  }, [d.checks, d.customConditions, d.problemList]);
+
 
   const set = <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => setD((prev) => ({ ...prev, [k]: v }));
 

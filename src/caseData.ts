@@ -13,10 +13,13 @@ export interface CaseData {
   weight: string; // lb
   weightKg: string;
   height: string;
+  procedure: string; // proposed procedure, from the pre-op
+  diagnosis: string; // problem list / diagnoses, from the pre-op
+  surgeon: string;
 }
 
 const KEY = 'anes-case-v1';
-const empty: CaseData = { allergies: '', weight: '', weightKg: '', height: '' };
+const empty: CaseData = { allergies: '', weight: '', weightKg: '', height: '', procedure: '', diagnosis: '', surgeon: '' };
 
 function read(): CaseData {
   try {
