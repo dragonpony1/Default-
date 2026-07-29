@@ -8,10 +8,11 @@ import { useSyncExternalStore } from 'react';
 
 export interface Signer {
   initials: string;
+  name: string; // full name, shown on signature lines before signing
   signature: string; // data URL PNG, or '' if none saved
 }
 
-const empty: Signer = { initials: '', signature: '' };
+const empty: Signer = { initials: '', name: '', signature: '' };
 let current: Signer = empty;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());

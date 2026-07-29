@@ -40,19 +40,25 @@ export default function ProviderBar({ onApply }: Props) {
     const raw = window.prompt('New provider initials (e.g. ABC):');
     const initials = (raw ?? '').trim().toUpperCase();
     if (!initials) return;
+    // The full name is what appears on the record's signature lines; the
+    // initials stay the button label.
+    const name = (window.prompt(`Full name for ${initials} (as it should read on the record):`) ?? '').trim();
     const profile: ProviderProfile = {
       id: newId(list),
       initials,
-      prefs: captureCurrentPrefs(initials),
+      prefs: { ...captureCurrentPrefs(initials), providerName: name || initials },
     };
     persist([...list, profile]);
     setActiveId(profile.id);
+    // Adding yourself is also clicking in — otherwise the signature lines stay
+    // blank until you tap your own chip again.
+    setSigner({ initials, name: name || initials, signature: '' });
     window.alert(`Saved current choices as ${initials}'s defaults.`);
   };
 
   const clickIn = (p: ProviderProfile) => {
     setActiveId(p.id);
-    setSigner({ initials: p.initials, signature: p.signature ?? '' });
+    setSigner({ initials: p.initials, name: p.prefs.providerName ?? '', signature: p.signature ?? '' });
     onApply(p.prefs);
   };
 
@@ -61,7 +67,7 @@ export default function ProviderBar({ onApply }: Props) {
     if (!p) return;
     const next = list.map((x) => (x.id === p.id ? { ...x, signature: dataUrl } : x));
     persist(next);
-    setSigner({ initials: p.initials, signature: dataUrl });
+    setSigner({ initials: p.initials, name: p.prefs.providerName ?? '', signature: dataUrl });
     setPadOpen(false);
   };
 
@@ -73,6 +79,19 @@ export default function ProviderBar({ onApply }: Props) {
     );
     persist(next);
     window.alert(`Updated ${p.initials}'s defaults from the current forms.`);
+  };
+
+  // The name shown on signature lines, editable after the fact.
+  const renameActive = () => {
+    const p = list.find((x) => x.id === activeId);
+    if (!p) return;
+    const name = window.prompt(`Full name for ${p.initials}:`, p.prefs.providerName ?? '');
+    if (name == null) return;
+    const next = list.map((x) =>
+      x.id === p.id ? { ...x, prefs: { ...x.prefs, providerName: name.trim() } } : x,
+    );
+    persist(next);
+    setSigner({ initials: p.initials, name: name.trim(), signature: p.signature ?? '' });
   };
 
   const removeActive = () => {
@@ -109,6 +128,9 @@ export default function ProviderBar({ onApply }: Props) {
           </button>
           <button type="button" className="chip prov-sig" onClick={() => setPadOpen(true)}>
             ✍ {active.signature ? 'Update' : 'Add'} signature
+          </button>
+          <button type="button" className="chip prov-name" onClick={renameActive}>
+            🏷 {active.prefs.providerName || 'Set name'}
           </button>
           <button type="button" className="chip prov-remove" onClick={removeActive} aria-label="Remove provider">
             ✕

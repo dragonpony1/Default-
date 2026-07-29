@@ -341,6 +341,39 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
       <div className="awiz-switch screen-only">
         <button type="button" className="chip" onClick={() => setMode('wizard')}>⛑ Guided setup wizard</button>
         <button type="button" className="chip cp-enter" onClick={() => setMode('column')}>⏱ Chart a time column</button>
+      </div>
+      <div className="ar-topbar screen-only">
+        <span className="ar-topgroup">
+          <span className="ar-toplabel">OR</span>
+          {['1', '2', '3', '4', 'Endo'].map((r) => (
+            <button
+              key={r}
+              type="button"
+              className={`chip${d.tx.orNum === r ? ' on' : ''}`}
+              onClick={() => setD((p) => ({ ...p, tx: { ...p.tx, orNum: p.tx.orNum === r ? '' : r } }))}
+            >
+              {r}
+            </button>
+          ))}
+        </span>
+        <span className="ar-topgroup">
+          <span className="ar-toplabel">Checked</span>
+          {[
+            ['hp', 'H&P'],
+            ['opPermit', 'OP Permit'],
+            ['consent', 'Anes. Consent'],
+            ['chartReviewed', 'Chart Reviewed'],
+          ].map(([k, label]) => (
+            <button
+              key={k}
+              type="button"
+              className={`chip${d.ck[k] ? ' on' : ''}`}
+              onClick={() => setD((p) => ({ ...p, ck: { ...p.ck, [k]: !p.ck[k] } }))}
+            >
+              {d.ck[k] ? '✓ ' : ''}{label}
+            </button>
+          ))}
+        </span>
         <span className="awiz-switch-hint">Walks you through setup, airway &amp; end-of-case. The grid stays tap-and-drag.</span>
         <span className="ar-rowctl">
           <button type="button" className="chip" onClick={addCustomRow}>＋ Add med row</button>
@@ -696,7 +729,12 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
           <div className="ar-bleft">
             <div className="ar-surgeon">
               <span className="lbl">Surgeon(s)</span>
-              {tx('surgeons', 'wide')}
+              <input
+                {...noAuto}
+                className="t u wide"
+                value={caseData.surgeon}
+                onChange={(e) => setCaseField('surgeon', e.target.value)}
+              />
             </div>
             <div className="ar-asa">
               <span className="lbl">ASA</span>
@@ -709,7 +747,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
               {d.tx.sigImg ? (
                 <SigImg src={d.tx.sigImg} />
               ) : (
-                tx('anesthetist', 'wide')
+                <span className="ar-anesname">{signer.name || signer.initials}</span>
               )}
               {d.tx.sigDate && <span className="ar-sigdt">{d.tx.sigDate} {d.tx.sigTime}</span>}
               {signer.signature && (
@@ -721,11 +759,19 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                     setD((p) => ({ ...p, tx: { ...p.tx, sigImg: p.tx.sigImg ? '' : signer.signature, sigDate: p.tx.sigImg ? '' : date, sigTime: p.tx.sigImg ? '' : time } }));
                   }}
                 >
-                  {d.tx.sigImg ? '✕' : `✍ Sign ${signer.initials}`}
+                  {d.tx.sigImg ? '✕' : `✍ Sign ${signer.name || signer.initials}`}
                 </button>
               )}
             </div>
-            <div className="ar-brow"><span className="lbl">Procedure</span>{tx('procedure', 'wide')}</div>
+            <div className="ar-brow">
+              <span className="lbl">Procedure</span>
+              <input
+                {...noAuto}
+                className="t u wide"
+                value={caseData.procedure}
+                onChange={(e) => setCaseField('procedure', e.target.value)}
+              />
+            </div>
             <div className="ar-btable">
               <div className="ar-times">
                 <div className="ar-trow head"><span /><span>Start</span><span>Stop</span></div>
@@ -734,7 +780,12 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
               </div>
               <div className="ar-dx">
                 <span className="lbl">Diagnosis</span>
-                {tx('diagnosis', 'wide')}
+                <input
+                  {...noAuto}
+                  className="t u wide"
+                  value={caseData.diagnosis}
+                  onChange={(e) => setCaseField('diagnosis', e.target.value)}
+                />
               </div>
             </div>
           </div>

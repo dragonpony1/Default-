@@ -3188,3 +3188,62 @@ input[type='checkbox']:checked::after {
   min-height: 40px;
   padding: 0.35rem 1rem;
 }
+
+/* OR room quick-pick sits beside the printed blank */
+.ar-orpick-unused {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 4px;
+}
+
+.ar-orpick .chip {
+  min-height: 26px;
+  padding: 0 0.45rem;
+  font-size: 10px;
+  border-radius: 5px;
+}
+
+/* Anesthetist line reads as a name until it is signed */
+.ar-anesname {
+  border-bottom: 1px solid #000;
+  flex: 1;
+  min-height: 12px;
+  padding: 0 2px;
+}
+
+.provbar .prov-name {
+  border-color: #7a5a1a;
+  color: #7a5a1a;
+}
+
+/* Top-of-record touch strip: room number and the pre-case sign-offs, big
+   enough for a gloved tap. Screen only — the printed header is unchanged. */
+.ar-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0.6rem;
+  background: #f1f4fa;
+  border: 1px solid #d3ddf0;
+  border-radius: 8px;
+}
+
+.ar-topgroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.ar-toplabel {
+  font-weight: 700;
+  color: #2a5db0;
+  margin-right: 0.15rem;
+}
+
+.ar-topbar .chip {
+  min-height: 40px;
+  padding: 0.3rem 0.85rem;
+}
