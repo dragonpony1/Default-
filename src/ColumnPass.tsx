@@ -318,8 +318,15 @@ export default function ColumnPass({
   return (
     <div className="cp screen-only">
       <div className="cp-bar">
-        <button type="button" className="chip" onClick={() => setCol((c) => Math.max(0, c - 1))}>
-          ← {col > 0 && times[col - 1] ? times[col - 1] : 'earlier'}
+        {/* Navigation, not charting: named so it cannot be mistaken for the
+            Fill button at the foot of the list. */}
+        <button
+          type="button"
+          className="chip cp-move"
+          onClick={() => setCol((c) => Math.max(0, c - 1))}
+          title="Look at the column before this one — nothing is written"
+        >
+          ← Back{col > 0 && times[col - 1] ? ` to ${times[col - 1]}` : ''}
         </button>
         <span className="cp-time">
           <span className="cp-timeval">{at}</span>
@@ -333,8 +340,13 @@ export default function ColumnPass({
                   : `${stepMin} min columns`}
           </span>
         </span>
-        <button type="button" className="chip" onClick={() => setCol((c) => Math.min(cols - 1, c + 1))}>
-          {times[col + 1] || 'later'} →
+        <button
+          type="button"
+          className="chip cp-move"
+          onClick={() => setCol((c) => Math.min(cols - 1, c + 1))}
+          title="Move on without writing this column down"
+        >
+          Skip{times[col + 1] ? ` to ${times[col + 1]}` : ''} →
         </button>
         {nowCol >= 0 && nowCol !== col && (
           <button type="button" className="chip" onClick={() => setCol(nowCol)} title="Jump to the column for the time it is now">
@@ -355,9 +367,10 @@ export default function ColumnPass({
 
       <div className="cp-list" ref={listRef}>
         <p className="cp-howto">
-          <b>Fill &amp; next</b> writes down everything showing here and moves on a column.
-          The arrows above only move — nothing is written. A row showing <b>—</b> has never been
-          set, so there is nothing to write: tap <b>Set</b> to start it.
+          <b>Fill &amp; next</b>, at the foot of this list, is what charts a column: it writes down
+          everything showing here and moves on. <b>Back</b> and <b>Skip</b> at the top only move
+          between times — they write nothing. A row showing <b>—</b> has never been set, so there is
+          nothing for Fill to write: tap <b>Set</b> to start it.
         </p>
         {rows.map(rowCard)}
 
