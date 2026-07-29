@@ -226,6 +226,10 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
 
   // Minutes per column, so a long case still fits the grid.
   const stepMin = Number(d.tx.stepMin) > 0 ? Number(d.tx.stepMin) : DEFAULT_STEP;
+  // Carrying a setting across the whole chart fills in columns nobody charted.
+  // Off by default: the chart shows what was charted, and the column tool is
+  // how a running value gets written into each five-minute slot.
+  const carryOn = d.tx.carry === 'on';
   const times = columnTimes(d.tx.surgStart ?? '', stepMin);
 
   // Vital-sign marks carry forward only to the Anesthesia Stop time; until a
@@ -246,7 +250,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
 
   const cell = (rowKey: string, col: number) => {
     const own = d.cells[`${rowKey}:${col}`];
-    const carried = own === undefined && CARRY_ROWS.has(rowKey) && col <= endCol ? carriedInto(rowKey, col) : '';
+    const carried = carryOn && own === undefined && CARRY_ROWS.has(rowKey) && col <= endCol ? carriedInto(rowKey, col) : '';
     return (
       <input
         {...(rowKey === 'mon2' ? tempPad : numPad)}
@@ -398,7 +402,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
       )}
       <div className="awiz-switch screen-only">
         <button type="button" className="chip" onClick={() => setMode('wizard')}>⛑ Guided setup wizard</button>
-        <button type="button" className="chip cp-enter" onClick={() => setMode('column')}>⏱ Chart a time column</button>
+        <button type="button" className="chip on cp-enter" onClick={() => setMode('column')}>⏱ Chart the case, column by column</button>
       </div>
       <div className="ar-topbar screen-only">
         <span className="ar-topgroup">
@@ -428,6 +432,22 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             </button>
           ))}
           <span className="ar-tophint">{(COLS * stepMin) / 60} h of chart</span>
+        </span>
+        <span className="ar-topgroup">
+          <span className="ar-toplabel">Carry forward</span>
+          {[['off', 'Off'], ['on', 'On']].map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              className={`chip${(d.tx.carry === 'on' ? 'on' : 'off') === v ? ' on' : ''}`}
+              onClick={() => setD((p) => ({ ...p, tx: { ...p.tx, carry: v } }))}
+              title={v === 'on'
+                ? 'Repeat a running value across the columns after it'
+                : 'Show only what has been charted — the column tool writes each column'}
+            >
+              {label}
+            </button>
+          ))}
         </span>
         <span className="ar-topgroup">
           <span className="ar-toplabel">Checked</span>
@@ -729,7 +749,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                 </div>
                 <div className="vsplot">
                   {[200, 180, 160, 140, 120, 100, 80, 60, 40, 20, 0].map((n) => vrow(n))}
-                  <VitalsGraph cols={COLS} endCol={endCol} vitals={d.vitals} setVitals={setVitals} />
+                  <VitalsGraph cols={COLS} endCol={endCol} vitals={d.vitals} setVitals={setVitals} carry={carryOn} />
                 </div>
                 {/* Time axis at the graph: clock labels every 15 minutes */}
                 <div className="vg-timeaxis">

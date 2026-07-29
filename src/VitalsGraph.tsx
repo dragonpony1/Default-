@@ -16,6 +16,9 @@ interface Props {
   endCol: number; // last column to plot (from the anesthesia stop time)
   vitals: VitalsData;
   setVitals: (next: VitalsData) => void;
+  /** Repeat the last reading across the columns after it. Off means the trace
+      shows only the readings actually charted. */
+  carry: boolean;
 }
 
 const MAX = 200;
@@ -44,7 +47,7 @@ const rowIndex = (v: number) => (MAX - v) / STEP_V;
 const topFrac = (v: number) => (rowIndex(v) + 0.5) / ROWS;
 const valueFromFrac = (frac: number) => MAX - (frac * ROWS - 0.5) * STEP_V;
 
-export default function VitalsGraph({ cols, endCol, vitals, setVitals }: Props) {
+export default function VitalsGraph({ cols, endCol, vitals, setVitals, carry }: Props) {
   const plotRef = useRef<HTMLDivElement>(null);
   // Snapshot the series when a drag starts and rebuild from it on every move,
   // so re-timing a mark is one clean move rather than a chain of
@@ -95,9 +98,17 @@ export default function VitalsGraph({ cols, endCol, vitals, setVitals }: Props) 
     const explicitMax = Math.max(...Object.keys(entries).map(Number));
     const last = Math.min(cols - 1, Math.max(endCol, explicitMax));
     const points: Array<{ col: number; value: number }> = [];
-    for (let c = start; c <= last; c++) {
-      const v = valueAt(entries, c);
-      if (v != null) points.push({ col: c, value: v });
+    if (carry) {
+      for (let c = start; c <= last; c++) {
+        const v = valueAt(entries, c);
+        if (v != null) points.push({ col: c, value: v });
+      }
+    } else {
+      // Only what was charted: the trace joins the readings taken.
+      Object.keys(entries)
+        .map(Number)
+        .sort((a, z) => a - z)
+        .forEach((c) => points.push({ col: c, value: entries[c] }));
     }
     const poly = points.map((p) => `${leftPct(p.col)},${topFrac(p.value) * 100}`).join(' ');
 

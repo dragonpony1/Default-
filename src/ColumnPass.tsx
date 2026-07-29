@@ -33,7 +33,9 @@ interface Props {
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 const decimals = (inc: number) => (String(inc).split('.')[1] ?? '').length;
 const format = (v: number, inc: number) => {
-  const s = v.toFixed(decimals(inc));
+  // Trailing zeros waste room in cells this small: 3, not 3.0.
+  const s = v.toFixed(decimals(inc)).replace(/\.0+$/, '');
+  // FiO2 and ET% are charted as bare decimals — ".5" fits a cell, "0.5" does not.
   return s.startsWith('0.') ? s.slice(1) : s;
 };
 
@@ -77,6 +79,25 @@ export default function ColumnPass({
   }, [col]);
 
   const at = times[col] || `column ${col + 1}`;
+
+  // Charting runs behind the clock as often as not; this lands on the column
+  // for the time it actually is, rather than counting forward by hand.
+  const nowCol = (() => {
+    const n = new Date();
+    const mins = n.getHours() * 60 + n.getMinutes();
+    let best = -1;
+    let bestDiff = Infinity;
+    times.forEach((t, i) => {
+      if (!/^\d{4}$/.test(t)) return;
+      const m = Number(t.slice(0, 2)) * 60 + Number(t.slice(2));
+      const diff = Math.abs(m - mins);
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        best = i;
+      }
+    });
+    return best;
+  })();
 
   const specFor = (r: PassRow): StepSpec | undefined => r.spec ?? STEP_SPECS[r.key];
 
@@ -283,6 +304,11 @@ export default function ColumnPass({
           </span>
         </span>
         <button type="button" className="chip" onClick={() => setCol((c) => Math.min(cols - 1, c + 1))}>later →</button>
+        {nowCol >= 0 && nowCol !== col && (
+          <button type="button" className="chip" onClick={() => setCol(nowCol)} title="Jump to the column for the time it is now">
+            🕐 {times[nowCol]}
+          </button>
+        )}
         <button type="button" className="chip on cp-done" onClick={onExit}>Done</button>
       </div>
 
