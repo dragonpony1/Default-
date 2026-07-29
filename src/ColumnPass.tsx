@@ -24,6 +24,8 @@ interface Props {
   times: string[];
   cols: number;
   endCol: number;
+  stepMin: number; // minutes a column covers
+  onStartNow: () => void; // set the surgery start so the columns get clock times
   customLabels: string[]; // user-named med rows, charted like the rest
   setCell: (key: string, value: string) => void;
   setVitals: (next: VitalsData) => void;
@@ -50,6 +52,8 @@ export default function ColumnPass({
   times,
   cols,
   endCol,
+  stepMin,
+  onStartNow,
   customLabels,
   setCell,
   setVitals,
@@ -78,7 +82,11 @@ export default function ColumnPass({
     listRef.current?.scrollTo({ top: 0 });
   }, [col]);
 
-  const at = times[col] || `column ${col + 1}`;
+  // Charting is done by the clock, so a column is its time. Until the case has
+  // a start time there is nothing to count from — the tool says so and offers
+  // to set it rather than falling back to "column 3".
+  const noClock = !times[0];
+  const at = times[col] || '--:--';
 
   // Charting runs behind the clock as often as not; this lands on the column
   // for the time it actually is, rather than counting forward by hand.
@@ -292,18 +300,24 @@ export default function ColumnPass({
   return (
     <div className="cp screen-only">
       <div className="cp-bar">
-        <button type="button" className="chip" onClick={() => setCol((c) => Math.max(0, c - 1))}>← earlier</button>
+        <button type="button" className="chip" onClick={() => setCol((c) => Math.max(0, c - 1))}>
+          ← {col > 0 && times[col - 1] ? times[col - 1] : 'earlier'}
+        </button>
         <span className="cp-time">
           <span className="cp-timeval">{at}</span>
           <span className="cp-timehint">
-            {col > endCol
-              ? 'after anesthesia stop'
-              : filledCount
-                ? `${filledCount} charted here`
-                : `column ${col + 1} of ${cols}`}
+            {noClock
+              ? 'no start time yet'
+              : col > endCol
+                ? 'after anesthesia stop'
+                : filledCount
+                  ? `${filledCount} charted here`
+                  : `${stepMin} min columns`}
           </span>
         </span>
-        <button type="button" className="chip" onClick={() => setCol((c) => Math.min(cols - 1, c + 1))}>later →</button>
+        <button type="button" className="chip" onClick={() => setCol((c) => Math.min(cols - 1, c + 1))}>
+          {times[col + 1] || 'later'} →
+        </button>
         {nowCol >= 0 && nowCol !== col && (
           <button type="button" className="chip" onClick={() => setCol(nowCol)} title="Jump to the column for the time it is now">
             🕐 {times[nowCol]}
@@ -311,6 +325,15 @@ export default function ColumnPass({
         )}
         <button type="button" className="chip on cp-done" onClick={onExit}>Done</button>
       </div>
+
+      {noClock && (
+        <div className="cp-nostart">
+          <span>
+            The case has no surgery start time, so the columns have no clock times to show.
+          </span>
+          <button type="button" className="chip on" onClick={onStartNow}>🕐 Start the case now</button>
+        </div>
+      )}
 
       <div className="cp-list" ref={listRef}>
         {rows.map(rowCard)}
@@ -341,7 +364,7 @@ export default function ColumnPass({
               setCol((c) => Math.min(cols - 1, c + 1));
             }}
           >
-            Fill &amp; next ({times[Math.min(cols - 1, col + 1)] || '—'}) →
+            Fill &amp; next ({times[Math.min(cols - 1, col + 1)] || `+${stepMin} min`}) →
           </button>
         </div>
       </div>

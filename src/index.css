@@ -3472,6 +3472,20 @@ button.po-num.on {
   }
 }
 
+/* Column tool with no clock to count from. */
+.cp-nostart {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: 0.5rem 0.6rem;
+  padding: 0.5rem 0.7rem;
+  border: 2px solid #b3541e;
+  border-radius: 8px;
+  background: #fff8f2;
+  font-size: 0.85rem;
+}
+
 /* ---- Pre-print review: what is still blank, answerable in place ---- */
 
 .pr {

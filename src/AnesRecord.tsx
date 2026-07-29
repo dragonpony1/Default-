@@ -230,12 +230,16 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
   // Off by default: the chart shows what was charted, and the column tool is
   // how a running value gets written into each five-minute slot.
   const carryOn = d.tx.carry === 'on';
-  const times = columnTimes(d.tx.surgStart ?? '', stepMin);
+  // The columns run on the anesthesia clock — the case starts when anesthesia
+  // does. Cases charted before this ran off the surgery start, so that still
+  // serves as the anchor when there is no anesthesia start.
+  const chartStart = (d.tx.anesStart || d.tx.surgStart) ?? '';
+  const times = columnTimes(chartStart, stepMin);
 
   // Vital-sign marks carry forward only to the Anesthesia Stop time; until a
   // stop is entered they fill to the end of the grid.
   const endCol = (() => {
-    const s = parseTime(d.tx.surgStart ?? '');
+    const s = parseTime(chartStart);
     const e = parseTime(d.tx.anesStop ?? '');
     if (s == null || e == null) return COLS - 1;
     let diff = e - s;
@@ -359,6 +363,15 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
           times={times}
           cols={COLS}
           endCol={endCol}
+          stepMin={stepMin}
+          onStartNow={() => {
+            // Columns are clock times counted from the surgery start. Without
+            // one there is nothing to count from, so the tool can set it.
+            const n = new Date();
+            const mins = Math.floor((n.getHours() * 60 + n.getMinutes()) / stepMin) * stepMin;
+            const hhmm = `${String(Math.floor(mins / 60)).padStart(2, '0')}${String(mins % 60).padStart(2, '0')}`;
+            setD((p) => ({ ...p, tx: { ...p.tx, anesStart: hhmm, surgStart: p.tx.surgStart || hhmm } }));
+          }}
           customLabels={Array.from({ length: customRowCount }, (_, i) => (d.tx[`custMed${i}`] ?? '').trim()).filter(Boolean)}
           setCell={setCell}
           setVitals={setVitals}
@@ -693,13 +706,13 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
               <div className="ar-bandrows">
                 <div className="ar-crow th">
                   <div className="ar-clabel th-start">
-                    <span>Surgery start</span>
+                    <span>Anesthesia start</span>
                     <input
-                      {...numPad}
+                      {...timePad}
                       className="ar-startinput"
                       placeholder="0730"
-                      value={d.tx.surgStart ?? ''}
-                      onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, surgStart: e.target.value } }))}
+                      value={d.tx.anesStart ?? ''}
+                      onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, anesStart: e.target.value } }))}
                     />
                   </div>
                   <div className="ar-cells th-times">
