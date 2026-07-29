@@ -36,7 +36,8 @@ function specOf(el: HTMLInputElement): Spec | null {
 // Match the step's precision so 0.05 steps don't produce 0.35000000000000003.
 const decimals = (inc: number) => (String(inc).split('.')[1] ?? '').length;
 const format = (v: number, inc: number) => {
-  const s = v.toFixed(decimals(inc));
+  // Trailing zeros waste room in cells this small: 3, not 3.0.
+  const s = v.toFixed(decimals(inc)).replace(/\.0+$/, '');
   // FiO2 and ET% are charted as bare decimals — ".5" fits a cell, "0.5" does not.
   return s.startsWith('0.') ? s.slice(1) : s;
 };
