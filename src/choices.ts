@@ -103,3 +103,28 @@ export function loadCustomChoices(): CustomChoices {
 export function saveCustomChoices(choices: CustomChoices): void {
   localStorage.setItem(KEY, JSON.stringify(choices));
 }
+
+// Setup-transfer codes: the whole choice configuration (including __seeded,
+// so removed defaults stay removed on the receiving device) as base64url JSON.
+// Carried in a #setup= URL fragment, so it never leaves the devices involved.
+export function encodeChoices(c: CustomChoices): string {
+  const bytes = new TextEncoder().encode(JSON.stringify(c));
+  let bin = '';
+  bytes.forEach((b) => { bin += String.fromCharCode(b); });
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+export function decodeChoices(s: string): CustomChoices | null {
+  try {
+    const b64 = s.trim().replace(/-/g, '+').replace(/_/g, '/');
+    const bytes = Uint8Array.from(atob(b64), (ch) => ch.charCodeAt(0));
+    const parsed: unknown = JSON.parse(new TextDecoder().decode(bytes));
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    for (const v of Object.values(parsed)) {
+      if (!Array.isArray(v) || v.some((x) => typeof x !== 'string')) return null;
+    }
+    return parsed as CustomChoices;
+  } catch {
+    return null;
+  }
+}

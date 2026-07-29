@@ -1,9 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
-import { noAuto } from './inputProps';
+import SigImg from './SigImg';
+import { noAuto, numPad, tempPad } from './inputProps';
 import { useCaseData, setCaseField } from './caseData';
 import VitalsGraph, { type VitalsData, type Series } from './VitalsGraph';
 import { useSigner, nowStamp } from './signer';
 import AnesWizard from './AnesWizard';
+import { composeNarrative } from './narrative';
+import ColumnPass from './ColumnPass';
+import { CARRY_ROWS, STEP_SPECS, carriedInto as carriedFrom } from './chartRows';
 
 // Intra-op Anesthesia Record replicating Mountain West Medical Center form
 // 170-165-MW250046HMS (03/08, Rev. 06/15), portrait US Letter, built from a
@@ -71,7 +75,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
   const [d, setD] = useState<AnesDraft>(loadAnes);
   const caseData = useCaseData(); // shared allergies (pre-populated from pre-op)
   const signer = useSigner();
-  const [mode, setMode] = useState<'chart' | 'wizard'>('chart');
+  const [mode, setMode] = useState<'chart' | 'wizard' | 'column'>('chart');
   const [zoom, setZoom] = useState(1);
   const bumpZoom = (delta: number) => setZoom((z) => Math.min(2.5, Math.max(0.8, Math.round((z + delta) * 10) / 10)));
   // Zoom via transform scale (not CSS `zoom`, which breaks pointer-drag math).
@@ -108,6 +112,38 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     </label>
   );
 
+  const txtemp = (k: string, cls = '') => (
+    <input
+      {...tempPad}
+      className={`t u ${cls}`}
+      value={d.tx[k] ?? ''}
+      onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: e.target.value } }))}
+    />
+  );
+
+  const txn = (k: string, cls = '') => (
+    <input
+      {...numPad}
+      className={`t u ${cls}`}
+      value={d.tx[k] ?? ''}
+      onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: e.target.value } }))}
+    />
+  );
+
+  // One of a printed pair: ticking one clears its partner.
+  const xck = (k: string, other: string, label: string) => (
+    <label className="ck" key={k}>
+      <input
+        type="checkbox"
+        checked={!!d.ck[k]}
+        onChange={(e) =>
+          setD((p) => ({ ...p, ck: { ...p.ck, [k]: e.target.checked, [other]: false } }))
+        }
+      />
+      <span>{label}</span>
+    </label>
+  );
+
   const tx = (k: string, cls = '') => (
     <input
       {...noAuto}
@@ -127,8 +163,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     <label className="vg-first-field">
       <span>{label}</span>
       <input
-        {...noAuto}
-        inputMode="numeric"
+        {...numPad}
         value={d.vitals[series][0] ?? ''}
         onChange={(e) => {
           const raw = e.target.value.trim();
@@ -156,16 +191,37 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     return Math.max(0, Math.min(COLS - 1, Math.floor(diff / STEP)));
   })();
 
-  // One tappable charting cell.
-  const cell = (rowKey: string, col: number) => (
-    <input
-      {...noAuto}
-      key={col}
-      className="ar-cell"
-      value={d.cells[`${rowKey}:${col}`] ?? ''}
-      onChange={(e) => setCell(`${rowKey}:${col}`, e.target.value)}
-    />
-  );
+// One tappable charting cell.
+  // Value carried into a column from the last entry at or before it. An
+  // explicitly blanked cell stops the carry, so turning something off works.
+  const carriedInto = (rowKey: string, col: number) => carriedFrom(d.cells, rowKey, col);
+
+  const cell = (rowKey: string, col: number) => {
+    const own = d.cells[`${rowKey}:${col}`];
+    const carried = own === undefined && CARRY_ROWS.has(rowKey) && col <= endCol ? carriedInto(rowKey, col) : '';
+    return (
+      <input
+        {...(rowKey === 'mon2' ? tempPad : numPad)}
+        {...(STEP_SPECS[rowKey]
+          ? {
+              'data-step-min': STEP_SPECS[rowKey].min,
+              'data-step-max': STEP_SPECS[rowKey].max,
+              'data-step-inc': STEP_SPECS[rowKey].inc,
+              'data-step-label': STEP_SPECS[rowKey].label,
+              'data-step-unit': STEP_SPECS[rowKey].unit,
+              'data-step-start': STEP_SPECS[rowKey].start,
+              // Shown on the pad, so the time slot being charted is readable
+              // without squinting at the grid.
+              'data-step-at': times[col] || `col ${col + 1}`,
+            }
+          : {})}
+        key={col}
+        className={`ar-cell${carried ? ' carried' : ''} len${Math.min(5, String(own ?? carried).length)}`}
+        value={own ?? carried}
+        onChange={(e) => setCell(`${rowKey}:${col}`, e.target.value)}
+      />
+    );
+  };
 
   // Value row: label | tappable time-columns | totals input
   const crow = (label: ReactNode, key: string) => (
@@ -173,13 +229,42 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
       <div className="ar-clabel">{label}</div>
       <div className="ar-cells">{Array.from({ length: COLS }, (_, c) => cell(key, c))}</div>
       <input
-        {...noAuto}
+        {...numPad}
         className="ar-cell ar-totalcell"
         value={d.cells[`${key}:total`] ?? ''}
         onChange={(e) => setCell(`${key}:total`, e.target.value)}
       />
     </div>
   );
+
+  // Blank med rows for anything not preprinted on the form. Two are always
+  // available; more can be added mid-case from the chart itself, without
+  // going back through the wizard.
+  const customRowCount = Math.max(2, Number(d.tx.customRowCount ?? 2) || 2);
+
+  const customRow = (i: number) =>
+    crow(
+      <input
+        {...noAuto}
+        className="ar-rowlabel"
+        placeholder="add med…"
+        value={d.tx[`custMed${i}`] ?? ''}
+        onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, [`custMed${i}`]: e.target.value } }))}
+      />,
+      `cust${i}`,
+    );
+
+  const addCustomRow = () =>
+    setD((p) => ({ ...p, tx: { ...p.tx, customRowCount: String(customRowCount + 1) } }));
+
+  // Only offered when the last row is unused, so nothing charted is dropped.
+  const lastRowEmpty =
+    customRowCount > 2 &&
+    !(d.tx[`custMed${customRowCount - 1}`] ?? '').trim() &&
+    !Object.keys(d.cells).some((k) => k.startsWith(`cust${customRowCount - 1}:`) && d.cells[k].trim());
+
+  const removeCustomRow = () =>
+    setD((p) => ({ ...p, tx: { ...p.tx, customRowCount: String(customRowCount - 1) } }));
 
   // Vital-signs row: label | crosshatch for hand-drawn BP/HR ticks | totals
   const vrow = (n: number) => (
@@ -208,6 +293,29 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     </div>
   );
 
+  if (mode === 'column') {
+    return (
+      <>
+        <div className="awiz-switch screen-only">
+          <button type="button" className="chip on" onClick={() => setMode('chart')}>← Back to full chart</button>
+        </div>
+        <ColumnPass
+          cells={d.cells}
+          ck={d.ck}
+          setCk={(k, v) => setD((p) => ({ ...p, ck: { ...p.ck, [k]: v } }))}
+          vitals={d.vitals}
+          times={times}
+          cols={COLS}
+          endCol={endCol}
+          customLabels={Array.from({ length: customRowCount }, (_, i) => (d.tx[`custMed${i}`] ?? '').trim()).filter(Boolean)}
+          setCell={setCell}
+          setVitals={setVitals}
+          onExit={() => setMode('chart')}
+        />
+      </>
+    );
+  }
+
   if (mode === 'wizard') {
     return (
       <>
@@ -232,7 +340,47 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     <div className="ar-wrap">
       <div className="awiz-switch screen-only">
         <button type="button" className="chip" onClick={() => setMode('wizard')}>⛑ Guided setup wizard</button>
+        <button type="button" className="chip cp-enter" onClick={() => setMode('column')}>⏱ Chart a time column</button>
+      </div>
+      <div className="ar-topbar screen-only">
+        <span className="ar-topgroup">
+          <span className="ar-toplabel">OR</span>
+          {['1', '2', '3', '4', 'Endo'].map((r) => (
+            <button
+              key={r}
+              type="button"
+              className={`chip${d.tx.orNum === r ? ' on' : ''}`}
+              onClick={() => setD((p) => ({ ...p, tx: { ...p.tx, orNum: p.tx.orNum === r ? '' : r } }))}
+            >
+              {r}
+            </button>
+          ))}
+        </span>
+        <span className="ar-topgroup">
+          <span className="ar-toplabel">Checked</span>
+          {[
+            ['hp', 'H&P'],
+            ['opPermit', 'OP Permit'],
+            ['consent', 'Anes. Consent'],
+            ['chartReviewed', 'Chart Reviewed'],
+          ].map(([k, label]) => (
+            <button
+              key={k}
+              type="button"
+              className={`chip${d.ck[k] ? ' on' : ''}`}
+              onClick={() => setD((p) => ({ ...p, ck: { ...p.ck, [k]: !p.ck[k] } }))}
+            >
+              {d.ck[k] ? '✓ ' : ''}{label}
+            </button>
+          ))}
+        </span>
         <span className="awiz-switch-hint">Walks you through setup, airway &amp; end-of-case. The grid stays tap-and-drag.</span>
+        <span className="ar-rowctl">
+          <button type="button" className="chip" onClick={addCustomRow}>＋ Add med row</button>
+          {lastRowEmpty && (
+            <button type="button" className="chip" onClick={removeCustomRow}>− Remove empty row</button>
+          )}
+        </span>
         <span className="ar-zoomctl">
           <button type="button" className="chip" onClick={() => bumpZoom(-0.2)} aria-label="Zoom out">−</button>
           <button type="button" className="chip ar-zoomval" onClick={() => setZoom(1)}>{Math.round(zoom * 100)}%</button>
@@ -300,15 +448,15 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             {ck('nasalCannula', 'Nasal Cannula')}
             {ck('simpleFaceMask', 'Simple Face Mask')}
             {ck('lma', 'LMA')}
-            <div className="ar-line">{ck('lmaSizeCk', 'Size')}{tx('lmaSize', 'xshort')}</div>
-            <div className="ar-line">{ck('air', 'Air')}{tx('airMl', 'xshort')} <span>mL</span></div>
+            <div className="ar-line">{ck('lmaSizeCk', 'Size')}{txn('lmaSize', 'xshort')}</div>
+            <div className="ar-line">{ck('air', 'Air')}{txn('airMl', 'xshort')} <span>mL</span></div>
           </div>
 
           <div className="ar-sec">
             <div className="ar-h">Endotracheal</div>
             <div className="ar-line">{ck('ettOral', 'Oral')}{ck('ettNasal', 'Nasal')}{ck('ettRae', 'RAE')}</div>
-            <div className="ar-line"><span>Tube size.</span>{tx('tubeSize', 'xshort')} <span>mm</span></div>
-            <div className="ar-line"><span>Length</span>{tx('tubeLength', 'xshort')} <span>cm (Lip)</span></div>
+            <div className="ar-line"><span>Tube size.</span>{txn('tubeSize', 'xshort')} <span>mm</span></div>
+            <div className="ar-line"><span>Length</span>{txn('tubeLength', 'xshort')} <span>cm (Lip)</span></div>
             <div className="ar-line ind">{ck('lubricant', 'Lubricant')}{ck('trachSpray', 'Trach Spray')}</div>
             <div className="ar-line ind">{ck('rapidSequence', 'Rapid Sequence')}</div>
             <div className="ar-line ind">{ck('cricoid', 'Cricoid Pressure')}</div>
@@ -317,8 +465,8 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             <div className="ar-line ind">{ck('atraumatic', 'Atraumatic')}{ck('traumatic', 'Traumatic')}</div>
             <div className="ar-line"><span className="b">BREATH SOUNDS:</span></div>
             <div className="ar-line ind">{ck('bilateral', 'Bilateral')}{ck('equal', 'Equal')}</div>
-            <div className="ar-line"><span className="b">TIME:</span>{tx('ettTime', 'short')}</div>
-            <div className="ar-line">{ck('attemptsCk', '# Attempts')}{tx('attempts', 'xshort')}</div>
+            <div className="ar-line"><span className="b">TIME:</span>{txn('ettTime', 'short')}</div>
+            <div className="ar-line">{ck('attemptsCk', '# Attempts')}{txn('attempts', 'xshort')}</div>
             {ck('arrivedIntubated', 'Arrived Intubated')}
             {ck('dentitionUnchanged', 'Dentition unchanged')}
           </div>
@@ -336,7 +484,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             <div className="ar-line">{ck('o2Analyzer', 'O₂ Analyzer')}{ck('calibrated', 'Calibrated')}</div>
             <div className="ar-line"><span className="b">WARMER:</span>{ck('warmerIv', 'IV Blood')}</div>
             <div className="ar-line ind">{ck('bairHugger', 'Bair Hugger')}{ck('bairUp', '↑')}{ck('bairDown', '↓')}</div>
-            <div className="ar-line">{ck('hme', 'HME')} <span>Temp</span>{tx('hmeTemp', 'xshort')}</div>
+            <div className="ar-line">{ck('hme', 'HME')} <span>Temp</span>{txtemp('hmeTemp', 'xshort')}</div>
             <div className="ar-line">{ck('artLine', 'Arterial Line')}{ck('artL', 'L')}{ck('artR', 'R')}</div>
             {ck('cvp', 'CVP')}
             {ck('swanGanz', 'Swan-Ganz')}
@@ -372,23 +520,23 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                 {ck('local', 'Local')}
               </div>
               <div className="ar-condcol mid">
-                <div className="ar-line">{ck('duramorphCk', 'Duramorph')}{tx('duramorph', 'xshort')} <span>mg</span></div>
-                <div className="ar-line">{ck('fentanylCk', 'Fentanyl')}{tx('fentanyl', 'xshort')} <span>mcg</span></div>
-                <div className="ar-line">{ck('sufentaCk', 'Sufenta')}{tx('sufenta', 'xshort')} <span>mcg</span></div>
-                <div className="ar-line">{ck('naropinCk', 'Naropin')}{tx('naropin', 'xshort')} <span>mL</span></div>
-                <div className="ar-line">{ck('nesacaineCk', 'Nesacaine')}{tx('nesacaine', 'xshort')} <span>mL</span></div>
-                <div className="ar-line">{ck('sensorcaineCk', 'Sensorcaine')}{tx('sensorcaine', 'xshort')} <span>mL</span></div>
-                <div className="ar-line">{ck('xylocaineCk', 'Xylocaine')}{tx('xylocaine', 'xshort')} <span>mL</span></div>
+                <div className="ar-line">{ck('duramorphCk', 'Duramorph')}{txn('duramorph', 'xshort')} <span>mg</span></div>
+                <div className="ar-line">{ck('fentanylCk', 'Fentanyl')}{txn('fentanyl', 'xshort')} <span>mcg</span></div>
+                <div className="ar-line">{ck('sufentaCk', 'Sufenta')}{txn('sufenta', 'xshort')} <span>mcg</span></div>
+                <div className="ar-line">{ck('naropinCk', 'Naropin')}{txn('naropin', 'xshort')} <span>mL</span></div>
+                <div className="ar-line">{ck('nesacaineCk', 'Nesacaine')}{txn('nesacaine', 'xshort')} <span>mL</span></div>
+                <div className="ar-line">{ck('sensorcaineCk', 'Sensorcaine')}{txn('sensorcaine', 'xshort')} <span>mL</span></div>
+                <div className="ar-line">{ck('xylocaineCk', 'Xylocaine')}{txn('xylocaine', 'xshort')} <span>mL</span></div>
                 <div className="ar-line">{ck('condOther1Ck', 'Other')}{tx('condOther1', 'short')}</div>
                 <div className="ar-line">{ck('condOther2Ck', 'Other')}{tx('condOther2', 'short')}</div>
               </div>
               <div className="ar-condcol">
-                <div className="ar-line">{ck('needleSizeCk', 'Needle Size')}{tx('needleSize', 'xshort')}</div>
-                <div className="ar-line">{ck('condAttemptsCk', '# Attempts')}{tx('condAttempts', 'xshort')}</div>
+                <div className="ar-line">{ck('needleSizeCk', 'Needle Size')}{txn('needleSize', 'xshort')}</div>
+                <div className="ar-line">{ck('condAttemptsCk', '# Attempts')}{txn('condAttempts', 'xshort')}</div>
                 <div className="ar-line">{ck('siteCk', 'Site')}{tx('site', 'short')}</div>
                 {ck('paresthesia', 'Paresthesia')}
                 {ck('cffcsf', 'CFFCSF')}
-                <div className="ar-line">{ck('condTimeCk', 'Time')}{tx('condTime', 'short')}</div>
+                <div className="ar-line">{ck('condTimeCk', 'Time')}{txn('condTime', 'short')}</div>
               </div>
             </div>
             <div className="ar-line"><span>Lot #</span>{tx('lotNum', 'grow')} <span>Expiration Date:</span>{tx('expDate', 'grow')}</div>
@@ -427,7 +575,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                   <div className="ar-clabel th-start">
                     <span>Surgery start</span>
                     <input
-                      {...noAuto}
+                      {...numPad}
                       className="ar-startinput"
                       placeholder="0730"
                       value={d.tx.surgStart ?? ''}
@@ -446,7 +594,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             {band('Medications', (
               <>
                 {crow('Oxygen (L/minute)', 'med0')}
-                {crow(<span className="ar-inlineck">{ck('n2o', 'N₂O')}{ck('airMed', 'Air')} (L/minute)</span>, 'med1')}
+                {crow(<span className="ar-inlineck">{xck('n2o', 'airMed', 'N₂O')}{xck('airMed', 'n2o', 'Air')} (L/minute)</span>, 'med1')}
                 {crow('ISO/SEVO/ET%', 'med2')}
                 {crow('PROPOFOL IV mg', 'med3')}
                 {crow('ANECTINE IV mg', 'med4')}
@@ -466,6 +614,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                 {crow('ANCEF (cefazolin) g', 'oth6')}
                 {crow('DECADRON IV mg', 'oth7')}
                 {crow('LR/D5LR/NS', 'oth4')}
+                {Array.from({ length: customRowCount }, (_, i) => customRow(i))}
               </>
             ))}
             <div className="ar-band vsband">
@@ -525,7 +674,20 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
           <div className="ar-right">
             <div className="ar-rbox ar-remarksbox">
               <div className="ar-h">Remarks</div>
-              <div className="ar-line"><span className="b">TIME:</span>{tx('remarkTime', 'grow')}</div>
+              <button
+                type="button"
+                className="chip ar-draftbtn screen-only"
+                onClick={() => {
+                  const draft = composeNarrative(d.ck, d.tx, d.cells);
+                  if (!draft) { window.alert('Nothing charted yet to draft from — fill in setup/airway/end-of-case first.'); return; }
+                  if (!d.tx.remarks || window.confirm('Replace the current remarks with a fresh draft from the chart?')) {
+                    setD((p) => ({ ...p, tx: { ...p.tx, remarks: draft } }));
+                  }
+                }}
+              >
+                ⚡ Draft from chart
+              </button>
+              <div className="ar-line"><span className="b">TIME:</span>{txn('remarkTime', 'grow')}</div>
               {ck('preInduction', 'Pre-induction anesthestic reassessment')}
               <textarea
                 {...noAuto}
@@ -537,20 +699,20 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             </div>
             <div className="ar-rbox">
               <div className="ar-h">Fluid Totals</div>
-              <div className="ar-line"><span>Crystalloid</span>{tx('crystalloid', 'grow')}</div>
-              <div className="ar-line"><span>EBL</span>{tx('fluidEbl', 'grow')}</div>
-              <div className="ar-line"><span>Urine</span>{tx('fluidUrine', 'grow')}</div>
-              <div className="ar-line"><span>Blood</span>{tx('fluidBlood', 'grow')}</div>
+              <div className="ar-line"><span>Crystalloid</span>{txn('crystalloid', 'grow')}</div>
+              <div className="ar-line"><span>EBL</span>{txn('fluidEbl', 'grow')}</div>
+              <div className="ar-line"><span>Urine</span>{txn('fluidUrine', 'grow')}</div>
+              <div className="ar-line"><span>Blood</span>{txn('fluidBlood', 'grow')}</div>
             </div>
             <div className="ar-rbox">
               <div className="ar-h">Recovery</div>
               <div className="ar-line"><span>Location</span>{tx('recLocation', 'grow')}</div>
-              <div className="ar-line"><span>Time</span>{tx('recTime', 'grow')}</div>
-              <div className="ar-line"><span>BP</span>{tx('recBp', 'grow')}</div>
-              <div className="ar-line"><span>O&#8322; Sat</span>{tx('recO2', 'grow')}</div>
-              <div className="ar-line"><span>P</span>{tx('recP', 'grow')}</div>
-              <div className="ar-line"><span>R</span>{tx('recR', 'grow')}</div>
-              <div className="ar-line"><span>T</span>{tx('recT', 'grow')}</div>
+              <div className="ar-line"><span>Time</span>{txn('recTime', 'grow')}</div>
+              <div className="ar-line"><span>BP</span>{txn('recBp', 'grow')}</div>
+              <div className="ar-line"><span>O&#8322; Sat</span>{txn('recO2', 'grow')}</div>
+              <div className="ar-line"><span>P</span>{txn('recP', 'grow')}</div>
+              <div className="ar-line"><span>R</span>{txn('recR', 'grow')}</div>
+              <div className="ar-line"><span>T</span>{txtemp('recT', 'grow')}</div>
               {ck('recDentition', 'Dentition unchanged')}
               {ck('reportToRn', 'Report to RN')}
               <div className="ar-line">{ck('awake', 'Awake')}{ck('stable', 'Stable')}{ck('recNasalO2', 'Nasal Oxygen')}</div>
@@ -567,7 +729,12 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
           <div className="ar-bleft">
             <div className="ar-surgeon">
               <span className="lbl">Surgeon(s)</span>
-              {tx('surgeons', 'wide')}
+              <input
+                {...noAuto}
+                className="t u wide"
+                value={caseData.surgeon}
+                onChange={(e) => setCaseField('surgeon', e.target.value)}
+              />
             </div>
             <div className="ar-asa">
               <span className="lbl">ASA</span>
@@ -578,9 +745,9 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             <div className="ar-brow">
               <span className="lbl">Anesthetist</span>
               {d.tx.sigImg ? (
-                <img className="sig-inline" src={d.tx.sigImg} alt="signature" />
+                <SigImg src={d.tx.sigImg} />
               ) : (
-                tx('anesthetist', 'wide')
+                <span className="ar-anesname">{signer.name || signer.initials}</span>
               )}
               {d.tx.sigDate && <span className="ar-sigdt">{d.tx.sigDate} {d.tx.sigTime}</span>}
               {signer.signature && (
@@ -592,20 +759,33 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                     setD((p) => ({ ...p, tx: { ...p.tx, sigImg: p.tx.sigImg ? '' : signer.signature, sigDate: p.tx.sigImg ? '' : date, sigTime: p.tx.sigImg ? '' : time } }));
                   }}
                 >
-                  {d.tx.sigImg ? '✕' : `✍ Sign ${signer.initials}`}
+                  {d.tx.sigImg ? '✕' : `✍ Sign ${signer.name || signer.initials}`}
                 </button>
               )}
             </div>
-            <div className="ar-brow"><span className="lbl">Procedure</span>{tx('procedure', 'wide')}</div>
+            <div className="ar-brow">
+              <span className="lbl">Procedure</span>
+              <input
+                {...noAuto}
+                className="t u wide"
+                value={caseData.procedure}
+                onChange={(e) => setCaseField('procedure', e.target.value)}
+              />
+            </div>
             <div className="ar-btable">
               <div className="ar-times">
                 <div className="ar-trow head"><span /><span>Start</span><span>Stop</span></div>
-                <div className="ar-trow"><span className="lbl">Anesthesia</span>{tx('anesStart', 'cellu')}{tx('anesStop', 'cellu')}</div>
-                <div className="ar-trow"><span className="lbl">Surgery</span>{tx('surgStart', 'cellu')}{tx('surgStop', 'cellu')}</div>
+                <div className="ar-trow"><span className="lbl">Anesthesia</span>{txn('anesStart', 'cellu')}{txn('anesStop', 'cellu')}</div>
+                <div className="ar-trow"><span className="lbl">Surgery</span>{txn('surgStart', 'cellu')}{txn('surgStop', 'cellu')}</div>
               </div>
               <div className="ar-dx">
                 <span className="lbl">Diagnosis</span>
-                {tx('diagnosis', 'wide')}
+                <input
+                  {...noAuto}
+                  className="t u wide"
+                  value={caseData.diagnosis}
+                  onChange={(e) => setCaseField('diagnosis', e.target.value)}
+                />
               </div>
             </div>
           </div>

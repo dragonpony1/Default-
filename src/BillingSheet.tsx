@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { noAuto } from './inputProps';
+import SigImg from './SigImg';
+import { noAuto, numPad } from './inputProps';
 import BillingWizard from './BillingWizard';
 import { useSigner, nowStamp } from './signer';
+import { useCaseData, setCaseField } from './caseData';
 
 // Deseret Peak Anesthesia Billing Information sheet, built from a flat scan
 // of the original. Tap the box beside a CPT code to mark it; header fields
@@ -123,6 +125,7 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
   const [d, setD] = useState<BillingDraft>(loadBilling);
   const [mode, setMode] = useState<'form' | 'wizard'>('form');
   const signer = useSigner();
+  const caseData = useCaseData();
 
   useEffect(() => {
     localStorage.setItem(KEY, JSON.stringify(d));
@@ -161,6 +164,15 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
     />
   );
 
+  const txn = (k: string, cls = '') => (
+    <input
+      {...numPad}
+      className={`t u ${cls}`}
+      value={d.tx[k] ?? ''}
+      onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: e.target.value } }))}
+    />
+  );
+
   const tx = (k: string, cls = '') => (
     <input
       {...noAuto}
@@ -195,16 +207,22 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
       <div className="bs-fields">
         <div className="bs-fline">
           <span className="b">Date:</span>
-          {tx('dateM', 'xshort')}<span>/</span>{tx('dateD', 'xshort')}<span>/</span>{tx('dateY', 'xshort')}
+          {txn('dateM', 'xshort')}<span>/</span>{txn('dateD', 'xshort')}<span>/</span>{txn('dateY', 'xshort')}
         </div>
         <div className="bs-fline"><span className="b">Procedure:</span>{tx('procedure', 'grow')}</div>
         <div className="bs-fline">
           <span className="b">Surgeon</span>{tx('surgeon', 'wide')}
-          <span className="b">Dx:</span>{tx('dx', 'grow')}
+          <span className="b">Dx:</span>
+          <input
+            {...noAuto}
+            className="t u grow"
+            value={caseData.diagnosis}
+            onChange={(e) => setCaseField('diagnosis', e.target.value)}
+          />
         </div>
         <div className="bs-fline">
           <span className="b">CRNA</span>
-          {d.tx.sigImg ? <img className="sig-inline" src={d.tx.sigImg} alt="signature" /> : tx('crna', 'wide')}
+          {d.tx.sigImg ? <SigImg src={d.tx.sigImg} /> : tx('crna', 'wide')}
           {d.tx.sigDate && <span className="bs-sigdt">{d.tx.sigDate} {d.tx.sigTime}</span>}
           {signer.signature && (
             <button
@@ -218,8 +236,8 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
               {d.tx.sigImg ? '✕' : `✍ Sign ${signer.initials}`}
             </button>
           )}
-          <span className="b">Start Time</span>{tx('startTime', 'med')}
-          <span className="b">End Time</span>{tx('endTime', 'med')}
+          <span className="b">Start Time</span>{txn('startTime', 'med')}
+          <span className="b">End Time</span>{txn('endTime', 'med')}
         </div>
       </div>
 
@@ -227,7 +245,7 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
         <span className="b">CPT CODES</span>
         <span className="b">Mark Codes Below for ALL criteria</span>
         <span className="b">*** ADD CODE IF NOT ON FORM HERE</span>
-        {tx('addCode', 'med')}
+        {txn('addCode', 'med')}
       </div>
 
       <div className="bs-table">

@@ -1,17 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
-import { noAuto } from './inputProps';
+import SigImg from './SigImg';
+import { noAuto, numPad, tempPad } from './inputProps';
 import { emptyPreopEval, type PreopEval, type YesNo } from './types';
-import { SYSTEMS, type SystemBand } from './formConfig';
+import { SYSTEMS, selectedProblems, type SystemBand } from './formConfig';
 import { clearDraft, loadDraft, saveDraft } from './storage';
 import Barcode39 from './Barcode39';
+import NumPad from './NumPad';
+import TempPad from './TempPad';
+import StepPad from './StepPad';
 import FieldByField from './FieldByField';
 import EditChoices from './EditChoices';
 import AnesRecord, { clearAnesDraft } from './AnesRecord';
 import PacuOrders, { clearPacuDraft } from './PacuOrders';
+import PostAnesNote from './PostAnesNote';
+import SignaturePad from './SignaturePad';
 import BillingSheet, { clearBillingDraft } from './BillingSheet';
-import { loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
+import { decodeChoices, loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 import { setCaseField, clearCase } from './caseData';
-import { clearSigner } from './signer';
+import { clearSigner, useSigner, nowStamp } from './signer';
 import ProviderBar from './ProviderBar';
 import { applyProviderToDrafts, type ProviderPrefs } from './providers';
 
@@ -23,6 +29,8 @@ export default function App() {
   const [view, setView] = useState<'fields' | 'form' | 'anes' | 'pacu' | 'billing' | 'choices'>('fields');
   const [anesReset, setAnesReset] = useState(0);
   const [choices, setChoicesState] = useState<CustomChoices>(loadCustomChoices);
+  const signer = useSigner();
+  const [signTarget, setSignTarget] = useState<{ sig: 'panSig' | 'evalSig' | 'inpSig'; dt: StringKeys } | null>(null);
 
   const setChoices = (c: CustomChoices) => {
     saveCustomChoices(c);
@@ -32,6 +40,22 @@ export default function App() {
   useEffect(() => {
     saveDraft(d);
   }, [d]);
+
+  // Arriving via a scanned setup QR: the #setup= fragment carries another
+  // device's Edit Choices configuration. Confirm, save, and clear the hash so
+  // reloads don't re-prompt.
+  useEffect(() => {
+    const m = window.location.hash.match(/^#setup=(.+)$/);
+    if (!m) return;
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    const imported = decodeChoices(m[1]);
+    if (!imported) return;
+    if (window.confirm('Load the scanned Edit Choices setup onto THIS device? It replaces this device’s choice lists. Patient data is not affected.')) {
+      saveCustomChoices(imported);
+      setChoicesState(imported);
+      setView('choices');
+    }
+  }, []);
 
   // Share the pre-op allergy assessment into the Case so it pre-populates the
   // record, PACU, and other documents. Only push when there's something to say
@@ -68,7 +92,43 @@ export default function App() {
     if (h) setCaseField('height', d.heightUnit ? `${h} ${d.heightUnit}` : h);
   }, [d.height, d.heightUnit]);
 
+  // The record's Procedure and Diagnosis lines are the same facts the pre-op
+  // already captured, so they flow across rather than being typed twice.
+  useEffect(() => {
+    const p = d.proposedProcedure.trim();
+    if (p) setCaseField('procedure', p);
+  }, [d.proposedProcedure]);
+
+  // The record's and billing sheet's Diagnosis is the surgical indication, not
+  // the patient's medical problem list — those are different fields on paper
+  // and must not be conflated.
+  useEffect(() => {
+    const dx = d.surgicalDx.trim();
+    if (dx) setCaseField('diagnosis', dx);
+  }, [d.surgicalDx]);
+
+
   const set = <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => setD((prev) => ({ ...prev, [k]: v }));
+
+  // A cached build can otherwise persist across launches, making it look like
+  // a fix never shipped. This drops the service worker and every cache, then
+  // reloads. Entered data lives in localStorage and is untouched.
+  const forceUpdate = async () => {
+    if (!window.confirm('Reload the app and fetch the newest version? Needs internet. Your entered data is kept.')) return;
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+    } catch {
+      // fall through to the reload regardless
+    }
+    window.location.reload();
+  };
 
   // Two-tap clear: first tap arms the button (auto-disarms after 5s), a second
   // tap within that window shows a final confirm before wiping. Guards against
@@ -115,6 +175,62 @@ export default function App() {
   // Borderless inline text input
   const txt = (k: StringKeys, cls = '') => (
     <input {...noAuto} className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
+  );
+
+  // Date/time blank with a one-tap "Now" stamp beside it.
+  const dtCell = (label: string, k: StringKeys, cls = 'w40') => (
+    <div className={`sigcell ${cls}`}>
+      <span className="lbl">{label}</span>
+      {txt(k)}
+      <button
+        type="button"
+        className="chip sig-btn screen-only"
+        onClick={() => {
+          const { date, time } = nowStamp();
+          set(k, `${date} ${time}`);
+        }}
+      >
+        🕐
+      </button>
+    </div>
+  );
+
+  // Signature cell: shows the stamped signature image; the clicked-in
+  // provider's saved signature stamps with one tap and fills the date/time.
+  const sigCell = (label: string, sigKey: 'panSig' | 'evalSig' | 'inpSig', dtKey: StringKeys) => (
+    <div className="sigcell grow tall">
+      <span className="lbl">{label}</span>
+      {d[sigKey] && <SigImg src={d[sigKey]} />}
+      <span className="sig-actions screen-only">
+        <button
+          type="button"
+          className="chip sig-btn"
+          onClick={() => {
+            if (signer.signature) {
+              const { date, time } = nowStamp();
+              setD((prev) => ({ ...prev, [sigKey]: signer.signature, [dtKey]: `${date} ${time}` }));
+            } else {
+              setSignTarget({ sig: sigKey, dt: dtKey });
+            }
+          }}
+        >
+          {d[sigKey] ? '↻' : signer.signature ? `✍ ${signer.initials}` : '✍ Sign'}
+        </button>
+        {d[sigKey] && (
+          <button type="button" className="chip sig-btn" onClick={() => setD((prev) => ({ ...prev, [sigKey]: '' }))}>✕</button>
+        )}
+      </span>
+    </div>
+  );
+
+  // Numeric variant: floating 10-key instead of the OS keyboard
+  const txn = (k: StringKeys, cls = '') => (
+    <input {...numPad} className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
+  );
+
+  // Temperature variant: floating slider
+  const txT = (k: StringKeys, cls = '') => (
+    <input {...tempPad} className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
   );
 
   const ta = (k: StringKeys, rows = 2, cls = '') => (
@@ -256,12 +372,12 @@ export default function App() {
   ) => (
     <div className="pan2">
       <div className="pcol">
-        <div className="vrow"><span>BP</span>{txt(`${pre}Bp` as StringKeys)}</div>
-        <div className="vrow"><span>P</span>{txt(`${pre}P` as StringKeys)}</div>
-        <div className="vrow"><span>R</span>{txt(`${pre}R` as StringKeys)}</div>
-        <div className="vrow"><span>T</span>{txt(`${pre}T` as StringKeys)}</div>
-        <div className="vrow"><span>O&#8322; Sat.</span>{txt(`${pre}O2` as StringKeys)}</div>
-        <div className="vrow"><span>Pain (0&ndash;10)</span>{txt(`${pre}Pain` as StringKeys)}</div>
+        <div className="vrow"><span>BP</span>{txn(`${pre}Bp` as StringKeys)}</div>
+        <div className="vrow"><span>P</span>{txn(`${pre}P` as StringKeys)}</div>
+        <div className="vrow"><span>R</span>{txn(`${pre}R` as StringKeys)}</div>
+        <div className="vrow"><span>T</span>{txT(`${pre}T` as StringKeys)}</div>
+        <div className="vrow"><span>O&#8322; Sat.</span>{txn(`${pre}O2` as StringKeys)}</div>
+        <div className="vrow"><span>Pain (0&ndash;10)</span>{txn(`${pre}Pain` as StringKeys)}</div>
       </div>
       <div className="pcol">
         <div className="vrow"><span>N/V</span>{optPick(`${pre}NV` as StringKeys, ['Yes', 'No'])}</div>
@@ -281,6 +397,19 @@ export default function App() {
 
   return (
     <div className="app">
+      <NumPad />
+      <TempPad />
+      <StepPad />
+      {signTarget && (
+        <SignaturePad
+          onSave={(sig) => {
+            const { date, time } = nowStamp();
+            setD((prev) => ({ ...prev, [signTarget.sig]: sig, [signTarget.dt]: `${date} ${time}` }));
+            setSignTarget(null);
+          }}
+          onCancel={() => setSignTarget(null)}
+        />
+      )}
       <header className="toolbar screen-only">
         <h1>Pre-Anesthesia Evaluation</h1>
         <div className="tabs">
@@ -305,6 +434,7 @@ export default function App() {
         </div>
         <div className="toolbar-actions">
           <button onClick={() => window.print()}>Print</button>
+          <button className="ghost" onClick={forceUpdate} title="Fetch the newest version">↻ Update</button>
           <button className={`danger${clearArmed ? ' armed' : ''}`} onClick={handleClear}>
             {clearArmed ? '⚠ Tap again to clear all' : 'Clear form'}
           </button>
@@ -322,6 +452,7 @@ export default function App() {
       )}
       {view === 'choices' && <EditChoices choices={choices} setChoices={setChoices} />}
       {view === 'anes' && <AnesRecord resetSignal={anesReset} />}
+      {view === 'pacu' && <PostAnesNote d={d} set={set} />}
       {view === 'pacu' && <PacuOrders resetSignal={anesReset} />}
       {view === 'billing' && <BillingSheet resetSignal={anesReset} />}
 
@@ -338,17 +469,17 @@ export default function App() {
           {/* Title / demographics */}
           <div className="row">
             <div className="cell grow c b caps">Pre Anesthesia Evaluation</div>
-            <div className="cell w9"><span className="lbl">Age</span>{txt('age')}</div>
+            <div className="cell w9"><span className="lbl">Age</span>{txn('age')}</div>
             <div className="cell w11">
               <span className="lbl">Sex</span>
               <span className="opts">{xbx('sex', 'M', 'M')}{xbx('sex', 'F', 'F')}</span>
             </div>
             <div className="cell w15">
-              <span className="lbl">Height</span>{txt('height', 'xshort')}
+              <span className="lbl">Height</span>{txn('height', 'xshort')}
               <span className="opts">{xbx('heightUnit', 'in', 'in')}{xbx('heightUnit', 'cm', 'cm')}</span>
             </div>
             <div className="cell w15">
-              <span className="lbl">Weight</span>{txt('weight', 'xshort')}
+              <span className="lbl">Weight</span>{txn('weight', 'xshort')}
               <span className="opts">{xbx('weightUnit', 'lb', 'lb')}{xbx('weightUnit', 'kg', 'kg')}</span>
             </div>
           </div>
@@ -361,10 +492,10 @@ export default function App() {
             <div className="cell grow half vitals">
               <div className="lbl">Pre-Procedure Vital Signs</div>
               <div className="vitline">
-                <span className="b">BP</span>{txt('bp', 'short')}
-                <span className="b">P</span>{txt('p', 'short')}
-                <span className="b">R</span>{txt('r', 'short')}
-                <span className="b">T</span>{txt('t', 'short')}
+                <span className="b">BP</span>{txn('bp', 'short')}
+                <span className="b">P</span>{txn('p', 'short')}
+                <span className="b">R</span>{txn('r', 'short')}
+                <span className="b">T</span>{txT('t', 'short')}
               </div>
             </div>
           </div>
@@ -460,8 +591,8 @@ export default function App() {
                 <>
                   <div className="inlinerow">
                     <span className="b">Tobacco Use:</span> {yn('tobacco')}
-                    {txt('tobaccoPacksDay', 'u short')} <span>Packs / Day for</span>
-                    {txt('tobaccoYears', 'u short')} <span>Years</span>
+                    {txn('tobaccoPacksDay', 'u short')} <span>Packs / Day for</span>
+                    {txn('tobaccoYears', 'u short')} <span>Years</span>
                   </div>
                   {d.homeO2 && (
                     <div className="detline">
@@ -513,8 +644,8 @@ export default function App() {
                 {vitalsPair('pan')}
                 <div className="noteslot"><span className="b">NOTES:</span>{ta('panNotes', 2)}</div>
                 <div className="sigrow">
-                  <div className="sigcell grow"><span className="lbl">Signed</span></div>
-                  <div className="sigcell w40"><span className="lbl">Date/Time</span>{txt('panDateTime')}</div>
+                  {sigCell('Signed', 'panSig', 'panDateTime')}
+                  {dtCell('Date/Time', 'panDateTime', 'w40')}
                 </div>
               </div>
             </div>
@@ -527,7 +658,11 @@ export default function App() {
                 <div className="blmain grow">
                   <div className="cellrow">
                     <span className="lbl">Problem List / Diagnoses</span>
-                    {ta('problemList', 2)}
+                    {(() => {
+                      const probs = selectedProblems(d.checks, d.customConditions);
+                      return probs.length ? <div className="detline">{probs.join(', ')}</div> : null;
+                    })()}
+                    {ta('problemList', selectedProblems(d.checks, d.customConditions).length && !d.problemList ? 1 : 2, selectedProblems(d.checks, d.customConditions).length && !d.problemList ? 'np' : '')}
                   </div>
                   <div className="cellrow last">
                     <span className="lbl">Planned Anesthesia / Special Monitors</span>
@@ -551,8 +686,8 @@ export default function App() {
                 {ta('preAnesthesiaMeds', 3)}
               </div>
               <div className="sigrow topline">
-                <div className="sigcell grow tall"><span className="lbl">Evaluator Signature</span></div>
-                <div className="sigcell w40 tall"><span className="lbl">Date/Time</span>{txt('evalDateTime')}</div>
+                {sigCell('Evaluator Signature', 'evalSig', 'evalDateTime')}
+                {dtCell('Date/Time', 'evalDateTime', 'w40 tall')}
               </div>
             </div>
 
@@ -561,8 +696,8 @@ export default function App() {
               {vitalsPair('inp')}
               <div className="noteslot grow"><span className="b">NOTES:</span>{ta('inpNotes', 3)}</div>
               <div className="sigrow topline">
-                <div className="sigcell grow tall"><span className="lbl">Signed</span></div>
-                <div className="sigcell w40 tall"><span className="lbl">Date/Time</span>{txt('inpDateTime')}</div>
+                {sigCell('Signed', 'inpSig', 'inpDateTime')}
+                {dtCell('Date/Time', 'inpDateTime', 'w40 tall')}
               </div>
             </div>
           </div>

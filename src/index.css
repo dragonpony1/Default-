@@ -2021,23 +2021,38 @@ input[type='checkbox']:checked::after {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: ns-resize;
+  cursor: move;
   pointer-events: auto;
   touch-action: none;
+  /* Columns are ~30px apart, so an 18px box overlapped its neighbours and a
+     tap could grab the repeat next door instead of the reading aimed at. */
+  z-index: 1;
+}
+
+/* A real reading always wins a tie against the repeats carried from it. */
+.vg-mark.explicit {
+  z-index: 2;
 }
 
 .vg-glyph {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 900;
   line-height: 1;
+  /* A hair of shadow in the same ink thickens the glyph without blurring it. */
+  text-shadow: 0 0 0.4px currentColor, 0 0 0.4px currentColor;
 }
 
+/* The HR dot stays smaller and rounder than the BP chevrons so the three
+   series never read as the same mark. */
 .vg-hr .vg-glyph {
-  font-size: 8px;
+  font-size: 9px;
+  text-shadow: 0 0 0.3px currentColor;
 }
 
+/* Carried repeats stay lighter than real readings, but no longer so faint
+   that the trace looks broken. */
 .vg-mark:not(.explicit) .vg-glyph {
-  opacity: 0.5;
+  opacity: 0.75;
 }
 
 /* First-reading entry bar (screen only — hidden in print, no layout shift) */
@@ -2709,4 +2724,567 @@ button.po-num.on {
   margin-top: 2px;
   color: #999;
   font-size: 0.85em;
+}
+
+.xfer-qr {
+  width: min(320px, 100%);
+  align-self: center;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+/* ---- Floating 10-key pad ---- */
+
+.np {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1000;
+  background: #f4f5f7;
+  border: 1px solid #98a3b3;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  padding: 6px;
+  width: 240px;
+  user-select: none;
+  touch-action: none;
+}
+
+.np-handle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 4px 6px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.np-grip {
+  color: #667;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+.np-close {
+  font: inherit;
+  border: none;
+  background: transparent;
+  color: #667;
+  font-size: 1rem;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.np-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+
+.np-key {
+  font: inherit;
+  font-size: 1.25rem;
+  padding: 0;
+  height: 48px;
+  border: 1px solid #b6bec9;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.np-key:active {
+  background: #dbe6f5;
+}
+
+.np-fn {
+  background: #e6e9ee;
+  font-size: 1.05rem;
+}
+
+.np-small {
+  font-size: 0.85rem;
+}
+
+.np-bottom {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.np-bottom .np-key {
+  height: 42px;
+}
+
+.np-done {
+  background: #2a5db0;
+  border-color: #2a5db0;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ---- Temperature slider pad ---- */
+
+.tp {
+  width: 300px;
+}
+
+.tp-scale {
+  display: flex;
+  gap: 4px;
+}
+
+.tp-chip {
+  min-height: 32px;
+  padding: 0.15rem 0.7rem;
+}
+
+.tp-value {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  padding: 2px 0 6px;
+}
+
+.tp-unit {
+  font-size: 1rem;
+  font-weight: 400;
+  color: #667;
+  margin-left: 4px;
+}
+
+.tp-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tp-slider {
+  flex: 1;
+  accent-color: #2a5db0;
+  height: 40px;
+  touch-action: none;
+}
+
+.tp-nudge {
+  width: 52px;
+  height: 40px;
+  font-size: 0.9rem;
+}
+
+.tp-bottom {
+  grid-template-columns: 1fr;
+}
+
+.sig-inline {
+  height: 22px;
+  vertical-align: middle;
+}
+
+.ar-draftbtn {
+  min-height: 34px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+.sig-actions {
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+.sig-btn {
+  min-height: 30px;
+  padding: 0.1rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+/* ---- Date/time picker (wizard) ---- */
+
+.dtf {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.dtf-wheels {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.dtf-wheel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
+}
+
+.dtf-wheel > span {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.dtf-wheel select {
+  font: inherit;
+  font-size: 1.1rem;
+  padding: 0.55rem 0.5rem;
+  border: 1.5px solid #98a3b3;
+  border-radius: 6px;
+  background: #fff;
+  min-height: 48px;
+}
+
+/* Signature images are drawn large and scaled down onto form lines, which
+   softens the strokes — push contrast back up so they read black on paper,
+   and give them a little more height to lose less detail. */
+.sig-inline,
+.sigstamp-img {
+  /* Ink-only PNGs; multiply also hides the white box on signatures saved
+     before the canvas went transparent. */
+  mix-blend-mode: multiply;
+  filter: contrast(1.9);
+}
+
+.sig-inline {
+  height: 34px;
+  max-height: 34px;
+  width: auto;
+}
+
+.sigstamp-img {
+  max-height: 46px;
+}
+
+@media print {
+  .sig-inline,
+  .sigstamp-img {
+    mix-blend-mode: multiply;
+    filter: contrast(2.2);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+/* White drawing surface for the pad comes from CSS, not painted pixels, so
+   the exported PNG stays transparent. */
+.sigpad-canvas {
+  background: #fff;
+}
+
+.toolbar button.ghost {
+  background: #fff;
+  color: #2a5db0;
+}
+
+.build-stamp {
+  font-weight: 700;
+  color: #2a5db0;
+}
+
+/* Editable label for a blank med row: looks like the printed labels, but
+   shows as a fillable slot on screen. */
+.ar-rowlabel {
+  font: inherit;
+  font-size: 6px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 0;
+  min-width: 0;
+}
+
+.ar-rowlabel::placeholder {
+  color: #2a5db0;
+  font-style: italic;
+}
+
+.ar-rowlabel:focus {
+  outline: none;
+  background: #eef4ff;
+}
+
+.ar-rowctl {
+  display: inline-flex;
+  gap: 0.3rem;
+}
+
+.ar-rowctl .chip {
+  min-height: 34px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.85rem;
+}
+
+@media print {
+  .ar-rowlabel::placeholder {
+    color: transparent;
+  }
+}
+
+/* Carried-forward values read lighter on screen so it is obvious which cells
+   were typed; they print as normal chart entries. */
+.ar-cell.carried {
+  color: #7b8794;
+}
+
+@media print {
+  .ar-cell.carried {
+    color: #000;
+  }
+}
+
+/* Longer entries (100, 36.5, Lith) shrink to stay inside the narrow charting
+   cells instead of clipping. */
+.ar-cell.len3 { font-size: 6px; }
+.ar-cell.len4 { font-size: 5.4px; letter-spacing: -0.2px; }
+.ar-cell.len5 { font-size: 4.8px; letter-spacing: -0.3px; }
+
+/* Floating pads counter page zoom, so give them a solid edge that reads at
+   any scale. */
+.np {
+  will-change: left, top, transform;
+}
+
+.np-at {
+  color: #2a5db0;
+  font-weight: 700;
+}
+
+/* ---- Column pass: chart one time column top to bottom ---- */
+
+.cp {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  font-size: 16px;
+}
+
+.cp-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  background: #f1f4fa;
+  border: 1px solid #d3ddf0;
+  border-radius: 8px;
+}
+
+.cp-time {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+
+.cp-timeval {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #2a5db0;
+}
+
+.cp-timehint {
+  font-size: 0.75rem;
+  color: #667;
+}
+
+.cp-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cp-row {
+  background: #fff;
+  border: 1px solid #ccd4e0;
+  border-left: 5px solid #2a5db0;
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+}
+
+/* A value inherited from an earlier column: shown so it is never missed, but
+   visibly not something entered this round. */
+.cp-row.carried {
+  border-left-color: #b6bec9;
+  background: #fafbfc;
+}
+
+.cp-row.empty {
+  border-left-color: #e0e4ea;
+}
+
+.cp-rowhead {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.cp-label {
+  font-weight: 700;
+  flex: 1;
+}
+
+.cp-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.cp-row.carried .cp-value {
+  color: #7b8794;
+  font-weight: 600;
+}
+
+.cp-unit {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #667;
+}
+
+.cp-carried {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #7b8794;
+  margin-left: 0.4rem;
+}
+
+.cp-clear {
+  font: inherit;
+  border: none;
+  background: transparent;
+  color: #b02a2a;
+  padding: 0 0.3rem;
+  cursor: pointer;
+  min-height: 32px;
+}
+
+.cp-slider-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cp-nudge {
+  font: inherit;
+  font-size: 1.3rem;
+  width: 56px;
+  height: 48px;
+  border: 1px solid #b6bec9;
+  border-radius: 8px;
+  background: #f4f5f7;
+  cursor: pointer;
+  flex: none;
+}
+
+.cp-nudge:active {
+  background: #dbe6f5;
+}
+
+.cp-input {
+  font: inherit;
+  font-size: 1.2rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.4rem 0.6rem;
+  border: 1.5px solid #98a3b3;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.cp-chips {
+  gap: 0.35rem;
+}
+
+.cp-more {
+  align-self: flex-start;
+}
+
+.cp-foot {
+  display: flex;
+  justify-content: center;
+  padding: 0.4rem 0 1.2rem;
+}
+
+.cp-next {
+  font-size: 1.05rem;
+  padding: 0.7rem 1.4rem;
+}
+
+.cp-enter {
+  border-color: #1a7a3a;
+  color: #1a7a3a;
+  font-weight: 600;
+}
+
+/* Gas choice sits above its slider in the column pass */
+.cp-pick {
+  margin-bottom: 0.4rem;
+}
+
+.cp-pick .chip {
+  min-height: 40px;
+  padding: 0.35rem 1rem;
+}
+
+/* OR room quick-pick sits beside the printed blank */
+.ar-orpick-unused {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: 4px;
+}
+
+.ar-orpick .chip {
+  min-height: 26px;
+  padding: 0 0.45rem;
+  font-size: 10px;
+  border-radius: 5px;
+}
+
+/* Anesthetist line reads as a name until it is signed */
+.ar-anesname {
+  border-bottom: 1px solid #000;
+  flex: 1;
+  min-height: 12px;
+  padding: 0 2px;
+}
+
+.provbar .prov-name {
+  border-color: #7a5a1a;
+  color: #7a5a1a;
+}
+
+/* Top-of-record touch strip: room number and the pre-case sign-offs, big
+   enough for a gloved tap. Screen only — the printed header is unchanged. */
+.ar-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  padding: 0.5rem 0.6rem;
+  margin-bottom: 0.6rem;
+  background: #f1f4fa;
+  border: 1px solid #d3ddf0;
+  border-radius: 8px;
+}
+
+.ar-topgroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.ar-toplabel {
+  font-weight: 700;
+  color: #2a5db0;
+  margin-right: 0.15rem;
+}
+
+.ar-topbar .chip {
+  min-height: 40px;
+  padding: 0.3rem 0.85rem;
 }

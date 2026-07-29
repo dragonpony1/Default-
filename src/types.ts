@@ -25,6 +25,7 @@ export interface PreopEval {
   weight: string;
   weightUnit: '' | 'lb' | 'kg';
   proposedProcedure: string;
+  surgicalDx: string; // indication for the operation, not the problem list
   bp: string;
   p: string;
   r: string;
@@ -98,6 +99,7 @@ export interface PreopEval {
   panHydrationVol: string;
   panNotes: string;
   panDateTime: string;
+  panSig: string;
 
   // Bottom-left
   problemList: string;
@@ -106,6 +108,7 @@ export interface PreopEval {
   physicalStatusE: boolean;
   preAnesthesiaMeds: string;
   evalDateTime: string;
+  evalSig: string;
 
   // Inpatient note post-anesthesia
   inpBp: string;
@@ -119,6 +122,7 @@ export interface PreopEval {
   inpMental: string;
   inpNotes: string;
   inpDateTime: string;
+  inpSig: string;
 }
 
 export const emptyPreopEval: PreopEval = {
@@ -129,6 +133,7 @@ export const emptyPreopEval: PreopEval = {
   weight: '',
   weightUnit: '',
   proposedProcedure: '',
+  surgicalDx: '',
   bp: '',
   p: '',
   r: '',
@@ -190,12 +195,14 @@ export const emptyPreopEval: PreopEval = {
   panHydrationVol: '',
   panNotes: '',
   panDateTime: '',
+  panSig: '',
   problemList: '',
   plannedAnesthesia: '',
   physicalStatus: '',
   physicalStatusE: false,
   preAnesthesiaMeds: '',
   evalDateTime: '',
+  evalSig: '',
   inpBp: '',
   inpP: '',
   inpR: '',
@@ -207,4 +214,5 @@ export const emptyPreopEval: PreopEval = {
   inpMental: '',
   inpNotes: '',
   inpDateTime: '',
+  inpSig: '',
 };

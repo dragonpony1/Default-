@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { noAuto } from './inputProps';
+import { noAuto, numPad } from './inputProps';
 import WizardShell, { type WizStep } from './WizardShell';
 
 // Guided walk-through of the PACU (post-anesthesia recovery) orders — fills the
@@ -33,7 +33,7 @@ export default function PacuWizard(api: PacuWizApi) {
   const field = (label: string, k: string, ph = '') => (
     <label className="ifield" key={k}>
       <span>{label}</span>
-      <input {...noAuto} value={api.tx[k] ?? ''} placeholder={ph} onChange={(e) => api.setTx(k, e.target.value)} />
+      <input {...(['morphineEvery', 'morphineMax', 'dilaudidEvery', 'dilaudidMax', 'fentanylEvery', 'fentanylMax', 'date', 'time'].includes(k) ? numPad : noAuto)} value={api.tx[k] ?? ''} placeholder={ph} onChange={(e) => api.setTx(k, e.target.value)} />
     </label>
   );
 
@@ -43,7 +43,7 @@ export default function PacuWizard(api: PacuWizApi) {
       <span>{label} {unit && <span className="awiz-unit">{unit}</span>}{extra}</span>
       <div className="chips wrap">
         {doses.map((dv) => chip(api.tx[k] === String(dv), () => api.setTx(k, api.tx[k] === String(dv) ? '' : String(dv)), String(dv), k + dv))}
-        <input {...noAuto} className="awiz-doseinput" inputMode="decimal" placeholder="other" value={doses.map(String).includes(api.tx[k]) ? '' : (api.tx[k] ?? '')} onChange={(e) => api.setTx(k, e.target.value)} />
+        <input {...numPad} className="awiz-doseinput" placeholder="other" value={doses.map(String).includes(api.tx[k]) ? '' : (api.tx[k] ?? '')} onChange={(e) => api.setTx(k, e.target.value)} />
       </div>
     </div>
   );
@@ -76,15 +76,15 @@ export default function PacuWizard(api: PacuWizApi) {
           <div className="irow">
             <label className="ifield" key="weight">
               <span>Weight (lb)</span>
-              <input {...noAuto} value={api.weight} onChange={(e) => api.setWeight(e.target.value)} />
+              <input {...numPad} value={api.weight} onChange={(e) => api.setWeight(e.target.value)} />
             </label>
             <label className="ifield" key="weightKg">
               <span>Weight (kg)</span>
-              <input {...noAuto} value={api.weightKg} onChange={(e) => api.setWeightKg(e.target.value)} />
+              <input {...numPad} value={api.weightKg} onChange={(e) => api.setWeightKg(e.target.value)} />
             </label>
             <label className="ifield" key="height">
               <span>Height</span>
-              <input {...noAuto} value={api.height} onChange={(e) => api.setHeight(e.target.value)} />
+              <input {...numPad} value={api.height} onChange={(e) => api.setHeight(e.target.value)} />
             </label>
           </div>
         </>

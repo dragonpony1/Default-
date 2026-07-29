@@ -1,9 +1,10 @@
 import { useState, type ReactNode } from 'react';
-import { noAuto } from './inputProps';
+import { noAuto, numPad, tempPad } from './inputProps';
 import type { PreopEval, YesNo } from './types';
-import { SYSTEMS, screenItems, type SystemBand } from './formConfig';
+import { SYSTEMS, selectedProblems, screenItems, type SystemBand } from './formConfig';
 import type { CustomChoices } from './choices';
 import AddEntry from './AddEntry';
+import DateTimeField from './DateTimeField';
 import ProcedurePicker from './ProcedurePicker';
 import MedList from './MedList';
 import AllergyList from './AllergyList';
@@ -70,6 +71,25 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     />
   );
 
+  const numInput = (k: StringKeys, placeholder = '') => (
+    <input
+      {...numPad}
+      className="fbf-input"
+      value={d[k]}
+      placeholder={placeholder}
+      onChange={(e) => set(k, e.target.value)}
+    />
+  );
+
+  const tempInput = (k: StringKeys) => (
+    <input
+      {...tempPad}
+      className="fbf-input"
+      value={d[k]}
+      onChange={(e) => set(k, e.target.value)}
+    />
+  );
+
   const area = (k: StringKeys, disabled = false) => (
     <textarea
         {...noAuto}
@@ -116,10 +136,31 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     summary: () => string;
   }
 
+  const choiceStep = (title: string, k: StringKeys, options: string[], hint?: string): Step => ({
+    title,
+    hint,
+    render: () => (
+      <>
+        <div className="chips wrap">
+          {options.map((v) => chip(d[k] === v, () => set(k, d[k] === v ? '' : v), v, v))}
+        </div>
+        <label className="ifield"><span>or type</span>{input(k)}</label>
+      </>
+    ),
+    summary: () => d[k],
+  });
+
   const textStep = (title: string, k: StringKeys, hint?: string): Step => ({
     title,
     hint,
     render: () => input(k),
+    summary: () => d[k],
+  });
+
+  const numStep = (title: string, k: StringKeys, hint?: string): Step => ({
+    title,
+    hint,
+    render: () => numInput(k),
     summary: () => d[k],
   });
 
@@ -203,13 +244,19 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       ),
       summary: () => d.proposedProcedure,
     },
-    textStep('Age', 'age'),
+    {
+      title: 'Surgical diagnosis',
+      hint: 'What the operation is for — the indication, not the medical problem list. Prints as Diagnosis on the anesthesia record and billing sheet.',
+      render: () => input('surgicalDx', 'e.g. OA right knee, acute appendicitis…'),
+      summary: () => d.surgicalDx,
+    },
+    numStep('Age', 'age'),
     { title: 'Sex', render: () => oneOf('sex', ['M', 'F']), summary: () => d.sex },
     {
       title: 'Height',
       render: () => (
         <>
-          {input('height')}
+          {numInput('height')}
           {oneOf('heightUnit', ['in', 'cm'])}
         </>
       ),
@@ -219,16 +266,16 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       title: 'Weight',
       render: () => (
         <>
-          {input('weight')}
+          {numInput('weight')}
           {oneOf('weightUnit', ['lb', 'kg'])}
         </>
       ),
       summary: () => (d.weight ? `${d.weight} ${d.weightUnit}`.trim() : ''),
     },
-    textStep('Blood pressure', 'bp', 'Pre-procedure vital signs'),
-    textStep('Pulse', 'p', 'Pre-procedure vital signs'),
-    textStep('Respirations', 'r', 'Pre-procedure vital signs'),
-    textStep('Temperature', 't', 'Pre-procedure vital signs'),
+    numStep('Blood pressure', 'bp', 'Pre-procedure vital signs'),
+    numStep('Pulse', 'p', 'Pre-procedure vital signs'),
+    numStep('Respirations', 'r', 'Pre-procedure vital signs'),
+    { title: 'Temperature', hint: 'Pre-procedure vital signs', render: () => tempInput('t'), summary: () => d.t },
     textStep('NPO since', 'npo'),
     {
       title: 'Previous anesthesia / operations',
@@ -357,8 +404,8 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       render: () => oneOf('mallampati', ['I', 'II', 'III', 'IV']),
       summary: () => d.mallampati,
     },
-    textStep('TMD', 'tmd', 'Airway / teeth / head and neck'),
-    textStep('ROM', 'rom', 'Airway / teeth / head and neck'),
+    choiceStep('TMD', 'tmd', ['2', '3', '4'], 'Airway / teeth / head and neck — fingerbreadths'),
+    choiceStep('ROM', 'rom', ['Full', 'Limited'], 'Airway / teeth / head and neck — neck range of motion'),
     systemStep(bySystem.resp),
     {
       title: 'Tobacco use',
@@ -369,11 +416,11 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
             <>
               <label className="ifield">
                 <span>Packs / day</span>
-                <input {...noAuto} value={d.tobaccoPacksDay} onChange={(e) => set('tobaccoPacksDay', e.target.value)} />
+                <input {...numPad} value={d.tobaccoPacksDay} onChange={(e) => set('tobaccoPacksDay', e.target.value)} />
               </label>
               <label className="ifield">
                 <span>For how many years</span>
-                <input {...noAuto} value={d.tobaccoYears} onChange={(e) => set('tobaccoYears', e.target.value)} />
+                <input {...numPad} value={d.tobaccoYears} onChange={(e) => set('tobaccoYears', e.target.value)} />
               </label>
             </>
           )}
@@ -398,7 +445,7 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
           {d.homeO2 && (
             <label className="ifield">
               <span>Liters / min</span>
-              <input {...noAuto} value={d.homeO2Liters} onChange={(e) => set('homeO2Liters', e.target.value)} />
+              <input {...numPad} value={d.homeO2Liters} onChange={(e) => set('homeO2Liters', e.target.value)} />
             </label>
           )}
         </>
@@ -502,7 +549,26 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       ),
       summary: () => `${d.physicalStatus}${d.physicalStatusE ? 'E' : ''}`,
     },
-    { title: 'Problem list / diagnoses', render: () => area('problemList'), summary: () => d.problemList },
+    {
+      title: 'Problem list / diagnoses',
+      hint: 'Everything you checked in the systems review is carried here automatically and prints on the form. Use the box only for anything extra.',
+      render: () => (
+        <>
+          {selectedProblems(d.checks, d.customConditions).length > 0 && (
+            <div className="chips wrap">
+              {selectedProblems(d.checks, d.customConditions).map((l) => (
+                <span className="chip fixed" key={l}>{l}</span>
+              ))}
+            </div>
+          )}
+          {area('problemList')}
+        </>
+      ),
+      summary: () => {
+        const probs = selectedProblems(d.checks, d.customConditions);
+        return [probs.join(', '), d.problemList].filter(Boolean).join('; ');
+      },
+    },
     {
       title: 'Planned anesthesia / special monitors',
       hint: 'Tap to combine — selections join with "+". Edit the text for anything else.',
@@ -519,7 +585,12 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       render: () => area('preAnesthesiaMeds'),
       summary: () => d.preAnesthesiaMeds,
     },
-    textStep('Evaluation date/time', 'evalDateTime'),
+    {
+      title: 'Evaluation date/time',
+      hint: 'Tap Now to stamp the current date and time, or spin the wheels.',
+      render: () => <DateTimeField value={d.evalDateTime} onChange={(v) => set('evalDateTime', v)} />,
+      summary: () => d.evalDateTime,
+    },
   ];
 
   const done = step >= steps.length;
