@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import SigImg from './SigImg';
+import { nameForSignature } from './providers';
 import { noAuto, numPad, tempPad } from './inputProps';
 import { nowStamp, useSigner } from './signer';
 import SignaturePad from './SignaturePad';
@@ -168,7 +169,9 @@ export default function PostAnesNote({ d, set }: Props) {
         <div className="pan-sigcell">
           <span className="pan-siglabel">Signature</span>
           <div className="pan-sigslot">{d.panSig ? <SigImg src={d.panSig} /> : <span className="pan-blank" />}</div>
-          {d.panSig && d.panSigName && <span className="signame">{d.panSigName}</span>}
+          {d.panSig && nameForSignature(d.panSig, d.panSigName) && (
+            <span className="signame">{nameForSignature(d.panSig, d.panSigName)}</span>
+          )}
           <div className="chips">
             <button
               type="button"

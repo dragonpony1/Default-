@@ -152,6 +152,24 @@ export function saveProviders(list: ProviderProfile[]): void {
   localStorage.setItem(PROV, JSON.stringify(list));
 }
 
+// The name to print with a signature. Normally it was stored when the
+// signature was stamped. A signature stamped before names existed carries
+// none — so look it up by matching the image against the saved provider
+// signatures. That is an identification, not a guess: no match, no name.
+const nameCache = new Map<string, string>();
+
+export function nameForSignature(sig: string, storedName?: string): string {
+  const stored = (storedName ?? '').trim();
+  if (stored) return stored;
+  if (!sig) return '';
+  const cached = nameCache.get(sig);
+  if (cached !== undefined) return cached;
+  const match = loadProviders().find((p) => p.signature && p.signature === sig);
+  const found = match?.prefs.providerName?.trim() || match?.initials || '';
+  nameCache.set(sig, found);
+  return found;
+}
+
 // Snapshot the current forms into a set of provider preferences (no patient data).
 export function captureCurrentPrefs(initials: string): ProviderPrefs {
   const pacu = read<Draft>(PACU);

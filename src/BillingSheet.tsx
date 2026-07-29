@@ -4,6 +4,8 @@ import { noAuto, numPad } from './inputProps';
 import BillingWizard from './BillingWizard';
 import { useSigner, nowStamp } from './signer';
 import { useCaseData } from './caseData';
+import { nameForSignature } from './providers';
+import SignaturePad from './SignaturePad';
 
 // Deseret Peak Anesthesia Billing Information sheet, built from a flat scan
 // of the original. Tap the box beside a CPT code to mark it; header fields
@@ -124,6 +126,7 @@ export function clearBillingDraft(): void {
 export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number }) {
   const [d, setD] = useState<BillingDraft>(loadBilling);
   const [mode, setMode] = useState<'form' | 'wizard'>('form');
+  const [signPad, setSignPad] = useState(false);
   const signer = useSigner();
   const caseData = useCaseData();
 
@@ -218,6 +221,16 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
 
   return (
     <>
+      {signPad && (
+        <SignaturePad
+          onSave={(sig) => {
+            const { date, time } = nowStamp();
+            setD((p) => ({ ...p, tx: { ...p.tx, sigImg: sig, sigDate: date, sigTime: time, sigName: signer.name || signer.initials } }));
+            setSignPad(false);
+          }}
+          onCancel={() => setSignPad(false)}
+        />
+      )}
       <div className="awiz-switch screen-only">
         <button type="button" className="chip" onClick={() => setMode('wizard')}>💲 Guided billing wizard</button>
         <span className="awiz-switch-hint">Case info, find-a-code, modifiers, and blocks. The full form stays fillable.</span>
@@ -243,17 +256,25 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
           {d.tx.sigImg ? (
             <>
               <SigImg src={d.tx.sigImg} />
-              {d.tx.sigName && <span className="signame">{d.tx.sigName}</span>}
+              {nameForSignature(d.tx.sigImg, d.tx.sigName) && (
+                <span className="signame">{nameForSignature(d.tx.sigImg, d.tx.sigName)}</span>
+              )}
             </>
           ) : (
             tx('crna', 'wide')
           )}
           {d.tx.sigDate && <span className="bs-sigdt">{d.tx.sigDate} {d.tx.sigTime}</span>}
-          {signer.signature && (
+          {
             <button
               type="button"
               className="chip bs-signbtn screen-only"
               onClick={() => {
+                // No saved signature for whoever is clicked in? Sign by hand,
+                // the same as the pre-op sheet does.
+                if (!d.tx.sigImg && !signer.signature) {
+                  setSignPad(true);
+                  return;
+                }
                 const { date, time } = nowStamp();
                 setD((p) => ({
                   ...p,
@@ -267,9 +288,9 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
                 }));
               }}
             >
-              {d.tx.sigImg ? '✕' : `✍ Sign ${signer.initials}`}
+              {d.tx.sigImg ? '✕' : signer.signature ? `✍ Sign ${signer.initials}` : '✍ Sign'}
             </button>
-          )}
+          }
           <span className="b">Start Time</span>{txn('startTime', 'med')}
           <span className="b">End Time</span>{txn('endTime', 'med')}
         </div>

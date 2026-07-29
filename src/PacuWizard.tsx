@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { noAuto, numPad } from './inputProps';
 import WizardShell, { type WizStep } from './WizardShell';
 import SigImg from './SigImg';
+import { nameForSignature } from './providers';
 import SignaturePad from './SignaturePad';
 import { nowStamp, useSigner } from './signer';
 
@@ -37,6 +38,7 @@ export default function PacuWizard(api: PacuWizApi) {
     api.setTx('sigImg', sig);
     api.setTx('date', date);
     api.setTx('time', time);
+    api.setTx('sigName', signer.name || signer.initials);
   };
   const chip = (active: boolean, onClick: () => void, label: string, key?: string) => (
     <button key={key ?? label} type="button" className={`chip${active ? ' on' : ''}`} onClick={onClick}>
@@ -178,7 +180,9 @@ export default function PacuWizard(api: PacuWizApi) {
               <span className="pan-siglabel">Signature</span>
               <div className="pan-sigslot">
                 {api.tx.sigImg ? <SigImg src={api.tx.sigImg} /> : <span className="pan-blank" />}
-                {api.tx.sigImg && api.tx.sigName && <span className="signame">{api.tx.sigName}</span>}
+                {api.tx.sigImg && nameForSignature(api.tx.sigImg, api.tx.sigName) && (
+                  <span className="signame">{nameForSignature(api.tx.sigImg, api.tx.sigName)}</span>
+                )}
               </div>
               <div className="chips">
                 <button
