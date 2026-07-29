@@ -120,15 +120,33 @@ export default function App() {
     setPrintAll(true);
   };
 
-  // Print once the extra sheets have actually laid out, then restore the view.
+  const endPrintAll = () => {
+    setPrintAll(false);
+    setView(viewBeforePrint.current);
+  };
+
+  // The print dialog does not hold the page still everywhere. On the tablet,
+  // window.print() hands off to the system print preview and returns straight
+  // away, so putting the view back on the next line tore the extra sheets down
+  // before the preview had taken its snapshot — and the packet came out as
+  // whichever single sheet happened to be on screen. So: print once the sheets
+  // have laid out, then leave them mounted until the print actually finishes,
+  // or until the packet banner is dismissed by hand.
   useEffect(() => {
     if (!printAll) return;
+    let sent = false;
     const t = setTimeout(() => {
+      sent = true;
       window.print();
-      setPrintAll(false);
-      setView(viewBeforePrint.current);
     }, 400);
-    return () => clearTimeout(t);
+    const done = () => {
+      if (sent) endPrintAll();
+    };
+    window.addEventListener('afterprint', done);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('afterprint', done);
+    };
   }, [printAll]);
 
   // A cached build can otherwise persist across launches, making it look like
@@ -448,6 +466,17 @@ export default function App() {
           <span className="build-stamp">Version: {__BUILD_DATE__}</span>
         </p>
       </header>
+
+      {printAll && (
+        <div className="pa-banner screen-only">
+          <span className="pa-bannertext">
+            <b>Printing the packet</b> &mdash; pre-op, record, PACU orders, billing (4 pages).
+            Leave this up until the printout finishes.
+          </span>
+          <button type="button" className="chip" onClick={() => window.print()}>🖨 Print again</button>
+          <button type="button" className="chip on" onClick={endPrintAll}>✓ Done</button>
+        </div>
+      )}
 
       {view === 'fields' && (
         <FieldByField d={d} set={set} customChoices={choices} onFinish={() => setView('form')} />
