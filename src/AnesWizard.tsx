@@ -224,7 +224,9 @@ export default function AnesWizard(api: WizardApi) {
       hint: 'Endotracheal / airway details.',
       render: () => (
         <>
-          {group('Type', <>{ckChip('ettOral', 'Oral')}{ckChip('ettNasal', 'Nasal')}{ckChip('ettRae', 'RAE')}{ckChip('lma', 'LMA')}</>)}
+          {/* "Oral / Nasal / RAE" on its own does not say what is going in —
+              they are all tubes, so they are labelled as tubes. */}
+          {group('Airway type', <>{ckChip('ettOral', 'ETT oral')}{ckChip('ettNasal', 'ETT nasal')}{ckChip('ettRae', 'ETT RAE')}{ckChip('lma', 'LMA')}{ckChip('mask', 'Mask')}</>)}
           {pick('Tube size (mm)', 'tubeSize', ['6.0', '6.5', '7.0', '7.5', '8.0'], true, 'other')}
           {pick('Blade', 'blade', ['Mac', 'Miller', 'McGrath', 'Glidescope'], true, 'other')}
           {pick('Blade size', 'bladeSize', ['2', '3', '4'], true, 'other')}
