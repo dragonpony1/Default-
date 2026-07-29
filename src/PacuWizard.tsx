@@ -1,6 +1,9 @@
-import { type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { noAuto, numPad } from './inputProps';
 import WizardShell, { type WizStep } from './WizardShell';
+import SigImg from './SigImg';
+import SignaturePad from './SignaturePad';
+import { nowStamp, useSigner } from './signer';
 
 // Guided walk-through of the PACU (post-anesthesia recovery) orders — fills the
 // same draft as the full form. Standing-order doses get common-dose quick-picks;
@@ -24,6 +27,17 @@ export interface PacuWizApi {
 }
 
 export default function PacuWizard(api: PacuWizApi) {
+  const signer = useSigner();
+  const [padOpen, setPadOpen] = useState(false);
+
+  // Signing stamps the signature and both halves of the printed Date/Time in
+  // one action; Today and Now set either half on its own.
+  const stampSig = (sig: string) => {
+    const { date, time } = nowStamp();
+    api.setTx('sigImg', sig);
+    api.setTx('date', date);
+    api.setTx('time', time);
+  };
   const chip = (active: boolean, onClick: () => void, label: string, key?: string) => (
     <button key={key ?? label} type="button" className={`chip${active ? ' on' : ''}`} onClick={onClick}>
       {label}
@@ -156,12 +170,51 @@ export default function PacuWizard(api: PacuWizApi) {
     {
       title: 'Sign-off',
       nav: 'Sign-off',
+      hint: 'Sign and it stamps the date and time with it.',
       render: () => (
-        <div className="irow">
-          {field('Anesthesia provider', 'provider')}
-          {field('Date', 'date', 'MM/DD/YY')}
-          {field('Time', 'time', 'HHMM')}
-        </div>
+        <>
+          <div className="pan-signoff">
+            <div className="pan-sigcell">
+              <span className="pan-siglabel">Signature</span>
+              <div className="pan-sigslot">
+                {api.tx.sigImg ? <SigImg src={api.tx.sigImg} /> : <span className="pan-blank" />}
+              </div>
+              <div className="chips">
+                <button
+                  type="button"
+                  className="chip on"
+                  onClick={() => (signer.signature ? stampSig(signer.signature) : setPadOpen(true))}
+                >
+                  {api.tx.sigImg ? '↻ Re-sign' : signer.signature ? `✍ Sign as ${signer.name || signer.initials}` : '✍ Sign'}
+                </button>
+                {api.tx.sigImg && (
+                  <button type="button" className="chip" onClick={() => api.setTx('sigImg', '')}>Clear</button>
+                )}
+              </div>
+            </div>
+
+            <div className="pan-sigcell">
+              <span className="pan-siglabel">Date</span>
+              <div className="pan-stampval">{api.tx.date || '—'}</div>
+              <button type="button" className="chip" onClick={() => api.setTx('date', nowStamp().date)}>📅 Today</button>
+            </div>
+
+            <div className="pan-sigcell">
+              <span className="pan-siglabel">Time</span>
+              <div className="pan-stampval">{api.tx.time || '—'}</div>
+              <button type="button" className="chip" onClick={() => api.setTx('time', nowStamp().time)}>🕐 Now</button>
+            </div>
+          </div>
+          {padOpen && (
+            <SignaturePad
+              onSave={(sig) => {
+                stampSig(sig);
+                setPadOpen(false);
+              }}
+              onCancel={() => setPadOpen(false)}
+            />
+          )}
+        </>
       ),
     },
   ];
