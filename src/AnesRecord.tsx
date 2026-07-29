@@ -379,7 +379,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
         <SignaturePad
           onSave={(sig) => {
             const { date, time } = nowStamp();
-            setD((p) => ({ ...p, tx: { ...p.tx, sigImg: sig, sigDate: date, sigTime: time } }));
+            setD((p) => ({ ...p, tx: { ...p.tx, sigImg: sig, sigDate: date, sigTime: time, sigName: signer.name || signer.initials } }));
             setSignPad(false);
           }}
           onCancel={() => setSignPad(false)}
@@ -446,12 +446,12 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             className={`chip${d.tx.sigImg ? ' on' : ''}`}
             onClick={() => {
               if (d.tx.sigImg) {
-                setD((p) => ({ ...p, tx: { ...p.tx, sigImg: '', sigDate: '', sigTime: '' } }));
+                setD((p) => ({ ...p, tx: { ...p.tx, sigImg: '', sigDate: '', sigTime: '', sigName: '' } }));
                 return;
               }
               if (signer.signature) {
                 const { date, time } = nowStamp();
-                setD((p) => ({ ...p, tx: { ...p.tx, sigImg: signer.signature, sigDate: date, sigTime: time } }));
+                setD((p) => ({ ...p, tx: { ...p.tx, sigImg: signer.signature, sigDate: date, sigTime: time, sigName: signer.name || signer.initials } }));
               } else {
                 setSignPad(true);
               }
@@ -831,7 +831,10 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             <div className="ar-brow">
               <span className="lbl">Anesthetist</span>
               {d.tx.sigImg ? (
-                <SigImg src={d.tx.sigImg} />
+                <>
+                  <SigImg src={d.tx.sigImg} />
+                  {d.tx.sigName && <span className="signame">{d.tx.sigName}</span>}
+                </>
               ) : (
                 <span className="ar-anesname">{signer.name || signer.initials}</span>
               )}
@@ -841,7 +844,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                 className="chip ar-signbtn screen-only"
                 onClick={() => {
                   if (d.tx.sigImg) {
-                    setD((p) => ({ ...p, tx: { ...p.tx, sigImg: '', sigDate: '', sigTime: '' } }));
+                    setD((p) => ({ ...p, tx: { ...p.tx, sigImg: '', sigDate: '', sigTime: '', sigName: '' } }));
                     return;
                   }
                   // A provider with a saved signature stamps it; anyone else
@@ -849,7 +852,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                   // a set-up provider.
                   if (signer.signature) {
                     const { date, time } = nowStamp();
-                    setD((p) => ({ ...p, tx: { ...p.tx, sigImg: signer.signature, sigDate: date, sigTime: time } }));
+                    setD((p) => ({ ...p, tx: { ...p.tx, sigImg: signer.signature, sigDate: date, sigTime: time, sigName: signer.name || signer.initials } }));
                   } else {
                     setSignPad(true);
                   }

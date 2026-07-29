@@ -194,6 +194,7 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
         const { date, time } = nowStamp();
         set('evalSig', sig);
         set('evalDateTime', `${date} ${time}`);
+        set('evalSigName', signer.name || signer.initials);
       },
     },
     !!d.evalSig,
@@ -260,6 +261,7 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
         writeSheetTx(ANES_KEY, 'sigImg', sig);
         writeSheetTx(ANES_KEY, 'sigDate', date);
         writeSheetTx(ANES_KEY, 'sigTime', time);
+        writeSheetTx(ANES_KEY, 'sigName', signer.name || signer.initials);
         touched();
       },
     },
@@ -301,6 +303,7 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
         const { date, time } = nowStamp();
         set('panSig', sig);
         set('panDateTime', `${date} ${time}`);
+        set('panSigName', signer.name || signer.initials);
       },
     },
     !!d.panSig,
@@ -319,6 +322,7 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
         writeSheetTx(PACU_KEY, 'sigImg', sig);
         writeSheetTx(PACU_KEY, 'date', date);
         writeSheetTx(PACU_KEY, 'time', time);
+        writeSheetTx(PACU_KEY, 'sigName', signer.name || signer.initials);
         touched();
       },
     },

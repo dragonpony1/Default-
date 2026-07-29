@@ -100,6 +100,7 @@ export interface PreopEval {
   panNotes: string;
   panDateTime: string;
   panSig: string;
+  panSigName: string; // typed name printed with the signature
 
   // Bottom-left
   problemList: string;
@@ -109,6 +110,7 @@ export interface PreopEval {
   preAnesthesiaMeds: string;
   evalDateTime: string;
   evalSig: string;
+  evalSigName: string;
 
   // Inpatient note post-anesthesia
   inpBp: string;
@@ -123,6 +125,7 @@ export interface PreopEval {
   inpNotes: string;
   inpDateTime: string;
   inpSig: string;
+  inpSigName: string;
 }
 
 export const emptyPreopEval: PreopEval = {
@@ -196,6 +199,7 @@ export const emptyPreopEval: PreopEval = {
   panNotes: '',
   panDateTime: '',
   panSig: '',
+  panSigName: '',
   problemList: '',
   plannedAnesthesia: '',
   physicalStatus: '',
@@ -203,6 +207,7 @@ export const emptyPreopEval: PreopEval = {
   preAnesthesiaMeds: '',
   evalDateTime: '',
   evalSig: '',
+  evalSigName: '',
   inpBp: '',
   inpP: '',
   inpR: '',
@@ -215,4 +220,5 @@ export const emptyPreopEval: PreopEval = {
   inpNotes: '',
   inpDateTime: '',
   inpSig: '',
+  inpSigName: '',
 };

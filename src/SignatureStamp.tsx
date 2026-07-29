@@ -10,16 +10,18 @@ interface Props {
   sig: string;
   date: string;
   time: string;
-  onStamp: (sig: string, date: string, time: string) => void;
+  /** Typed name printed under the signature, so the reader knows whose it is. */
+  name?: string;
+  onStamp: (sig: string, date: string, time: string, name: string) => void;
   onClear: () => void;
 }
 
-export default function SignatureStamp({ label, sig, date, time, onStamp, onClear }: Props) {
+export default function SignatureStamp({ label, sig, date, time, name, onStamp, onClear }: Props) {
   const signer = useSigner();
 
   const sign = () => {
     const { date: d, time: t } = nowStamp();
-    onStamp(signer.signature, d, t);
+    onStamp(signer.signature, d, t, signer.name || signer.initials);
   };
 
   return (
@@ -28,7 +30,7 @@ export default function SignatureStamp({ label, sig, date, time, onStamp, onClea
         {sig ? <SigImg src={sig} className="sigstamp-img" /> : <span className="sigstamp-blank" />}
       </div>
       <div className="sigstamp-foot">
-        <span className="sigstamp-label">{label}</span>
+        <span className="sigstamp-label">{label}{sig && name ? ` — ${name}` : ''}</span>
         <span className="sigstamp-dt">{date}{time ? ` · ${time}` : ''}</span>
       </div>
       <div className="sigstamp-actions screen-only">

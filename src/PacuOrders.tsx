@@ -305,8 +305,9 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
             sig={d.tx.sigImg ?? ''}
             date={d.tx.date ?? ''}
             time={d.tx.time ?? ''}
-            onStamp={(s, dt, tm) => setD((p) => ({ ...p, tx: { ...p.tx, sigImg: s, date: dt, time: tm } }))}
-            onClear={() => setD((p) => ({ ...p, tx: { ...p.tx, sigImg: '' } }))}
+            name={d.tx.sigName ?? ''}
+            onStamp={(s, dt, tm, nm) => setD((p) => ({ ...p, tx: { ...p.tx, sigImg: s, date: dt, time: tm, sigName: nm } }))}
+            onClear={() => setD((p) => ({ ...p, tx: { ...p.tx, sigImg: '', sigName: '' } }))}
           />
         </div>
       </div>

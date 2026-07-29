@@ -108,17 +108,41 @@ function pick(src: Record<string, string>, keys: string[]): Record<string, strin
   return out;
 }
 
-// The department's providers, seeded on first run. Each starts with no saved
-// defaults — a provider taps their button then "Save" once to store their setup.
-const SEED_INITIALS = ['JG', 'MS', 'AP', 'SN', 'CS', 'SD', 'AL', 'EP', 'TA'];
+// The department's providers, seeded on first run: initials for the buttons,
+// full name for the signature lines. Each starts with no saved defaults — a
+// provider taps their button then "Save" once to store their setup.
+const SEED_PROVIDERS: Array<[initials: string, name: string]> = [
+  ['JG', 'Jeff Green'],
+  ['MS', 'Matt Smith'],
+  ['AP', 'Annette Proctor'],
+  ['SN', 'Stacey Nelsen'],
+  ['CS', 'Chris Smith'],
+  ['SD', 'Stephanie Dixon'],
+  ['AL', 'Amy Lloyd'],
+  ['EP', 'Evie Purdom'],
+  ['TA', 'Taylor Albrecht'],
+];
+const SEED_NAMES = new Map(SEED_PROVIDERS);
 
 export function loadProviders(): ProviderProfile[] {
   const stored = read<ProviderProfile[]>(PROV);
-  if (stored && stored.length) return stored;
-  const seeded = SEED_INITIALS.map((initials, i) => ({
+  if (stored && stored.length) {
+    // Devices set up before the names were known carry initials only. Fill in
+    // the blanks; a name a provider has already set for themselves stands.
+    let changed = false;
+    const named = stored.map((p) => {
+      const seed = SEED_NAMES.get(p.initials.toUpperCase());
+      if (!seed || (p.prefs.providerName ?? '').trim()) return p;
+      changed = true;
+      return { ...p, prefs: { ...p.prefs, providerName: seed } };
+    });
+    if (changed) saveProviders(named);
+    return named;
+  }
+  const seeded = SEED_PROVIDERS.map(([initials, providerName], i) => ({
     id: `p${i + 1}`,
     initials,
-    prefs: {} as ProviderPrefs,
+    prefs: { providerName } as ProviderPrefs,
   }));
   saveProviders(seeded);
   return seeded;
