@@ -3404,6 +3404,20 @@ input[type='checkbox']:checked::after {
   font-size: 0.85rem;
 }
 
+/* The typed name that rides with a signature, so a reader can make it out. */
+.signame {
+  font-size: 0.72rem;
+  color: #000;
+  white-space: nowrap;
+  margin-left: 0.2rem;
+}
+
+@media print {
+  .signame {
+    font-size: 6pt;
+  }
+}
+
 /* ---- Pre-print review: what is still blank, answerable in place ---- */
 
 .pr {

@@ -45,7 +45,7 @@ export default function App() {
   const beforeChoices = useRef<typeof view>('fields');
   const [choices, setChoicesState] = useState<CustomChoices>(loadCustomChoices);
   const signer = useSigner();
-  const [signTarget, setSignTarget] = useState<{ sig: 'panSig' | 'evalSig' | 'inpSig'; dt: StringKeys } | null>(null);
+  const [signTarget, setSignTarget] = useState<{ sig: 'panSig' | 'evalSig' | 'inpSig'; dt: StringKeys; nm: StringKeys } | null>(null);
 
   const setChoices = (c: CustomChoices) => {
     saveCustomChoices(c);
@@ -217,10 +217,13 @@ export default function App() {
 
   // Signature cell: shows the stamped signature image; the clicked-in
   // provider's saved signature stamps with one tap and fills the date/time.
-  const sigCell = (label: string, sigKey: 'panSig' | 'evalSig' | 'inpSig', dtKey: StringKeys) => (
+  const sigCell = (label: string, sigKey: 'panSig' | 'evalSig' | 'inpSig', dtKey: StringKeys) => {
+    const nameKey = `${sigKey}Name` as StringKeys;
+    return (
     <div className="sigcell grow tall">
       <span className="lbl">{label}</span>
       {d[sigKey] && <SigImg src={d[sigKey]} />}
+      {d[sigKey] && d[nameKey] && <span className="signame">{d[nameKey]}</span>}
       <span className="sig-actions screen-only">
         <button
           type="button"
@@ -228,20 +231,26 @@ export default function App() {
           onClick={() => {
             if (signer.signature) {
               const { date, time } = nowStamp();
-              setD((prev) => ({ ...prev, [sigKey]: signer.signature, [dtKey]: `${date} ${time}` }));
+              setD((prev) => ({
+                ...prev,
+                [sigKey]: signer.signature,
+                [dtKey]: `${date} ${time}`,
+                [nameKey]: signer.name || signer.initials,
+              }));
             } else {
-              setSignTarget({ sig: sigKey, dt: dtKey });
+              setSignTarget({ sig: sigKey, dt: dtKey, nm: nameKey });
             }
           }}
         >
           {d[sigKey] ? '↻' : signer.signature ? `✍ ${signer.initials}` : '✍ Sign'}
         </button>
         {d[sigKey] && (
-          <button type="button" className="chip sig-btn" onClick={() => setD((prev) => ({ ...prev, [sigKey]: '' }))}>✕</button>
+          <button type="button" className="chip sig-btn" onClick={() => setD((prev) => ({ ...prev, [sigKey]: '', [nameKey]: '' }))}>✕</button>
         )}
       </span>
     </div>
-  );
+    );
+  };
 
   // Numeric variant: floating 10-key instead of the OS keyboard
   const txn = (k: StringKeys, cls = '') => (
@@ -405,7 +414,12 @@ export default function App() {
         <SignaturePad
           onSave={(sig) => {
             const { date, time } = nowStamp();
-            setD((prev) => ({ ...prev, [signTarget.sig]: sig, [signTarget.dt]: `${date} ${time}` }));
+            setD((prev) => ({
+              ...prev,
+              [signTarget.sig]: sig,
+              [signTarget.dt]: `${date} ${time}`,
+              [signTarget.nm]: signer.name || signer.initials,
+            }));
             setSignTarget(null);
           }}
           onCancel={() => setSignTarget(null)}

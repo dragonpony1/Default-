@@ -240,7 +240,14 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
         </div>
         <div className="bs-fline">
           <span className="b">CRNA</span>
-          {d.tx.sigImg ? <SigImg src={d.tx.sigImg} /> : tx('crna', 'wide')}
+          {d.tx.sigImg ? (
+            <>
+              <SigImg src={d.tx.sigImg} />
+              {d.tx.sigName && <span className="signame">{d.tx.sigName}</span>}
+            </>
+          ) : (
+            tx('crna', 'wide')
+          )}
           {d.tx.sigDate && <span className="bs-sigdt">{d.tx.sigDate} {d.tx.sigTime}</span>}
           {signer.signature && (
             <button
@@ -248,7 +255,16 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
               className="chip bs-signbtn screen-only"
               onClick={() => {
                 const { date, time } = nowStamp();
-                setD((p) => ({ ...p, tx: { ...p.tx, sigImg: p.tx.sigImg ? '' : signer.signature, sigDate: p.tx.sigImg ? '' : date, sigTime: p.tx.sigImg ? '' : time } }));
+                setD((p) => ({
+                  ...p,
+                  tx: {
+                    ...p.tx,
+                    sigImg: p.tx.sigImg ? '' : signer.signature,
+                    sigDate: p.tx.sigImg ? '' : date,
+                    sigTime: p.tx.sigImg ? '' : time,
+                    sigName: p.tx.sigImg ? '' : signer.name || signer.initials,
+                  },
+                }));
               }}
             >
               {d.tx.sigImg ? '✕' : `✍ Sign ${signer.initials}`}

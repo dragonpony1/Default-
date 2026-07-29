@@ -178,6 +178,7 @@ export default function PacuWizard(api: PacuWizApi) {
               <span className="pan-siglabel">Signature</span>
               <div className="pan-sigslot">
                 {api.tx.sigImg ? <SigImg src={api.tx.sigImg} /> : <span className="pan-blank" />}
+                {api.tx.sigImg && api.tx.sigName && <span className="signame">{api.tx.sigName}</span>}
               </div>
               <div className="chips">
                 <button
@@ -188,7 +189,7 @@ export default function PacuWizard(api: PacuWizApi) {
                   {api.tx.sigImg ? '↻ Re-sign' : signer.signature ? `✍ Sign as ${signer.name || signer.initials}` : '✍ Sign'}
                 </button>
                 {api.tx.sigImg && (
-                  <button type="button" className="chip" onClick={() => api.setTx('sigImg', '')}>Clear</button>
+                  <button type="button" className="chip" onClick={() => { api.setTx('sigImg', ''); api.setTx('sigName', ''); }}>Clear</button>
                 )}
               </div>
             </div>

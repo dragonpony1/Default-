@@ -38,6 +38,7 @@ export default function PostAnesNote({ d, set }: Props) {
     const { date, time } = nowStamp();
     set('panSig', sig);
     set('panDateTime', `${date} ${time}`);
+    set('panSigName', signer.name || signer.initials);
   };
 
   const num = (label: string, k: keyof PreopEval) => (
@@ -167,6 +168,7 @@ export default function PostAnesNote({ d, set }: Props) {
         <div className="pan-sigcell">
           <span className="pan-siglabel">Signature</span>
           <div className="pan-sigslot">{d.panSig ? <SigImg src={d.panSig} /> : <span className="pan-blank" />}</div>
+          {d.panSig && d.panSigName && <span className="signame">{d.panSigName}</span>}
           <div className="chips">
             <button
               type="button"
@@ -176,7 +178,7 @@ export default function PostAnesNote({ d, set }: Props) {
               {d.panSig ? '↻ Re-sign' : signer.signature ? `✍ Sign as ${signer.name || signer.initials}` : '✍ Sign'}
             </button>
             {d.panSig && (
-              <button type="button" className="chip" onClick={() => set('panSig', '')}>Clear</button>
+              <button type="button" className="chip" onClick={() => { set('panSig', ''); set('panSigName', ''); }}>Clear</button>
             )}
           </div>
         </div>
