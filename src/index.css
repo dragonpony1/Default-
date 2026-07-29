@@ -3367,3 +3367,8 @@ input[type='checkbox']:checked::after {
   border-color: #b02a2a;
   color: #b02a2a;
 }
+
+.ar-tophint {
+  font-size: 0.8rem;
+  color: #667;
+}
