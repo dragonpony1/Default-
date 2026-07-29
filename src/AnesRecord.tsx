@@ -1,12 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import SigImg from './SigImg';
-import { noAuto, numPad, tempPad } from './inputProps';
+import { datePad, noAuto, numPad, tempPad } from './inputProps';
 import { useCaseData, setCaseField } from './caseData';
 import VitalsGraph, { type VitalsData, type Series } from './VitalsGraph';
 import { useSigner, nowStamp } from './signer';
 import AnesWizard from './AnesWizard';
 import { composeNarrative } from './narrative';
 import ColumnPass from './ColumnPass';
+import SignaturePad from './SignaturePad';
 import { CARRY_ROWS, STEP_SPECS, carriedInto as carriedFrom } from './chartRows';
 
 // Intra-op Anesthesia Record replicating Mountain West Medical Center form
@@ -79,6 +80,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
   const caseData = useCaseData(); // shared allergies (pre-populated from pre-op)
   const signer = useSigner();
   const [mode, setMode] = useState<'chart' | 'wizard' | 'column'>('chart');
+  const [signPad, setSignPad] = useState(false);
   const [zoom, setZoom] = useState(1);
   const bumpZoom = (delta: number) => setZoom((z) => Math.min(2.5, Math.max(0.8, Math.round((z + delta) * 10) / 10)));
   // Zoom via transform scale (not CSS `zoom`, which breaks pointer-drag math).
@@ -158,6 +160,16 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
   const tx = (k: string, cls = '') => (
     <input
       {...noAuto}
+      className={`t u ${cls}`}
+      value={d.tx[k] ?? ''}
+      onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: e.target.value } }))}
+    />
+  );
+
+  // Date boxes summon the floating date picker: Today is one tap.
+  const txd = (k: string, cls = '') => (
+    <input
+      {...datePad}
       className={`t u ${cls}`}
       value={d.tx[k] ?? ''}
       onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: e.target.value } }))}
@@ -363,6 +375,16 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
 
   return (
     <div className="ar-wrap">
+      {signPad && (
+        <SignaturePad
+          onSave={(sig) => {
+            const { date, time } = nowStamp();
+            setD((p) => ({ ...p, tx: { ...p.tx, sigImg: sig, sigDate: date, sigTime: time } }));
+            setSignPad(false);
+          }}
+          onCancel={() => setSignPad(false)}
+        />
+      )}
       <div className="awiz-switch screen-only">
         <button type="button" className="chip" onClick={() => setMode('wizard')}>⛑ Guided setup wizard</button>
         <button type="button" className="chip cp-enter" onClick={() => setMode('column')}>⏱ Chart a time column</button>
@@ -442,7 +464,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             <div className="ar-hrow">
               <span className="cell w4">{ck('hp', 'H&P')}</span>
               <span className="cell w4"><span className="lbl">OR #</span>{tx('orNum', 'short')}</span>
-              <span className="cell w4"><span className="lbl">DATE</span>{tx('date', 'med')}</span>
+              <span className="cell w4"><span className="lbl">DATE</span>{txd('date', 'med')}</span>
             </div>
             <div className="ar-hrow">
               <span className="cell w4">{ck('opPermit', 'OP Permit')}</span>
@@ -790,18 +812,27 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                 <span className="ar-anesname">{signer.name || signer.initials}</span>
               )}
               {d.tx.sigDate && <span className="ar-sigdt">{d.tx.sigDate} {d.tx.sigTime}</span>}
-              {signer.signature && (
-                <button
-                  type="button"
-                  className="chip ar-signbtn screen-only"
-                  onClick={() => {
+              <button
+                type="button"
+                className="chip ar-signbtn screen-only"
+                onClick={() => {
+                  if (d.tx.sigImg) {
+                    setD((p) => ({ ...p, tx: { ...p.tx, sigImg: '', sigDate: '', sigTime: '' } }));
+                    return;
+                  }
+                  // A provider with a saved signature stamps it; anyone else
+                  // signs by hand, so the line is never left blank for want of
+                  // a set-up provider.
+                  if (signer.signature) {
                     const { date, time } = nowStamp();
-                    setD((p) => ({ ...p, tx: { ...p.tx, sigImg: p.tx.sigImg ? '' : signer.signature, sigDate: p.tx.sigImg ? '' : date, sigTime: p.tx.sigImg ? '' : time } }));
-                  }}
-                >
-                  {d.tx.sigImg ? '✕' : `✍ Sign ${signer.name || signer.initials}`}
-                </button>
-              )}
+                    setD((p) => ({ ...p, tx: { ...p.tx, sigImg: signer.signature, sigDate: date, sigTime: time } }));
+                  } else {
+                    setSignPad(true);
+                  }
+                }}
+              >
+                {d.tx.sigImg ? '✕' : signer.signature ? `✍ Sign ${signer.name || signer.initials}` : '✍ Sign'}
+              </button>
             </div>
             <div className="ar-brow">
               <span className="lbl">Procedure</span>

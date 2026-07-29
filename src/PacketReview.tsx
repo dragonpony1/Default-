@@ -1,0 +1,457 @@
+import { useState } from 'react';
+import { datePad, noAuto, numPad } from './inputProps';
+import { ANES_KEY, BILLING_KEY, PACU_KEY, readSheet, writeSheetCk, writeSheetTx } from './drafts';
+import { setCaseField, useCaseData } from './caseData';
+import { nowStamp, useSigner } from './signer';
+import type { PreopEval } from './types';
+
+// Last look before the packet prints: every box that ought to carry something
+// and does not, listed in one place with the answer typed in right here. A box
+// that genuinely does not apply gets N/A — the point is that nothing on the
+// printed forms is left ambiguous, not that everything has a number in it.
+
+export type PacketTab = 'fields' | 'anes' | 'pacu' | 'billing';
+
+type Kind = 'text' | 'num' | 'date' | 'choice' | 'sig' | 'goto';
+
+interface Gap {
+  id: string;
+  label: string;
+  sheet: string;
+  tab: PacketTab;
+  kind: Kind;
+  options?: string[];
+  value: string;
+  set?: (v: string) => void;
+  na?: () => void; // how "N/A" is recorded, when it is not just the text N/A
+  note?: string;
+}
+
+interface Props {
+  d: PreopEval;
+  set: <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => void;
+  onGo: (tab: PacketTab) => void;
+  onPrint: () => void;
+  onClose: () => void;
+  /** Tells the mounted record / PACU / billing sheets to re-read their drafts. */
+  onDraftsChanged: () => void;
+}
+
+const filled = (s: string | undefined) => !!(s ?? '').trim();
+
+export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsChanged }: Props) {
+  const caseData = useCaseData();
+  const signer = useSigner();
+  // Bumped after every write so the list recomputes from fresh drafts.
+  const [tick, setTick] = useState(0);
+  const anes = readSheet(ANES_KEY);
+  const pacu = readSheet(PACU_KEY);
+  const billing = readSheet(BILLING_KEY);
+  void tick;
+
+  const touched = () => {
+    setTick((t) => t + 1);
+    onDraftsChanged();
+  };
+
+  const sheetTx = (key: string) => (field: string) => (v: string) => {
+    writeSheetTx(key, field, v);
+    touched();
+  };
+  const anesTx = sheetTx(ANES_KEY);
+
+  const gaps: Gap[] = [];
+  const need = (g: Gap, ok: boolean) => {
+    if (!ok) gaps.push(g);
+  };
+  const pre = (id: keyof PreopEval, label: string, kind: Kind = 'text', options?: string[]) =>
+    need(
+      {
+        id: String(id),
+        label,
+        sheet: 'Pre-Op',
+        tab: 'fields',
+        kind,
+        options,
+        value: String(d[id] ?? ''),
+        set: (v) => set(id, v as PreopEval[typeof id]),
+      },
+      filled(String(d[id] ?? '')),
+    );
+
+  // ---- Pre-Op evaluation ----
+  pre('age', 'Age', 'num');
+  pre('sex', 'Sex', 'choice', ['M', 'F']);
+  pre('height', 'Height', 'num');
+  pre('weight', 'Weight', 'num');
+  pre('proposedProcedure', 'Proposed procedure');
+  pre('surgicalDx', 'Surgical diagnosis', 'text');
+  pre('bp', 'Pre-op BP', 'text');
+  pre('p', 'Pre-op pulse', 'num');
+  pre('r', 'Pre-op respirations', 'num');
+  pre('t', 'Pre-op temperature', 'num');
+  pre('mallampati', 'Mallampati class', 'choice', ['I', 'II', 'III', 'IV']);
+  pre('npo', 'NPO since', 'text');
+  pre('tmd', 'TMD', 'choice', ['2', '3', '4']);
+  pre('rom', 'ROM', 'choice', ['Full', 'Limited']);
+  pre('plannedAnesthesia', 'Planned anesthesia');
+  pre('physicalStatus', 'Physical status (ASA)', 'choice', ['1', '2', '3', '4', '5']);
+
+  // A "None" box on the form answers these as surely as any text does.
+  need(
+    {
+      id: 'allergies',
+      label: 'Allergies',
+      sheet: 'Pre-Op',
+      tab: 'fields',
+      kind: 'text',
+      value: d.allergies,
+      set: (v) => set('allergies', v),
+      na: () => set('allergiesNone', true),
+      note: 'N/A ticks the None box',
+    },
+    d.allergiesNone || filled(d.allergies) || d.allergyList.length > 0,
+  );
+  need(
+    {
+      id: 'currentMedications',
+      label: 'Current medications',
+      sheet: 'Pre-Op',
+      tab: 'fields',
+      kind: 'text',
+      value: d.currentMedications,
+      set: (v) => set('currentMedications', v),
+      na: () => set('currentMedicationsNone', true),
+      note: 'N/A ticks the None box',
+    },
+    d.currentMedicationsNone || filled(d.currentMedications) || d.meds.length > 0,
+  );
+  need(
+    {
+      id: 'previousAnesthesia',
+      label: 'Previous anesthesia / operations',
+      sheet: 'Pre-Op',
+      tab: 'fields',
+      kind: 'text',
+      value: d.previousAnesthesia,
+      set: (v) => set('previousAnesthesia', v),
+      na: () => set('previousAnesthesiaNone', true),
+      note: 'N/A ticks the None box',
+    },
+    d.previousAnesthesiaNone || filled(d.previousAnesthesia) || d.prevHxList.length > 0,
+  );
+  need(
+    {
+      id: 'familyHistory',
+      label: 'Family history of anesthesia complications',
+      sheet: 'Pre-Op',
+      tab: 'fields',
+      kind: 'text',
+      value: d.familyHistory,
+      set: (v) => set('familyHistory', v),
+      na: () => set('familyHistoryNone', true),
+      note: 'N/A ticks the None box',
+    },
+    d.familyHistoryNone || filled(d.familyHistory),
+  );
+
+  // Studies: the form's own None box covers the lot, or answer them one by one
+  // — an EKG that was not done says so on the printed sheet.
+  const study = (id: 'dxEkg' | 'dxCxr' | 'dxPulm', label: string) =>
+    need(
+      {
+        id,
+        label,
+        sheet: 'Pre-Op',
+        tab: 'fields',
+        kind: 'text',
+        value: d[id],
+        set: (v) => set(id, v),
+      },
+      d.dxNone || filled(d[id]),
+    );
+  study('dxEkg', 'EKG');
+  study('dxCxr', 'Chest X-ray');
+  study('dxPulm', 'Pulmonary studies');
+  const lab = (id: 'labHgb' | 'labElectrolytes' | 'labUrinalysis', label: string) =>
+    need({ id, label, sheet: 'Pre-Op', tab: 'fields', kind: 'text', value: d[id], set: (v) => set(id, v) }, filled(d[id]));
+  lab('labHgb', 'Hgb / Hct / CBC');
+  lab('labElectrolytes', 'Electrolytes');
+  lab('labUrinalysis', 'Urinalysis');
+
+  need(
+    {
+      id: 'evalSig',
+      label: 'Pre-anesthesia evaluation signature',
+      sheet: 'Pre-Op',
+      tab: 'fields',
+      kind: 'sig',
+      value: d.evalSig ? 'signed' : '',
+      set: (sig) => {
+        const { date, time } = nowStamp();
+        set('evalSig', sig);
+        set('evalDateTime', `${date} ${time}`);
+      },
+    },
+    !!d.evalSig,
+  );
+
+  // ---- Anesthesia record ----
+  const rec = (id: string, label: string, kind: Kind = 'text', options?: string[]) =>
+    need(
+      { id: `anes.${id}`, label, sheet: 'Record', tab: 'anes', kind, options, value: anes.tx[id] ?? '', set: anesTx(id) },
+      filled(anes.tx[id]),
+    );
+  rec('date', 'Case date', 'date');
+  rec('orNum', 'OR', 'choice', ['1', '2', '3', '4', 'Endo']);
+  rec('anesStart', 'Anesthesia start', 'num');
+  rec('anesStop', 'Anesthesia stop', 'num');
+  rec('surgStart', 'Surgery start', 'num');
+  rec('surgStop', 'Surgery stop', 'num');
+
+  const asaMarked = ['asa1', 'asa2', 'asa3', 'asa4', 'asa5'].find((k) => anes.ck[k]);
+  need(
+    {
+      id: 'anes.asa',
+      label: 'ASA class',
+      sheet: 'Record',
+      tab: 'anes',
+      kind: 'choice',
+      options: ['1', '2', '3', '4', '5'],
+      value: asaMarked ? asaMarked.slice(-1) : '',
+      set: (v) => {
+        ['asa1', 'asa2', 'asa3', 'asa4', 'asa5'].forEach((k) => writeSheetCk(ANES_KEY, k, k === `asa${v}`));
+        touched();
+      },
+    },
+    !!asaMarked,
+  );
+
+  const caseField = (id: 'surgeon' | 'procedure' | 'diagnosis', label: string) =>
+    need(
+      {
+        id: `case.${id}`,
+        label,
+        sheet: 'Record',
+        tab: 'anes',
+        kind: 'text',
+        value: caseData[id],
+        set: (v) => setCaseField(id, v),
+      },
+      filled(caseData[id]),
+    );
+  caseField('surgeon', 'Surgeon');
+  caseField('procedure', 'Procedure');
+  caseField('diagnosis', 'Diagnosis');
+
+  need(
+    {
+      id: 'anes.sig',
+      label: 'Anesthetist signature',
+      sheet: 'Record',
+      tab: 'anes',
+      kind: 'sig',
+      value: anes.tx.sigImg ? 'signed' : '',
+      set: (sig) => {
+        const { date, time } = nowStamp();
+        writeSheetTx(ANES_KEY, 'sigImg', sig);
+        writeSheetTx(ANES_KEY, 'sigDate', date);
+        writeSheetTx(ANES_KEY, 'sigTime', time);
+        touched();
+      },
+    },
+    filled(anes.tx.sigImg),
+  );
+
+  // ---- Post-anesthesia note (prints on the pre-op sheet, filled in PACU) ----
+  const pan = (id: keyof PreopEval, label: string, kind: Kind = 'num', options?: string[]) =>
+    need(
+      {
+        id: String(id),
+        label,
+        sheet: 'PACU',
+        tab: 'pacu',
+        kind,
+        options,
+        value: String(d[id] ?? ''),
+        set: (v) => set(id, v as PreopEval[typeof id]),
+      },
+      filled(String(d[id] ?? '')),
+    );
+  pan('panBp', 'Post-anesthesia BP', 'text');
+  pan('panP', 'Post-anesthesia pulse');
+  pan('panR', 'Post-anesthesia respirations');
+  pan('panO2', 'Post-anesthesia O₂ sat');
+  pan('panMental', 'Mental status', 'choice', ['Alert', 'Drowsy', 'Somnolent', 'Unresponsive']);
+  pan('panAirway', 'Airway patency', 'choice', ['Patent', 'Oral airway', 'Nasal airway', 'Intubated']);
+  pan('panNV', 'Nausea / vomiting', 'choice', ['None', 'Nausea', 'Vomiting']);
+  pan('panHydration', 'Hydration', 'text');
+  need(
+    {
+      id: 'panSig',
+      label: 'Post-anesthesia note signature',
+      sheet: 'PACU',
+      tab: 'pacu',
+      kind: 'sig',
+      value: d.panSig ? 'signed' : '',
+      set: (sig) => {
+        const { date, time } = nowStamp();
+        set('panSig', sig);
+        set('panDateTime', `${date} ${time}`);
+      },
+    },
+    !!d.panSig,
+  );
+
+  need(
+    {
+      id: 'pacu.sig',
+      label: 'PACU orders signature',
+      sheet: 'PACU',
+      tab: 'pacu',
+      kind: 'sig',
+      value: pacu.tx.sigImg ? 'signed' : '',
+      set: (sig) => {
+        const { date, time } = nowStamp();
+        writeSheetTx(PACU_KEY, 'sigImg', sig);
+        writeSheetTx(PACU_KEY, 'date', date);
+        writeSheetTx(PACU_KEY, 'time', time);
+        touched();
+      },
+    },
+    filled(pacu.tx.sigImg),
+  );
+
+  // ---- Billing ----
+  // Its header fills itself from the case; what no one else can supply is the
+  // code being billed.
+  need(
+    {
+      id: 'billing.code',
+      label: 'A CPT code marked',
+      sheet: 'Billing',
+      tab: 'billing',
+      kind: 'goto',
+      value: '',
+      note: 'Pick the anesthesia code on the billing sheet',
+    },
+    Object.values(billing.ck).some(Boolean) || filled(billing.tx.addCode),
+  );
+  need(
+    {
+      id: 'billing.crna',
+      label: 'CRNA',
+      sheet: 'Billing',
+      tab: 'billing',
+      kind: 'text',
+      value: billing.tx.crna ?? '',
+      set: sheetTx(BILLING_KEY)('crna'),
+    },
+    filled(billing.tx.crna) || filled(billing.tx.sigImg),
+  );
+
+  const sheets = ['Pre-Op', 'Record', 'PACU', 'Billing'].filter((s) => gaps.some((g) => g.sheet === s));
+
+  const answerNA = (g: Gap) => {
+    if (g.na) g.na();
+    else g.set?.('N/A');
+  };
+
+  const signNow = (g: Gap) => {
+    if (signer.signature) g.set?.(signer.signature);
+    else onGo(g.tab);
+  };
+
+  const control = (g: Gap) => {
+    if (g.kind === 'sig') {
+      return (
+        <button type="button" className="chip on" onClick={() => signNow(g)}>
+          {signer.signature ? `✍ Sign as ${signer.initials}` : 'Open the form to sign →'}
+        </button>
+      );
+    }
+    if (g.kind === 'goto') {
+      return (
+        <button type="button" className="chip on" onClick={() => onGo(g.tab)}>
+          Open {g.sheet} →
+        </button>
+      );
+    }
+    if (g.kind === 'choice') {
+      return (
+        <div className="chips wrap">
+          {(g.options ?? []).map((o) => (
+            <button
+              key={o}
+              type="button"
+              className={`chip${g.value === o ? ' on' : ''}`}
+              onClick={() => g.set?.(o)}
+            >
+              {o}
+            </button>
+          ))}
+        </div>
+      );
+    }
+    const props = g.kind === 'num' ? numPad : g.kind === 'date' ? datePad : noAuto;
+    return (
+      <input
+        {...props}
+        className="pr-input"
+        value={g.value}
+        placeholder="answer here"
+        onChange={(e) => g.set?.(e.target.value)}
+      />
+    );
+  };
+
+  return (
+    <section className="pr screen-only">
+      <div className="pr-head">
+        <h2>{gaps.length ? `${gaps.length} blank${gaps.length === 1 ? '' : 's'} before printing` : 'Nothing left blank'}</h2>
+        <button type="button" className="chip" onClick={onClose}>✕ Close</button>
+      </div>
+
+      {gaps.length === 0 ? (
+        <p className="pr-hint">Every box the packet needs has an answer in it. Good to print.</p>
+      ) : (
+        <p className="pr-hint">
+          Answer them here &mdash; it writes straight onto the forms. Anything that genuinely does not
+          apply takes <b>N/A</b>, so the printed sheet says so rather than leaving a reader guessing.
+        </p>
+      )}
+
+      {sheets.map((s) => (
+        <div className="pr-sheet" key={s}>
+          <div className="pr-sheethead">
+            <span className="pr-sheetname">{s}</span>
+            <button type="button" className="chip" onClick={() => onGo(gaps.find((g) => g.sheet === s)!.tab)}>
+              Open the {s} tab →
+            </button>
+          </div>
+          {gaps
+            .filter((g) => g.sheet === s)
+            .map((g) => (
+              <div className="pr-row" key={g.id}>
+                <span className="pr-label">
+                  {g.label}
+                  {g.note && <span className="pr-note">{g.note}</span>}
+                </span>
+                <span className="pr-ctl">{control(g)}</span>
+                {g.kind !== 'goto' && g.kind !== 'sig' && (
+                  <button type="button" className="chip pr-na" onClick={() => answerNA(g)}>N/A</button>
+                )}
+              </div>
+            ))}
+        </div>
+      ))}
+
+      <div className="pr-foot">
+        <button type="button" className="pk-big" onClick={onPrint}>
+          {gaps.length ? `🖨 Print anyway (${gaps.length} blank)` : '🖨 Print all 4 pages'}
+        </button>
+        <button type="button" className="chip" onClick={onClose}>Back to the packet</button>
+      </div>
+    </section>
+  );
+}

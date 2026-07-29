@@ -16,6 +16,13 @@ export const numPad = {
   'data-np': '1',
 } as const;
 
+// Date boxes: floating date picker (Today plus wheels) instead of typing.
+export const datePad = {
+  ...noAuto,
+  inputMode: 'none',
+  'data-datepad': '1',
+} as const;
+
 // Temperature fields: floating slider pad instead of any keyboard.
 export const tempPad = {
   ...noAuto,
