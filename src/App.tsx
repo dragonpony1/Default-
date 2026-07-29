@@ -138,7 +138,7 @@ export default function App() {
     const t = setTimeout(() => {
       sent = true;
       window.print();
-    }, 400);
+    }, 700);
     const done = () => {
       if (sent) endPrintAll();
     };
@@ -490,8 +490,8 @@ export default function App() {
       {printAll && (
         <div className="pa-banner screen-only">
           <span className="pa-bannertext">
-            <b>Printing the packet</b> &mdash; pre-op, record, PACU orders, billing (4 pages).
-            Leave this up until the printout finishes.
+            <b>Printing the packet</b> &mdash; pre-op, record, PACU orders, billing (4 pages),
+            laid out below in that order. Leave this up until the printout finishes.
           </span>
           <button type="button" className="chip" onClick={() => window.print()}>🖨 Print again</button>
           <button type="button" className="chip on" onClick={endPrintAll}>✓ Done</button>

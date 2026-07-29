@@ -3397,8 +3397,20 @@ button.po-num.on {
 }
 
 @media screen {
-  /* Only ever on screen for the instant before the print dialog opens. */
+  /* The packet is laid out on screen while it prints. Hiding these sheets with
+     display:none meant the tablet's browser never laid them out, and a sheet
+     that has never been laid out is left out of the print job — only the pre-op
+     page came through. So they sit here as a preview instead: visible, scrolled
+     past, and taking no taps, since the real copies live on their own tabs. */
   .pa-sheet {
+    pointer-events: none;
+    margin-top: 1.2rem;
+    padding-top: 1rem;
+    border-top: 2px dashed #99a;
+  }
+
+  /* Wizard buttons and toolbars belong to the tabs, not to a print preview. */
+  .pa-sheet .screen-only {
     display: none;
   }
 }
