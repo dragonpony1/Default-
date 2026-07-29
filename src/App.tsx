@@ -8,6 +8,8 @@ import Barcode39 from './Barcode39';
 import NumPad from './NumPad';
 import TempPad from './TempPad';
 import StepPad from './StepPad';
+import DatePad from './DatePad';
+import PacketReview from './PacketReview';
 import FieldByField from './FieldByField';
 import EditChoices from './EditChoices';
 import AnesRecord, { clearAnesDraft } from './AnesRecord';
@@ -36,6 +38,9 @@ export default function App() {
   // screen. `solo` restricts the print to one of them, for a printer or
   // browser that will not carry a four-page job.
   const [solo, setSolo] = useState<number | null>(null);
+  const [review, setReview] = useState(false);
+  // Left the review to answer something on its own tab: the way back stays put.
+  const [fromReview, setFromReview] = useState(false);
   const [choices, setChoicesState] = useState<CustomChoices>(loadCustomChoices);
   const signer = useSigner();
   const [signTarget, setSignTarget] = useState<{ sig: 'panSig' | 'evalSig' | 'inpSig'; dt: StringKeys } | null>(null);
@@ -413,6 +418,7 @@ export default function App() {
       <NumPad />
       <TempPad />
       <StepPad />
+      <DatePad />
       {signTarget && (
         <SignaturePad
           onSave={(sig) => {
@@ -450,9 +456,6 @@ export default function App() {
         </div>
         <div className="toolbar-actions">
           <button onClick={() => window.print()}>Print</button>
-          <button onClick={() => setView('packet')} title="Pre-op, record, PACU orders and billing on one tab">
-            🖨 Print all
-          </button>
           <button className="ghost" onClick={forceUpdate} title="Fetch the newest version">↻ Update</button>
           <button className={`danger${clearArmed ? ' armed' : ''}`} onClick={handleClear}>
             {clearArmed ? '⚠ Tap again to clear all' : 'Clear form'}
@@ -466,17 +469,61 @@ export default function App() {
         </p>
       </header>
 
+      {fromReview && !packet && (
+        <div className="pk-back screen-only">
+          <span>Answering a blank the pre-print check found.</span>
+          <button
+            type="button"
+            className="chip on"
+            onClick={() => {
+              setFromReview(false);
+              setView('packet');
+              setReview(true);
+            }}
+          >
+            ← Back to the check
+          </button>
+        </div>
+      )}
+
       {packet && (
         <section className="pk-head screen-only">
           <div className="pk-row">
-            <button type="button" className="pk-big" onClick={() => { setSolo(null); window.print(); }}>
+            <button
+              type="button"
+              className="pk-big"
+              onClick={() => {
+                setSolo(null);
+                // Nothing prints with a blank on it unnoticed: the review opens
+                // first and only stands down when there is nothing left to ask.
+                setReview(true);
+              }}
+            >
               🖨 Print all 4 pages
             </button>
             <span className="pk-hint">
               Pre-op, anesthesia record, PACU orders and billing all live on this tab, laid out
               below in printing order &mdash; what you scroll through here is what comes out.
+              Printing runs a last check for blanks first.
             </span>
           </div>
+          {review && (
+            <PacketReview
+              d={d}
+              set={set}
+              onGo={(tab) => {
+                setReview(false);
+                setFromReview(true);
+                setView(tab);
+              }}
+              onPrint={() => {
+                setReview(false);
+                setTimeout(() => window.print(), 100);
+              }}
+              onClose={() => setReview(false)}
+              onDraftsChanged={() => setAnesReset((n) => n + 1)}
+            />
+          )}
           <div className="pk-row pk-solorow">
             <span className="pk-sololbl">Or one page at a time:</span>
             {PACKET_SHEETS.map((name, i) => (

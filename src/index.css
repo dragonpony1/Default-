@@ -3432,6 +3432,131 @@ button.po-num.on {
   }
 }
 
+.pk-back {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.45rem 0.7rem;
+  margin-bottom: 0.5rem;
+  border: 2px solid #b3541e;
+  border-radius: 8px;
+  background: #fff8f2;
+  font-size: 0.85rem;
+}
+
+/* ---- Pre-print review: what is still blank, answerable in place ---- */
+
+.pr {
+  margin: 0.6rem 0 0.8rem;
+  padding: 0.8rem;
+  border: 2px solid #b3541e;
+  border-radius: 8px;
+  background: #fff8f2;
+}
+
+.pr-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.pr-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.pr-hint {
+  margin: 0.35rem 0 0.6rem;
+  font-size: 0.85rem;
+  color: #445;
+}
+
+.pr-sheet {
+  margin-top: 0.6rem;
+  border-top: 1px solid #e2d5c9;
+  padding-top: 0.4rem;
+}
+
+.pr-sheethead {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.3rem;
+}
+
+.pr-sheetname {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.pr-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.28rem 0;
+}
+
+.pr-label {
+  flex: 1 1 11rem;
+  min-width: 9rem;
+  font-size: 0.88rem;
+}
+
+.pr-note {
+  display: block;
+  font-size: 0.75rem;
+  color: #777;
+}
+
+.pr-ctl {
+  flex: 1 1 12rem;
+  min-width: 9rem;
+}
+
+.pr-input {
+  width: 100%;
+  padding: 0.35rem 0.4rem;
+  font-size: 0.95rem;
+  border: 1px solid #99a;
+  border-radius: 5px;
+}
+
+.pr-na {
+  flex: 0 0 auto;
+}
+
+.pr-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+}
+
+/* ---- Floating date pad ---- */
+
+.dp-value {
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  padding: 0.3rem 0;
+}
+
+.dp-quick {
+  justify-content: center;
+  margin-bottom: 0.4rem;
+}
+
+.dp-wheels {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
 /* Print all: each extra sheet starts its own page. */
 .pa-sheet {
   break-before: page;
