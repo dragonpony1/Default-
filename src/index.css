@@ -3307,3 +3307,22 @@ input[type='checkbox']:checked::after {
   display: flex;
   align-items: flex-end;
 }
+
+/* Hydration: fluid choice then how much */
+.pan-amt {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.pan-amt .pan-other {
+  margin-top: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.pan-unit {
+  font-weight: 600;
+  color: #667;
+}

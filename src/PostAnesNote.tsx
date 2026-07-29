@@ -41,6 +41,45 @@ export default function PostAnesNote({ d, set }: Props) {
     </label>
   );
 
+  // Hydration is charted as the fluid running and how much of it went in, so
+  // it is a fluid choice plus a volume rather than a free-text description.
+  // Stored as one string ("LR 1000 mL") because that is what the printed
+  // Hydration line carries.
+  const fluidPick = (label: string, k: keyof PreopEval, types: string[]) => {
+    const cur = (d[k] as string) ?? '';
+    const type = types.find((t) => cur.toUpperCase().startsWith(t.toUpperCase())) ?? '';
+    const amount = (cur.match(/(\d+)/) ?? [])[1] ?? '';
+    const write = (t: string, a: string) =>
+      set(k, [t, a ? `${a} mL` : ''].filter(Boolean).join(' ') as PreopEval[typeof k]);
+    return (
+      <div className="ifield" key={String(k)}>
+        <span>{label}</span>
+        <div className="chips wrap pan-chips">
+          {types.map((t) => (
+            <button
+              key={t}
+              type="button"
+              className={`chip${type === t ? ' on' : ''}`}
+              onClick={() => write(type === t ? '' : t, amount)}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+        <div className="pan-amt">
+          <input
+            {...numPad}
+            className="pan-other"
+            placeholder="how much"
+            value={amount}
+            onChange={(e) => write(type, e.target.value.replace(/[^\d]/g, ''))}
+          />
+          <span className="pan-unit">mL</span>
+        </div>
+      </div>
+    );
+  };
+
   // Assessment fields are the same handful of answers every time — tap one
   // rather than typing it. Tapping again clears; the box still accepts text.
   const pick = (label: string, k: keyof PreopEval, options: string[]) => {
@@ -92,7 +131,7 @@ export default function PostAnesNote({ d, set }: Props) {
       </div>
       <div className="irow">
         {pick('Mental status', 'panMental', ['Alert', 'Drowsy', 'Somnolent', 'Unresponsive'])}
-        {pick('Hydration', 'panHydration', ['Adequate', 'Dry', 'Overloaded'])}
+        {fluidPick('Hydration', 'panHydration', ['LR', 'D5LR', 'NS'])}
       </div>
       <label className="ifield">
         <span>Notes</span>
