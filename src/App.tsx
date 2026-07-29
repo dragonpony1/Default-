@@ -41,6 +41,8 @@ export default function App() {
   const [review, setReview] = useState(false);
   // Left the review to answer something on its own tab: the way back stays put.
   const [fromReview, setFromReview] = useState(false);
+  // Where Edit Choices was opened from, so tapping it again comes back here.
+  const beforeChoices = useRef<typeof view>('fields');
   const [choices, setChoicesState] = useState<CustomChoices>(loadCustomChoices);
   const signer = useSigner();
   const [signTarget, setSignTarget] = useState<{ sig: 'panSig' | 'evalSig' | 'inpSig'; dt: StringKeys } | null>(null);
@@ -430,8 +432,20 @@ export default function App() {
           <button className={view === 'packet' ? 'on' : ''} onClick={() => setView('packet')}>
             🖨 Print Packet
           </button>
-          <button className={view === 'choices' ? 'on' : ''} onClick={() => setView('choices')}>
-            Edit Choices
+          {/* A toggle: duck in to add or drop a choice, tap again and you are
+              back on the form you were working on. */}
+          <button
+            className={view === 'choices' ? 'on' : ''}
+            onClick={() => {
+              if (view === 'choices') {
+                setView(beforeChoices.current);
+                return;
+              }
+              beforeChoices.current = view;
+              setView('choices');
+            }}
+          >
+            {view === 'choices' ? '✓ Done editing' : 'Edit Choices'}
           </button>
         </div>
         <div className="toolbar-actions">
