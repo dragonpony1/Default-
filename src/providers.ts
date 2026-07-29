@@ -117,24 +117,66 @@ const SEED_PROVIDERS: Array<[initials: string, name: string]> = [
   ['AP', 'Annette Proctor'],
   ['SN', 'Stacey Nelsen'],
   ['CS', 'Chris Smith'],
-  ['SD', 'Stephanie Dixon'],
+  ['SD', 'Stephanie Dickson'],
   ['AL', 'Amy Lloyd'],
-  ['EP', 'Evie Purdom'],
+  ['EW', 'Evie Waters'],
   ['TA', 'Taylor Albrecht'],
 ];
 const SEED_NAMES = new Map(SEED_PROVIDERS);
 
+// People change their names, and a name can go in wrong. Devices already set
+// up keep their saved signatures and defaults through either — the profile is
+// the same profile, so only its initials and name move.
+const RENAMED: Array<{ from: string; to: string; wasCalled: string; nowCalled: string }> = [
+  { from: 'EP', to: 'EW', wasCalled: 'Evie Purdom', nowCalled: 'Evie Waters' },
+];
+const RESPELLED = new Map([['Stephanie Dixon', 'Stephanie Dickson']]);
+
+/** A name stored before a correction, shown as it is spelled now. */
+export function correctedName(name: string): string {
+  return RESPELLED.get(name.trim()) ?? name;
+}
+
 export function loadProviders(): ProviderProfile[] {
   const stored = read<ProviderProfile[]>(PROV);
   if (stored && stored.length) {
-    // Devices set up before the names were known carry initials only. Fill in
-    // the blanks; a name a provider has already set for themselves stands.
     let changed = false;
     const named = stored.map((p) => {
-      const seed = SEED_NAMES.get(p.initials.toUpperCase());
-      if (!seed || (p.prefs.providerName ?? '').trim()) return p;
-      changed = true;
-      return { ...p, prefs: { ...p.prefs, providerName: seed } };
+      let next = p;
+      const initials = p.initials.toUpperCase();
+
+      // Married, divorced, or whatever else: the initials move, the profile
+      // does not. Skipped if the new initials are already taken.
+      const rename = RENAMED.find((r) => r.from === initials);
+      if (rename && !stored.some((x) => x.initials.toUpperCase() === rename.to)) {
+        const held = (next.prefs.providerName ?? '').trim();
+        changed = true;
+        next = {
+          ...next,
+          initials: rename.to,
+          prefs: {
+            ...next.prefs,
+            providerName: !held || held === rename.wasCalled ? rename.nowCalled : held,
+          },
+        };
+      }
+
+      // A misspelling that was seeded by this app, so this app fixes it.
+      const held = (next.prefs.providerName ?? '').trim();
+      const respelled = RESPELLED.get(held);
+      if (respelled) {
+        changed = true;
+        next = { ...next, prefs: { ...next.prefs, providerName: respelled } };
+      }
+
+      // Devices set up before the names were known carry initials only. Fill
+      // in the blanks; a name a provider has set for themselves stands.
+      const seed = SEED_NAMES.get(next.initials.toUpperCase());
+      if (seed && !(next.prefs.providerName ?? '').trim()) {
+        changed = true;
+        next = { ...next, prefs: { ...next.prefs, providerName: seed } };
+      }
+      return next;
     });
     if (changed) saveProviders(named);
     return named;
@@ -160,7 +202,7 @@ const nameCache = new Map<string, string>();
 
 export function nameForSignature(sig: string, storedName?: string): string {
   const stored = (storedName ?? '').trim();
-  if (stored) return stored;
+  if (stored) return correctedName(stored);
   if (!sig) return '';
   const cached = nameCache.get(sig);
   if (cached !== undefined) return cached;
