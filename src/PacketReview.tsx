@@ -3,6 +3,7 @@ import { datePad, noAuto, numPad } from './inputProps';
 import { ANES_KEY, BILLING_KEY, PACU_KEY, readSheet, writeSheetCk, writeSheetTx } from './drafts';
 import { setCaseField, useCaseData } from './caseData';
 import { nowStamp, useSigner } from './signer';
+import SignaturePad from './SignaturePad';
 import type { PreopEval } from './types';
 
 // Last look before the packet prints: every box that ought to carry something
@@ -44,6 +45,8 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
   const signer = useSigner();
   // Bumped after every write so the list recomputes from fresh drafts.
   const [tick, setTick] = useState(0);
+  // Which signature line the drawing pad is open for, if any.
+  const [drawFor, setDrawFor] = useState<string | null>(null);
   const anes = readSheet(ANES_KEY);
   const pacu = readSheet(PACU_KEY);
   const billing = readSheet(BILLING_KEY);
@@ -357,16 +360,19 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
     else g.set?.('N/A');
   };
 
+  // Signing happens here. A provider with a saved signature stamps it in one
+  // tap; anyone else draws it on the spot, rather than being sent off to hunt
+  // for a signature line on the form itself.
   const signNow = (g: Gap) => {
     if (signer.signature) g.set?.(signer.signature);
-    else onGo(g.tab);
+    else setDrawFor(g.id);
   };
 
   const control = (g: Gap) => {
     if (g.kind === 'sig') {
       return (
         <button type="button" className="chip on" onClick={() => signNow(g)}>
-          {signer.signature ? `✍ Sign as ${signer.initials}` : 'Open the form to sign →'}
+          {signer.signature ? `✍ Sign as ${signer.initials}` : '✍ Sign here'}
         </button>
       );
     }
@@ -405,8 +411,19 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
     );
   };
 
+  const drawing = drawFor ? gaps.find((g) => g.id === drawFor) : null;
+
   return (
     <section className="pr screen-only">
+      {drawing && (
+        <SignaturePad
+          onSave={(sig) => {
+            drawing.set?.(sig);
+            setDrawFor(null);
+          }}
+          onCancel={() => setDrawFor(null)}
+        />
+      )}
       <div className="pr-head">
         <h2>{gaps.length ? `${gaps.length} blank${gaps.length === 1 ? '' : 's'} before printing` : 'Nothing left blank'}</h2>
         <button type="button" className="chip" onClick={onClose}>✕ Close</button>

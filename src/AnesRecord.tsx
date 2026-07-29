@@ -436,6 +436,30 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             </button>
           ))}
         </span>
+        {/* The Anesthetist line sits in the small print at the foot of the
+            record. Signing it is reachable from up here too, so it is not a
+            hunt at the end of a case. */}
+        <span className="ar-topgroup">
+          <span className="ar-toplabel">Anesthetist</span>
+          <button
+            type="button"
+            className={`chip${d.tx.sigImg ? ' on' : ''}`}
+            onClick={() => {
+              if (d.tx.sigImg) {
+                setD((p) => ({ ...p, tx: { ...p.tx, sigImg: '', sigDate: '', sigTime: '' } }));
+                return;
+              }
+              if (signer.signature) {
+                const { date, time } = nowStamp();
+                setD((p) => ({ ...p, tx: { ...p.tx, sigImg: signer.signature, sigDate: date, sigTime: time } }));
+              } else {
+                setSignPad(true);
+              }
+            }}
+          >
+            {d.tx.sigImg ? `✓ Signed ${d.tx.sigTime ?? ''}` : signer.signature ? `✍ Sign as ${signer.initials}` : '✍ Sign'}
+          </button>
+        </span>
         <span className="awiz-switch-hint">Walks you through setup, airway &amp; end-of-case. The grid stays tap-and-drag.</span>
         <span className="ar-rowctl">
           <button type="button" className="chip" onClick={addCustomRow}>＋ Add med row</button>
