@@ -28,6 +28,10 @@ export default function App() {
   const [d, setD] = useState<PreopEval>(loadDraft);
   const [view, setView] = useState<'fields' | 'form' | 'anes' | 'pacu' | 'billing' | 'choices'>('fields');
   const [anesReset, setAnesReset] = useState(0);
+  // Printing the whole chart: every form is mounted at once, printed, then the
+  // view goes back to where it was.
+  const [printAll, setPrintAll] = useState(false);
+  const viewBeforePrint = useRef<typeof view>('fields');
   const [choices, setChoicesState] = useState<CustomChoices>(loadCustomChoices);
   const signer = useSigner();
   const [signTarget, setSignTarget] = useState<{ sig: 'panSig' | 'evalSig' | 'inpSig'; dt: StringKeys } | null>(null);
@@ -109,6 +113,23 @@ export default function App() {
 
 
   const set = <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => setD((prev) => ({ ...prev, [k]: v }));
+
+  const doPrintAll = () => {
+    viewBeforePrint.current = view;
+    setView('form'); // the pre-op sheet leads; the rest mount alongside it
+    setPrintAll(true);
+  };
+
+  // Print once the extra sheets have actually laid out, then restore the view.
+  useEffect(() => {
+    if (!printAll) return;
+    const t = setTimeout(() => {
+      window.print();
+      setPrintAll(false);
+      setView(viewBeforePrint.current);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [printAll]);
 
   // A cached build can otherwise persist across launches, making it look like
   // a fix never shipped. This drops the service worker and every cache, then
@@ -434,6 +455,7 @@ export default function App() {
         </div>
         <div className="toolbar-actions">
           <button onClick={() => window.print()}>Print</button>
+          <button onClick={doPrintAll} title="Pre-op, record, PACU orders and billing">🖨 Print all</button>
           <button className="ghost" onClick={forceUpdate} title="Fetch the newest version">↻ Update</button>
           <button className={`danger${clearArmed ? ' armed' : ''}`} onClick={handleClear}>
             {clearArmed ? '⚠ Tap again to clear all' : 'Clear form'}
@@ -455,6 +477,7 @@ export default function App() {
       {view === 'pacu' && <PostAnesNote d={d} set={set} />}
       {view === 'pacu' && <PacuOrders resetSignal={anesReset} />}
       {view === 'billing' && <BillingSheet resetSignal={anesReset} />}
+
 
       {view !== 'anes' && view !== 'pacu' && view !== 'billing' && (
       <div className={`page${view === 'form' ? '' : ' print-only-block'}`}>
@@ -716,6 +739,14 @@ export default function App() {
           </div>
         </div>
       </div>
+      )}
+
+      {printAll && (
+        <>
+          <div className="pa-sheet"><AnesRecord resetSignal={anesReset} /></div>
+          <div className="pa-sheet"><PacuOrders resetSignal={anesReset} /></div>
+          <div className="pa-sheet"><BillingSheet resetSignal={anesReset} /></div>
+        </>
       )}
     </div>
   );
