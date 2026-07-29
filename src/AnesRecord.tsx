@@ -161,8 +161,20 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     />
   );
 
+  // Emptying a cell removes the entry rather than storing a blank, so a cell
+  // poked by accident goes back to whatever it should have been — nothing, or
+  // the value carried in from earlier. To chart something as switched off,
+  // enter a value (0, or a dash) rather than clearing it.
   const setCell = (k: string, v: string) =>
-    setD((p) => ({ ...p, cells: { ...p.cells, [k]: v } }));
+    setD((p) => {
+      if (v === '') {
+        if (!(k in p.cells)) return p;
+        const cells = { ...p.cells };
+        delete cells[k];
+        return { ...p, cells };
+      }
+      return { ...p, cells: { ...p.cells, [k]: v } };
+    });
 
   const setVitals = (next: VitalsData) => setD((p) => ({ ...p, vitals: next }));
 

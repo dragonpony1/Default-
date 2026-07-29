@@ -142,7 +142,19 @@ export default function StepPad() {
           +{format(spec.inc, spec.inc)}
         </button>
       </div>
-      <div className="np-bottom">
+      <div className="np-bottom np-bottom3">
+        <button
+          type="button"
+          className="np-key np-fn np-small"
+          onPointerDown={noFocus}
+          onClick={() => {
+            // Take the value back out of the cell entirely.
+            setNativeValue(target, '');
+            done();
+          }}
+        >
+          Clear
+        </button>
         <button
           type="button"
           className="np-key np-fn np-small"
