@@ -92,9 +92,21 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
     />
   );
 
-  const item = (n: number, body: ReactNode) => (
+  // Items with no dose blank (standing orders) can be "circled" to mark them
+  // active, the way you'd circle the order number on paper.
+  const item = (n: number, body: ReactNode, circle = false) => (
     <div className="po-item" key={n}>
-      <span className="po-num">{n}.</span>
+      {circle ? (
+        <button
+          type="button"
+          className={`po-num po-circle${d.ck[`circle${n}`] ? ' on' : ''}`}
+          onClick={() => setD((p) => ({ ...p, ck: { ...p.ck, [`circle${n}`]: !p.ck[`circle${n}`] } }))}
+        >
+          {n}.
+        </button>
+      ) : (
+        <span className="po-num">{n}.</span>
+      )}
       <div className="po-body">{body}</div>
     </div>
   );
@@ -156,7 +168,7 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
             {sub('F', "Do not administer narcotics if patient's Systolic blood pressure is below 90 or Diastolic is below 60.")}
             {sub('G', 'Please check blood sugar on all diabetic patients. Please call anesthesia provider if blood sugar is below 80 mg/dL or greater than 200 mg/dL.')}
           </>
-        ))}
+        ), true)}
 
         <div className="po-sechead">PAIN</div>
         {item(3, (
@@ -269,9 +281,9 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
             {sub('f', 'Ventilatory rate less than 10 breaths/minute')}
             {sub('g', 'Unresponsiveness after narcotic analgesic dosing')}
           </>
-        ))}
-        {item(14, 'Discharge when MWMC PACU criteria met')}
-        {item(15, 'Incentive Spirometer if patient alert and room air Sats are less than 90%')}
+        ), true)}
+        {item(14, 'Discharge when MWMC PACU criteria met', true)}
+        {item(15, 'Incentive Spirometer if patient alert and room air Sats are less than 90%', true)}
         {item(16, tx('line16', 'grow'))}
         {item(17, tx('line17', 'grow'))}
         {item(18, tx('line18', 'grow'))}

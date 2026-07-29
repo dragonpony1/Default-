@@ -95,6 +95,7 @@ export interface PreopEval {
   panAirway: string;
   panMental: string;
   panHydration: string;
+  panHydrationVol: string;
   panNotes: string;
   panDateTime: string;
 
@@ -186,6 +187,7 @@ export const emptyPreopEval: PreopEval = {
   panAirway: '',
   panMental: '',
   panHydration: '',
+  panHydrationVol: '',
   panNotes: '',
   panDateTime: '',
   problemList: '',

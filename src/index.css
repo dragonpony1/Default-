@@ -790,6 +790,19 @@ input[type='checkbox']:checked::after {
   border-bottom: 1px solid #000;
 }
 
+/* Post-Anesthesia Note tappable pick options */
+.panopts {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  align-items: baseline;
+}
+
+.panopts .ck {
+  margin-right: 0;
+  white-space: nowrap;
+}
+
 /* Footer */
 
 .page-foot {
@@ -2221,6 +2234,16 @@ input[type='checkbox']:checked::after {
   margin-bottom: 0.4rem;
 }
 
+.awiz-orders {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.awiz-order {
+  align-items: flex-start;
+}
+
 /* Billing code picker: tappable rows for search results and selections */
 .awiz-codelist {
   display: flex;
@@ -2435,6 +2458,24 @@ input[type='checkbox']:checked::after {
   flex: none;
   width: 1.6em;
   text-align: right;
+}
+
+/* Circle-able standing-order number (items 2, 13, 14, 15) */
+button.po-num {
+  font: inherit;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: inherit;
+}
+
+button.po-num.on {
+  width: 1.7em;
+  border: 1.3px solid #000;
+  border-radius: 999px;
+  text-align: center;
+  font-weight: 700;
 }
 
 .po-body {
