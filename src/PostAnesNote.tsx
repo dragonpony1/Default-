@@ -18,8 +18,21 @@ interface Props {
 export default function PostAnesNote({ d, set }: Props) {
   const signer = useSigner();
   const [padOpen, setPadOpen] = useState(false);
+  // Written at the end of the case, so it starts folded away — otherwise its
+  // sign-off box sits on screen alongside the PACU orders' own.
+  const [open, setOpen] = useState(false);
 
   const [panDate = '', panTime = ''] = (d.panDateTime || '').split(' ');
+
+  const summary = [
+    d.panBp && `BP ${d.panBp}`,
+    d.panP && `P ${d.panP}`,
+    d.panO2 && `O₂ ${d.panO2}`,
+    d.panMental,
+    d.panSig ? 'signed' : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   const stamp = (sig: string) => {
     const { date, time } = nowStamp();
@@ -112,7 +125,15 @@ export default function PostAnesNote({ d, set }: Props) {
 
   return (
     <section className="icard screen-only">
-      <h2>Post-Anesthesia Note</h2>
+      <div className="ihead">
+        <h2>Post-Anesthesia Note</h2>
+        <button type="button" className="chip" onClick={() => setOpen(!open)}>
+          {open ? 'Hide' : summary ? 'Open' : 'Fill out'}
+        </button>
+      </div>
+      {!open && <p className="fbf-hint">{summary || 'Not started — prints in the Post-Anesthesia Note box on the pre-op form.'}</p>}
+      {open && (
+        <>
       <p className="fbf-hint">
         Filled out here in PACU &mdash; it prints in the Post-Anesthesia Note box on the Pre-Op
         form, so the pre-op sheet comes out complete.
@@ -177,6 +198,8 @@ export default function PostAnesNote({ d, set }: Props) {
         </div>
       </div>
 
+        </>
+      )}
       {padOpen && (
         <SignaturePad
           onSave={(sig) => {
