@@ -3472,6 +3472,13 @@ button.po-num.on {
   }
 }
 
+/* Moving between times is not charting — these stay quiet next to Fill. */
+.cp-move {
+  font-size: 0.8rem;
+  color: #667;
+  border-color: #b8bfcc;
+}
+
 .cp-start {
   font-size: 0.78rem;
   padding: 0.15rem 0.45rem;
