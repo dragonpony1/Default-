@@ -354,6 +354,19 @@ export default function App() {
     </div>
   );
 
+  // Mutually-exclusive tappable options that write a string field (re-tap to
+  // clear). Used for the Post-Anesthesia Note assessments.
+  const optPick = (k: StringKeys, opts: string[]) => (
+    <span className="panopts">
+      {opts.map((o) => (
+        <label className="ck" key={o}>
+          <input type="checkbox" checked={d[k] === o} onChange={(e) => set(k, (e.target.checked ? o : '') as PreopEval[StringKeys])} />
+          <span>{o}</span>
+        </label>
+      ))}
+    </span>
+  );
+
   const vitalsPair = (
     pre: 'pan' | 'inp',
   ) => (
@@ -367,10 +380,17 @@ export default function App() {
         <div className="vrow"><span>Pain (0&ndash;10)</span>{txn(`${pre}Pain` as StringKeys)}</div>
       </div>
       <div className="pcol">
-        <div className="vrow"><span>N/V</span>{txt(`${pre}NV` as StringKeys)}</div>
-        <div className="vrow u"><span>Airway Patency</span>{txt(`${pre}Airway` as StringKeys)}</div>
-        <div className="vrow u"><span>Mental Status</span>{txt(`${pre}Mental` as StringKeys)}</div>
-        {pre === 'pan' && <div className="vrow u"><span>Hydration</span>{txt('panHydration')}</div>}
+        <div className="vrow"><span>N/V</span>{optPick(`${pre}NV` as StringKeys, ['Yes', 'No'])}</div>
+        <div className="vrow"><span>Airway Patency</span>{optPick(`${pre}Airway` as StringKeys, ['WNL'])}</div>
+        <div className="vrow"><span>Mental Status</span>{optPick(`${pre}Mental` as StringKeys, ['A&O', 'Asleep', 'Arousable'])}</div>
+        {pre === 'pan' && (
+          <div className="vrow">
+            <span>Hydration</span>
+            {optPick('panHydration', ['LR', 'NS'])}
+            {txt('panHydrationVol', 'xshort')}
+            <span>mL</span>
+          </div>
+        )}
       </div>
     </div>
   );
