@@ -21,17 +21,21 @@ import { clearSigner, useSigner, nowStamp } from './signer';
 import ProviderBar from './ProviderBar';
 import { applyProviderToDrafts, type ProviderPrefs } from './providers';
 
+// The packet, in the order it prints.
+const PACKET_SHEETS = ['Pre-Op', 'Record', 'PACU Orders', 'Billing'];
+
 type StringKeys = { [K in keyof PreopEval]: PreopEval[K] extends string ? K : never }[keyof PreopEval];
 type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : never }[keyof PreopEval];
 
 export default function App() {
   const [d, setD] = useState<PreopEval>(loadDraft);
-  const [view, setView] = useState<'fields' | 'form' | 'anes' | 'pacu' | 'billing' | 'choices'>('fields');
+  const [view, setView] = useState<'fields' | 'form' | 'anes' | 'pacu' | 'billing' | 'choices' | 'packet'>('fields');
   const [anesReset, setAnesReset] = useState(0);
-  // Printing the whole chart: every form is mounted at once, printed, then the
-  // view goes back to where it was.
-  const [printAll, setPrintAll] = useState(false);
-  const viewBeforePrint = useRef<typeof view>('fields');
+  // The Print Packet tab holds all four sheets at once, mounted and laid out
+  // like any other tab, so printing it is an ordinary print of what is on the
+  // screen. `solo` restricts the print to one of them, for a printer or
+  // browser that will not carry a four-page job.
+  const [solo, setSolo] = useState<number | null>(null);
   const [choices, setChoicesState] = useState<CustomChoices>(loadCustomChoices);
   const signer = useSigner();
   const [signTarget, setSignTarget] = useState<{ sig: 'panSig' | 'evalSig' | 'inpSig'; dt: StringKeys } | null>(null);
@@ -114,40 +118,10 @@ export default function App() {
 
   const set = <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => setD((prev) => ({ ...prev, [k]: v }));
 
-  const doPrintAll = () => {
-    viewBeforePrint.current = view;
-    setView('form'); // the pre-op sheet leads; the rest mount alongside it
-    setPrintAll(true);
-  };
+  const packet = view === 'packet';
+  // A sheet left out of the print when one page has been picked on its own.
+  const soloCls = (i: number) => (solo !== null && solo !== i ? ' pk-hide' : '');
 
-  const endPrintAll = () => {
-    setPrintAll(false);
-    setView(viewBeforePrint.current);
-  };
-
-  // The print dialog does not hold the page still everywhere. On the tablet,
-  // window.print() hands off to the system print preview and returns straight
-  // away, so putting the view back on the next line tore the extra sheets down
-  // before the preview had taken its snapshot — and the packet came out as
-  // whichever single sheet happened to be on screen. So: print once the sheets
-  // have laid out, then leave them mounted until the print actually finishes,
-  // or until the packet banner is dismissed by hand.
-  useEffect(() => {
-    if (!printAll) return;
-    let sent = false;
-    const t = setTimeout(() => {
-      sent = true;
-      window.print();
-    }, 700);
-    const done = () => {
-      if (sent) endPrintAll();
-    };
-    window.addEventListener('afterprint', done);
-    return () => {
-      clearTimeout(t);
-      window.removeEventListener('afterprint', done);
-    };
-  }, [printAll]);
 
   // A cached build can otherwise persist across launches, making it look like
   // a fix never shipped. This drops the service worker and every cache, then
@@ -467,13 +441,18 @@ export default function App() {
           <button className={view === 'billing' ? 'on' : ''} onClick={() => setView('billing')}>
             Billing
           </button>
+          <button className={view === 'packet' ? 'on' : ''} onClick={() => setView('packet')}>
+            🖨 Print Packet
+          </button>
           <button className={view === 'choices' ? 'on' : ''} onClick={() => setView('choices')}>
             Edit Choices
           </button>
         </div>
         <div className="toolbar-actions">
           <button onClick={() => window.print()}>Print</button>
-          <button onClick={doPrintAll} title="Pre-op, record, PACU orders and billing">🖨 Print all</button>
+          <button onClick={() => setView('packet')} title="Pre-op, record, PACU orders and billing on one tab">
+            🖨 Print all
+          </button>
           <button className="ghost" onClick={forceUpdate} title="Fetch the newest version">↻ Update</button>
           <button className={`danger${clearArmed ? ' armed' : ''}`} onClick={handleClear}>
             {clearArmed ? '⚠ Tap again to clear all' : 'Clear form'}
@@ -487,15 +466,42 @@ export default function App() {
         </p>
       </header>
 
-      {printAll && (
-        <div className="pa-banner screen-only">
-          <span className="pa-bannertext">
-            <b>Printing the packet</b> &mdash; pre-op, record, PACU orders, billing (4 pages),
-            laid out below in that order. Leave this up until the printout finishes.
-          </span>
-          <button type="button" className="chip" onClick={() => window.print()}>🖨 Print again</button>
-          <button type="button" className="chip on" onClick={endPrintAll}>✓ Done</button>
-        </div>
+      {packet && (
+        <section className="pk-head screen-only">
+          <div className="pk-row">
+            <button type="button" className="pk-big" onClick={() => { setSolo(null); window.print(); }}>
+              🖨 Print all 4 pages
+            </button>
+            <span className="pk-hint">
+              Pre-op, anesthesia record, PACU orders and billing all live on this tab, laid out
+              below in printing order &mdash; what you scroll through here is what comes out.
+            </span>
+          </div>
+          <div className="pk-row pk-solorow">
+            <span className="pk-sololbl">Or one page at a time:</span>
+            {PACKET_SHEETS.map((name, i) => (
+              <button
+                key={name}
+                type="button"
+                className={`chip${solo === i ? ' on' : ''}`}
+                onClick={() => setSolo(solo === i ? null : i)}
+              >
+                {i + 1}. {name}
+              </button>
+            ))}
+            {solo !== null && (
+              <button type="button" className="chip on" onClick={() => window.print()}>
+                🖨 Print page {solo + 1} only
+              </button>
+            )}
+          </div>
+          {solo !== null && (
+            <p className="pk-note">
+              Only page {solo + 1} ({PACKET_SHEETS[solo]}) will print. The greyed-out sheets below are
+              being left out &mdash; tap <b>{solo + 1}. {PACKET_SHEETS[solo]}</b> again for all four.
+            </p>
+          )}
+        </section>
       )}
 
       {view === 'fields' && (
@@ -509,7 +515,7 @@ export default function App() {
 
 
       {view !== 'anes' && view !== 'pacu' && view !== 'billing' && (
-      <div className={`page${view === 'form' ? '' : ' print-only-block'}`}>
+      <div className={`page${view === 'form' || packet ? '' : ' print-only-block'}${packet ? soloCls(0) : ''}`}>
         <div className="page-top">
           <div className="bc-wrap">
             <Barcode39 value="PRE" />
@@ -770,11 +776,11 @@ export default function App() {
       </div>
       )}
 
-      {printAll && (
+      {packet && (
         <>
-          <div className="pa-sheet"><AnesRecord resetSignal={anesReset} /></div>
-          <div className="pa-sheet"><PacuOrders resetSignal={anesReset} /></div>
-          <div className="pa-sheet"><BillingSheet resetSignal={anesReset} /></div>
+          <div className={`pa-sheet${soloCls(1)}`}><AnesRecord resetSignal={anesReset} /></div>
+          <div className={`pa-sheet${soloCls(2)}`}><PacuOrders resetSignal={anesReset} /></div>
+          <div className={`pa-sheet${soloCls(3)}`}><BillingSheet resetSignal={anesReset} /></div>
         </>
       )}
     </div>
