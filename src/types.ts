@@ -25,6 +25,7 @@ export interface PreopEval {
   weight: string;
   weightUnit: '' | 'lb' | 'kg';
   proposedProcedure: string;
+  surgicalDx: string; // indication for the operation, not the problem list
   bp: string;
   p: string;
   r: string;
@@ -131,6 +132,7 @@ export const emptyPreopEval: PreopEval = {
   weight: '',
   weightUnit: '',
   proposedProcedure: '',
+  surgicalDx: '',
   bp: '',
   p: '',
   r: '',
