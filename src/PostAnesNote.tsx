@@ -19,6 +19,8 @@ export default function PostAnesNote({ d, set }: Props) {
   const signer = useSigner();
   const [padOpen, setPadOpen] = useState(false);
 
+  const [panDate = '', panTime = ''] = (d.panDateTime || '').split(' ');
+
   const stamp = (sig: string) => {
     const { date, time } = nowStamp();
     set('panSig', sig);
@@ -39,12 +41,35 @@ export default function PostAnesNote({ d, set }: Props) {
     </label>
   );
 
-  const text = (label: string, k: keyof PreopEval) => (
-    <label className="ifield" key={String(k)}>
-      <span>{label}</span>
-      <input {...noAuto} value={d[k] as string} onChange={(e) => set(k, e.target.value as PreopEval[typeof k])} />
-    </label>
-  );
+  // Assessment fields are the same handful of answers every time — tap one
+  // rather than typing it. Tapping again clears; the box still accepts text.
+  const pick = (label: string, k: keyof PreopEval, options: string[]) => {
+    const cur = d[k] as string;
+    return (
+      <div className="ifield" key={String(k)}>
+        <span>{label}</span>
+        <div className="chips wrap pan-chips">
+          {options.map((o) => (
+            <button
+              key={o}
+              type="button"
+              className={`chip${cur === o ? ' on' : ''}`}
+              onClick={() => set(k, (cur === o ? '' : o) as PreopEval[typeof k])}
+            >
+              {o}
+            </button>
+          ))}
+        </div>
+        <input
+          {...noAuto}
+          className="pan-other"
+          placeholder="or type…"
+          value={options.includes(cur) ? '' : cur}
+          onChange={(e) => set(k, e.target.value as PreopEval[typeof k])}
+        />
+      </div>
+    );
+  };
 
   return (
     <section className="icard screen-only">
@@ -62,12 +87,12 @@ export default function PostAnesNote({ d, set }: Props) {
         {num('Pain (0–10)', 'panPain')}
       </div>
       <div className="irow">
-        {text('N/V', 'panNV')}
-        {text('Airway patency', 'panAirway')}
+        {pick('N/V', 'panNV', ['None', 'Nausea', 'Vomiting'])}
+        {pick('Airway patency', 'panAirway', ['Patent', 'Oral airway', 'Nasal airway', 'Intubated'])}
       </div>
       <div className="irow">
-        {text('Mental status', 'panMental')}
-        {text('Hydration', 'panHydration')}
+        {pick('Mental status', 'panMental', ['Alert', 'Drowsy', 'Somnolent', 'Unresponsive'])}
+        {pick('Hydration', 'panHydration', ['Adequate', 'Dry', 'Overloaded'])}
       </div>
       <label className="ifield">
         <span>Notes</span>
@@ -78,30 +103,41 @@ export default function PostAnesNote({ d, set }: Props) {
           onChange={(e) => set('panNotes', e.target.value)}
         />
       </label>
-      <div className="chips wrap">
-        <button
-          type="button"
-          className="chip on"
-          onClick={() => (signer.signature ? stamp(signer.signature) : setPadOpen(true))}
-        >
-          {d.panSig ? '↻ Re-sign' : signer.signature ? `✍ Sign as ${signer.initials}` : '✍ Sign'}
-        </button>
-        <button
-          type="button"
-          className="chip"
-          onClick={() => {
-            const { date, time } = nowStamp();
-            set('panDateTime', `${date} ${time}`);
-          }}
-        >
-          🕐 Stamp time
-        </button>
-        {d.panSig && (
-          <button type="button" className="chip" onClick={() => set('panSig', '')}>Clear signature</button>
-        )}
-        {d.panSig && <SigImg src={d.panSig} />}
-        {d.panDateTime && <span className="ihint">{d.panDateTime}</span>}
+      <div className="pan-signoff">
+        <div className="pan-sigcell">
+          <span className="pan-siglabel">Signature</span>
+          <div className="pan-sigslot">{d.panSig ? <SigImg src={d.panSig} /> : <span className="pan-blank" />}</div>
+          <div className="chips">
+            <button
+              type="button"
+              className="chip on"
+              onClick={() => (signer.signature ? stamp(signer.signature) : setPadOpen(true))}
+            >
+              {d.panSig ? '↻ Re-sign' : signer.signature ? `✍ Sign as ${signer.name || signer.initials}` : '✍ Sign'}
+            </button>
+            {d.panSig && (
+              <button type="button" className="chip" onClick={() => set('panSig', '')}>Clear</button>
+            )}
+          </div>
+        </div>
+
+        <div className="pan-sigcell">
+          <span className="pan-siglabel">Date</span>
+          <div className="pan-stampval">{panDate || '—'}</div>
+          <button type="button" className="chip" onClick={() => set('panDateTime', `${nowStamp().date} ${panTime}`.trim())}>
+            📅 Today
+          </button>
+        </div>
+
+        <div className="pan-sigcell">
+          <span className="pan-siglabel">Time</span>
+          <div className="pan-stampval">{panTime || '—'}</div>
+          <button type="button" className="chip" onClick={() => set('panDateTime', `${panDate || nowStamp().date} ${nowStamp().time}`)}>
+            🕐 Now
+          </button>
+        </div>
       </div>
+
       {padOpen && (
         <SignaturePad
           onSave={(sig) => {
