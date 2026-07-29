@@ -3368,6 +3368,28 @@ button.po-num.on {
   color: #667;
 }
 
+/* Print all: the packet stays mounted until the printout is done, so say so. */
+.pa-banner {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.5rem;
+  border: 2px solid #1a7a3a;
+  border-radius: 8px;
+  background: #eaf7ee;
+}
+
+.pa-bannertext {
+  flex: 1;
+  min-width: 12rem;
+  font-size: 0.9rem;
+}
+
 /* Print all: each extra sheet starts its own page. */
 .pa-sheet {
   break-before: page;
@@ -3407,4 +3429,9 @@ button.po-num.on {
 .cp-wipe {
   border-color: #b02a2a;
   color: #b02a2a;
+}
+
+.ar-tophint {
+  font-size: 0.8rem;
+  color: #667;
 }

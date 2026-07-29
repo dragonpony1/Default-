@@ -17,9 +17,12 @@ import { CARRY_ROWS, STEP_SPECS, carriedInto as carriedFrom } from './chartRows'
 
 const KEY = 'anes-record-draft-v1';
 
-// The charting grid is a time axis: COLS columns of STEP minutes each,
-// anchored to the surgery start time entered on the record. 36 × 5 min = 3 h.
-const STEP = 5;
+// The charting grid is a time axis: COLS columns of so many minutes each,
+// anchored to the surgery start time entered on the record. At the usual five
+// minutes a column that is three hours; a longer case switches to 10 or 15
+// minutes so the same printed grid still reaches the end of the case.
+const STEP_CHOICES = [5, 10, 15] as const;
+const DEFAULT_STEP = 5;
 const COLS = 36;
 
 interface AnesDraft {
@@ -58,11 +61,11 @@ function parseTime(s: string): number | null {
 }
 
 // Column clock labels from the start time; blank until a valid start is set.
-function columnTimes(start: string): string[] {
+function columnTimes(start: string, step: number): string[] {
   const base = parseTime(start);
   if (base == null) return Array(COLS).fill('');
   return Array.from({ length: COLS }, (_, i) => {
-    const t = (base + i * STEP) % (24 * 60);
+    const t = (base + i * step) % (24 * 60);
     return String(Math.floor(t / 60)).padStart(2, '0') + String(t % 60).padStart(2, '0');
   });
 }
@@ -198,7 +201,9 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     </label>
   );
 
-  const times = columnTimes(d.tx.surgStart ?? '');
+  // Minutes per column, so a long case still fits the grid.
+  const stepMin = Number(d.tx.stepMin) > 0 ? Number(d.tx.stepMin) : DEFAULT_STEP;
+  const times = columnTimes(d.tx.surgStart ?? '', stepMin);
 
   // Vital-sign marks carry forward only to the Anesthesia Stop time; until a
   // stop is entered they fill to the end of the grid.
@@ -208,7 +213,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     if (s == null || e == null) return COLS - 1;
     let diff = e - s;
     if (diff < 0) diff += 24 * 60;
-    return Math.max(0, Math.min(COLS - 1, Math.floor(diff / STEP)));
+    return Math.max(0, Math.min(COLS - 1, Math.floor(diff / stepMin)));
   })();
 
 // One tappable charting cell.
@@ -291,14 +296,14 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     <div className="ar-crow vs" key={`vs${n}`}>
       <div className="ar-clabel num">{n} &mdash;</div>
       <div className="ar-vscells">
-        <svg className="ar-vsgrid" viewBox={`0 0 ${COLS * STEP} 10`} preserveAspectRatio="none" aria-hidden="true">
-          {Array.from({ length: COLS * STEP + 1 }, (_, x) => {
+        <svg className="ar-vsgrid" viewBox={`0 0 ${COLS * 5} 10`} preserveAspectRatio="none" aria-hidden="true">
+          {Array.from({ length: COLS * 5 + 1 }, (_, x) => {
             // faint 1-min, light 5-min, darker 15-min, darkest 30-min
             const stroke = x % 30 === 0 ? '#555' : x % 15 === 0 ? '#888' : x % 5 === 0 ? '#aaa' : '#e0e0e0';
             const w = x % 15 === 0 ? 0.6 : x % 5 === 0 ? 0.4 : 0.2;
             return <line key={x} x1={x} y1="0" x2={x} y2="10" stroke={stroke} strokeWidth={w} />;
           })}
-          <line x1="0" y1="5" x2={COLS * STEP} y2="5" stroke="#ccc" strokeWidth="0.2" />
+          <line x1="0" y1="5" x2={COLS * 5} y2="5" stroke="#ccc" strokeWidth="0.2" />
         </svg>
       </div>
       <div className="ar-ctotal" />
@@ -375,6 +380,21 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
               {r}
             </button>
           ))}
+        </span>
+        <span className="ar-topgroup">
+          <span className="ar-toplabel">Per column</span>
+          {STEP_CHOICES.map((m) => (
+            <button
+              key={m}
+              type="button"
+              className={`chip${stepMin === m ? ' on' : ''}`}
+              onClick={() => setD((p) => ({ ...p, tx: { ...p.tx, stepMin: String(m) } }))}
+              title={`${m} minutes a column — covers ${(COLS * m) / 60} hours`}
+            >
+              {m} min
+            </button>
+          ))}
+          <span className="ar-tophint">{(COLS * stepMin) / 60} h of chart</span>
         </span>
         <span className="ar-topgroup">
           <span className="ar-toplabel">Checked</span>

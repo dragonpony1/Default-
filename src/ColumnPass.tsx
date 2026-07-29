@@ -189,9 +189,9 @@ export default function ColumnPass({
   // five-minute slot on the printed chart carries its own figures.
   const fillColumn = () => {
     rows.forEach((r) => {
-      const { value, carried } = shownValue(r);
-      if (value === '' || !carried) return; // already an entry of its own
-      write(r, value);
+      const { value } = shownValue(r);
+      if (value === '') return;
+      write(r, value); // writing a value it already holds is harmless
     });
   };
 
@@ -200,7 +200,9 @@ export default function ColumnPass({
     return value !== '' && !carried;
   }).length;
 
-  const carriedCount = rows.filter((r) => shownValue(r).carried).length;
+  // Anything showing in the column — adjusted or carried — can be written
+  // down. Only a column with nothing in it at all has nothing to fill.
+  const fillableCount = rows.filter((r) => shownValue(r).value !== '').length;
 
   // Wipe this time column — every row of it, including the drugs and totals —
   // for a column charted in the wrong slot.
@@ -300,10 +302,10 @@ export default function ColumnPass({
             type="button"
             className="chip cp-fill"
             onClick={fillColumn}
-            disabled={carriedCount === 0}
-            title="Write the carried values down as entries for this time"
+            disabled={fillableCount === 0}
+            title="Write every value showing here down as entries for this time"
           >
-            ✓ Fill in {at}{carriedCount ? ` (${carriedCount})` : ''}
+            {fillableCount ? `✓ Fill in ${at} (${fillableCount})` : 'Nothing to fill yet'}
           </button>
           <button
             type="button"
