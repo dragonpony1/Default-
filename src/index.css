@@ -3326,3 +3326,16 @@ input[type='checkbox']:checked::after {
   font-weight: 600;
   color: #667;
 }
+
+/* Print all: each extra sheet starts its own page. */
+.pa-sheet {
+  break-before: page;
+  page-break-before: always;
+}
+
+@media screen {
+  /* Only ever on screen for the instant before the print dialog opens. */
+  .pa-sheet {
+    display: none;
+  }
+}
