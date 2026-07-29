@@ -3472,6 +3472,21 @@ button.po-num.on {
   }
 }
 
+.cp-start {
+  font-size: 0.78rem;
+  padding: 0.15rem 0.45rem;
+  white-space: nowrap;
+}
+
+.cp-howto {
+  margin: 0.2rem 0.6rem 0.6rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  background: #eef2fa;
+  font-size: 0.8rem;
+  color: #445;
+}
+
 /* Column tool with no clock to count from. */
 .cp-nostart {
   display: flex;
