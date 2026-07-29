@@ -33,6 +33,20 @@ export function clearPacuDraft(): void {
   localStorage.removeItem(KEY);
 }
 
+// PACU orders are standing orders — the same doses, case after case — so
+// clearing the forms for the next patient keeps them and drops only what
+// belonged to the patient just finished: the signature and its date and time.
+export function clearPacuForNextCase(): void {
+  const d = loadPacu();
+  if (!Object.keys(d.ck).length && !Object.keys(d.tx).length) return;
+  const tx = { ...d.tx };
+  delete tx.sigImg;
+  delete tx.sigName;
+  delete tx.date;
+  delete tx.time;
+  localStorage.setItem(KEY, JSON.stringify({ ck: d.ck, tx }));
+}
+
 export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }) {
   const [d, setD] = useState<PacuDraft>(loadPacu);
   const [mode, setMode] = useState<'form' | 'wizard'>('form');

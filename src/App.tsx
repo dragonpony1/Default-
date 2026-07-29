@@ -13,7 +13,7 @@ import PacketReview from './PacketReview';
 import FieldByField from './FieldByField';
 import EditChoices from './EditChoices';
 import AnesRecord, { clearAnesDraft } from './AnesRecord';
-import PacuOrders, { clearPacuDraft } from './PacuOrders';
+import PacuOrders, { clearPacuForNextCase } from './PacuOrders';
 import PostAnesNote from './PostAnesNote';
 import SignaturePad from './SignaturePad';
 import BillingSheet, { clearBillingDraft } from './BillingSheet';
@@ -169,10 +169,13 @@ export default function App() {
       return;
     }
     disarmClear();
-    if (window.confirm('Clear ALL forms and wipe all entered data from this device? This cannot be undone.')) {
+    if (window.confirm(
+      'Clear the forms for the next patient? Everything entered about this one is wiped and cannot be recovered.\n\n'
+      + 'Your PACU orders are kept — they are standing orders, not patient data — minus the signature.',
+    )) {
       clearDraft();
       clearAnesDraft();
-      clearPacuDraft();
+      clearPacuForNextCase();
       clearBillingDraft();
       clearCase();
       clearSigner();
