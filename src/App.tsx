@@ -21,7 +21,7 @@ import { decodeChoices, loadCustomChoices, saveCustomChoices, type CustomChoices
 import { setCaseField, clearCase } from './caseData';
 import { clearSigner, useSigner, nowStamp } from './signer';
 import ProviderBar from './ProviderBar';
-import { applyProviderToDrafts, type ProviderPrefs } from './providers';
+import { applyProviderToDrafts, nameForSignature, type ProviderPrefs } from './providers';
 
 // The packet, in the order it prints.
 const PACKET_SHEETS = ['Pre-Op', 'Record', 'PACU Orders', 'Billing'];
@@ -223,7 +223,9 @@ export default function App() {
     <div className="sigcell grow tall">
       <span className="lbl">{label}</span>
       {d[sigKey] && <SigImg src={d[sigKey]} />}
-      {d[sigKey] && d[nameKey] && <span className="signame">{d[nameKey]}</span>}
+      {d[sigKey] && nameForSignature(d[sigKey], d[nameKey]) && (
+        <span className="signame">{nameForSignature(d[sigKey], d[nameKey])}</span>
+      )}
       <span className="sig-actions screen-only">
         <button
           type="button"

@@ -8,6 +8,7 @@ import AnesWizard from './AnesWizard';
 import { composeNarrative } from './narrative';
 import ColumnPass from './ColumnPass';
 import SignaturePad from './SignaturePad';
+import { nameForSignature } from './providers';
 import { CARRY_ROWS, STEP_SPECS, carriedInto as carriedFrom } from './chartRows';
 
 // Intra-op Anesthesia Record replicating Mountain West Medical Center form
@@ -833,7 +834,9 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
               {d.tx.sigImg ? (
                 <>
                   <SigImg src={d.tx.sigImg} />
-                  {d.tx.sigName && <span className="signame">{d.tx.sigName}</span>}
+                  {nameForSignature(d.tx.sigImg, d.tx.sigName) && (
+                    <span className="signame">{nameForSignature(d.tx.sigImg, d.tx.sigName)}</span>
+                  )}
                 </>
               ) : (
                 <span className="ar-anesname">{signer.name || signer.initials}</span>
