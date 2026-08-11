@@ -33,6 +33,8 @@ interface Props {
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+// How far sideways a finger travels before it is adjusting rather than scrolling.
+const SLIDE_THRESHOLD = 12;
 const decimals = (inc: number) => (String(inc).split('.')[1] ?? '').length;
 const format = (v: number, inc: number) => {
   // Trailing zeros waste room in cells this small: 3, not 3.0.
@@ -74,6 +76,8 @@ export default function ColumnPass({
   };
 
   const [col, setCol] = useState(firstEmpty);
+  // A sideways drag in progress on one of the value tracks.
+  const slide = useRef<{ id: string; x: number; rect: DOMRect; live: boolean } | null>(null);
   const [showAsNeeded, setShowAsNeeded] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -196,18 +200,52 @@ export default function ColumnPass({
     const inc = range ? 0.1 : spec!.inc;
     const cur = value === '' ? (range ? range.start : spec!.start) : Number(value);
 
+    const pct = clamp(((Number.isFinite(cur) ? cur : min) - min) / (max - min), 0, 1) * 100;
+    const writeAt = (fraction: number) => {
+      const raw = min + clamp(fraction, 0, 1) * (max - min);
+      const stepped = Math.round(raw / inc) * inc;
+      write(r, range ? clamp(stepped, min, max).toFixed(1) : format(clamp(stepped, min, max), inc));
+    };
+
+    // A scrolling finger must not move a value on its way past. The track only
+    // starts adjusting once the finger has travelled sideways — a tap, or a
+    // drag up and down the list, leaves the value exactly as it was.
+    const onDown = (e: React.PointerEvent<HTMLDivElement>) => {
+      slide.current = { id: r.key, x: e.clientX, rect: e.currentTarget.getBoundingClientRect(), live: false };
+      e.currentTarget.setPointerCapture(e.pointerId);
+    };
+    const onMove = (e: React.PointerEvent<HTMLDivElement>) => {
+      const st = slide.current;
+      if (!st || st.id !== r.key) return;
+      if (!st.live) {
+        if (Math.abs(e.clientX - st.x) < SLIDE_THRESHOLD) return;
+        st.live = true;
+      }
+      writeAt((e.clientX - st.rect.left) / st.rect.width);
+    };
+    const onUp = () => {
+      slide.current = null;
+    };
+
     return (
       <div className="cp-slider-row">
         <button type="button" className="cp-nudge" onClick={() => nudge(r, -1)} aria-label="down">−</button>
-        <input
-          type="range"
-          className="tp-slider"
-          min={min}
-          max={max}
-          step={inc}
-          value={Number.isFinite(cur) ? cur : min}
-          onChange={(e) => write(r, range ? Number(e.target.value).toFixed(1) : format(Number(e.target.value), inc))}
-        />
+        <div
+          className={`cp-track${value === '' ? ' unset' : ''}`}
+          role="slider"
+          tabIndex={-1}
+          aria-label={r.label}
+          aria-valuemin={min}
+          aria-valuemax={max}
+          aria-valuenow={Number.isFinite(cur) ? cur : min}
+          onPointerDown={onDown}
+          onPointerMove={onMove}
+          onPointerUp={onUp}
+          onPointerCancel={onUp}
+        >
+          <div className="cp-track-fill" style={{ width: `${pct}%` }} />
+          <div className="cp-track-thumb" style={{ left: `${pct}%` }} />
+        </div>
         <button type="button" className="cp-nudge" onClick={() => nudge(r, 1)} aria-label="up">+</button>
       </div>
     );
