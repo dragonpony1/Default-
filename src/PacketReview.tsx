@@ -4,6 +4,8 @@ import { ANES_KEY, BILLING_KEY, PACU_KEY, readSheet, writeSheetCk, writeSheetTx 
 import { setCaseField, useCaseData } from './caseData';
 import { nowStamp, useSigner } from './signer';
 import SignaturePad from './SignaturePad';
+import LearnedInput from './LearnedInput';
+import type { Bucket } from './learned';
 import type { PreopEval } from './types';
 
 // Last look before the packet prints: every box that ought to carry something
@@ -39,6 +41,15 @@ interface Props {
 }
 
 const filled = (s: string | undefined) => !!(s ?? '').trim();
+
+// Rows whose answers are worth remembering for the next case.
+const LEARNS: Record<string, Bucket> = {
+  'case.surgeon': 'surgeon',
+  'case.procedure': 'procedure',
+  'case.diagnosis': 'diagnosis',
+  proposedProcedure: 'procedure',
+  surgicalDx: 'diagnosis',
+};
 
 export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsChanged }: Props) {
   const caseData = useCaseData();
@@ -425,6 +436,19 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
             </button>
           ))}
         </div>
+      );
+    }
+    // The boxes that name the case remember what has been typed in them.
+    const bucket = LEARNS[g.id];
+    if (bucket) {
+      return (
+        <LearnedInput
+          bucket={bucket}
+          className="pr-input"
+          value={g.value}
+          placeholder="answer here"
+          onChange={(v) => g.set?.(v)}
+        />
       );
     }
     const props = g.kind === 'num' ? numPad : g.kind === 'date' ? datePad : noAuto;

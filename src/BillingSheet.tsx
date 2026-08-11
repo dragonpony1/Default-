@@ -6,6 +6,7 @@ import { useSigner, nowStamp } from './signer';
 import { useCaseData, setCaseField } from './caseData';
 import { loadProviders, nameForSignature } from './providers';
 import SignaturePad from './SignaturePad';
+import LearnedInput from './LearnedInput';
 
 // Deseret Peak Anesthesia Billing Information sheet, built from a flat scan
 // of the original. Tap the box beside a CPT code to mark it; header fields
@@ -250,13 +251,13 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
         </div>
         <div className="bs-fline">
           <span className="b">Procedure:</span>
-          <input {...noAuto} className="t u grow" value={caseData.procedure} onChange={(e) => setCaseField('procedure', e.target.value)} />
+          <LearnedInput bucket="procedure" className="t u grow" value={caseData.procedure} onChange={(v) => setCaseField('procedure', v)} />
         </div>
         <div className="bs-fline">
           <span className="b">Surgeon</span>
-          <input {...noAuto} className="t u wide" value={caseData.surgeon} onChange={(e) => setCaseField('surgeon', e.target.value)} />
+          <LearnedInput bucket="surgeon" className="t u wide" value={caseData.surgeon} onChange={(v) => setCaseField('surgeon', v)} />
           <span className="b">Dx:</span>
-          <input {...noAuto} className="t u grow" value={caseData.diagnosis} onChange={(e) => setCaseField('diagnosis', e.target.value)} />
+          <LearnedInput bucket="diagnosis" className="t u grow" value={caseData.diagnosis} onChange={(v) => setCaseField('diagnosis', v)} />
         </div>
         <div className="bs-fline">
           <span className="b">CRNA</span>

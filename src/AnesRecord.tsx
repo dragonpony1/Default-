@@ -8,6 +8,7 @@ import AnesWizard from './AnesWizard';
 import { composeNarrative } from './narrative';
 import ColumnPass from './ColumnPass';
 import SignaturePad from './SignaturePad';
+import LearnedInput from './LearnedInput';
 import { nameForSignature } from './providers';
 import { CARRY_ROWS, STEP_SPECS, carriedInto as carriedFrom } from './chartRows';
 
@@ -300,12 +301,12 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
 
   const customRow = (i: number) =>
     crow(
-      <input
-        {...noAuto}
+      <LearnedInput
+        bucket="medRow"
         className="ar-rowlabel"
         placeholder="add med…"
         value={d.tx[`custMed${i}`] ?? ''}
-        onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, [`custMed${i}`]: e.target.value } }))}
+        onChange={(v) => setD((p) => ({ ...p, tx: { ...p.tx, [`custMed${i}`]: v } }))}
       />,
       `cust${i}`,
     );
@@ -863,12 +864,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
           <div className="ar-bleft">
             <div className="ar-surgeon">
               <span className="lbl">Surgeon(s)</span>
-              <input
-                {...noAuto}
-                className="t u wide"
-                value={caseData.surgeon}
-                onChange={(e) => setCaseField('surgeon', e.target.value)}
-              />
+              <LearnedInput bucket="surgeon" className="t u wide" value={caseData.surgeon} onChange={(v) => setCaseField('surgeon', v)} />
             </div>
             <div className="ar-asa">
               <span className="lbl">ASA</span>
@@ -913,12 +909,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             </div>
             <div className="ar-brow">
               <span className="lbl">Procedure</span>
-              <input
-                {...noAuto}
-                className="t u wide"
-                value={caseData.procedure}
-                onChange={(e) => setCaseField('procedure', e.target.value)}
-              />
+              <LearnedInput bucket="procedure" className="t u wide" value={caseData.procedure} onChange={(v) => setCaseField('procedure', v)} />
             </div>
             <div className="ar-btable">
               <div className="ar-times">
@@ -928,12 +919,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
               </div>
               <div className="ar-dx">
                 <span className="lbl">Diagnosis</span>
-                <input
-                  {...noAuto}
-                  className="t u wide"
-                  value={caseData.diagnosis}
-                  onChange={(e) => setCaseField('diagnosis', e.target.value)}
-                />
+                <LearnedInput bucket="diagnosis" className="t u wide" value={caseData.diagnosis} onChange={(v) => setCaseField('diagnosis', v)} />
               </div>
             </div>
           </div>

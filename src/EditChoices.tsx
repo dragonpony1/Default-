@@ -3,6 +3,7 @@ import QRCode from 'qrcode';
 import { SYSTEMS } from './formConfig';
 import { SERVICES, procKey, decodeChoices, encodeChoices, type CustomChoices } from './choices';
 import AddEntry from './AddEntry';
+import LearnedLists from './LearnedLists';
 import { noAuto } from './inputProps';
 
 interface Props {
@@ -68,6 +69,9 @@ export default function EditChoices({ choices, setChoices }: Props) {
           (sex, Mallampati class, ASA physical status) are not editable.
         </p>
       </section>
+
+      <LearnedLists />
+
       <section className="icard">
         <h2>Copy Setup to Another Device</h2>
         <p className="fbf-hint">

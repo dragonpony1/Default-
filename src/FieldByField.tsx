@@ -5,6 +5,7 @@ import { SYSTEMS, selectedProblems, screenItems, type SystemBand } from './formC
 import type { CustomChoices } from './choices';
 import AddEntry from './AddEntry';
 import DateTimeField from './DateTimeField';
+import LearnedInput from './LearnedInput';
 import ProcedurePicker from './ProcedurePicker';
 import MedList from './MedList';
 import AllergyList from './AllergyList';
@@ -232,7 +233,12 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       render: () => (
         <>
           <ProcedurePicker d={d} set={set} customChoices={customChoices} />
-          {input('proposedProcedure')}
+          <LearnedInput
+            bucket="procedure"
+            className="fbf-input"
+            value={d.proposedProcedure}
+            onChange={(v) => set('proposedProcedure', v)}
+          />
         </>
       ),
       summary: () => d.proposedProcedure,
@@ -240,7 +246,15 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     {
       title: 'Surgical diagnosis',
       hint: 'What the operation is for — the indication, not the medical problem list. Prints as Diagnosis on the anesthesia record and billing sheet.',
-      render: () => input('surgicalDx', 'e.g. OA right knee, acute appendicitis…'),
+      render: () => (
+        <LearnedInput
+          bucket="diagnosis"
+          className="fbf-input"
+          value={d.surgicalDx}
+          placeholder="e.g. OA right knee, acute appendicitis…"
+          onChange={(v) => set('surgicalDx', v)}
+        />
+      ),
       summary: () => d.surgicalDx,
     },
     numStep('Age', 'age'),
