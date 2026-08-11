@@ -63,9 +63,12 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
   };
   const anesTx = sheetTx(ANES_KEY);
 
-  const gaps: Gap[] = [];
+  // Every question this check knows how to ask, each carrying whether it is
+  // answered yet. Dropping the answered ones here is what made a box vanish
+  // from under the finger typing in it — see `asked` below.
+  const all: Array<Gap & { ok: boolean }> = [];
   const need = (g: Gap, ok: boolean) => {
-    if (!ok) gaps.push(g);
+    all.push({ ...g, ok });
   };
   const pre = (id: keyof PreopEval, label: string, kind: Kind = 'text', options?: string[]) =>
     need(
@@ -371,6 +374,13 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
     filled(billing.tx.crna) || filled(billing.tx.sigImg),
   );
 
+  // The list is fixed when the check opens: a question stays on it while it is
+  // being answered, ticking over to answered in place. Recomputing it on every
+  // keystroke removed the row the moment it held one character, which took the
+  // box — and the keyboard — with it.
+  const [asked] = useState(() => new Set(all.filter((g) => !g.ok).map((g) => g.id)));
+  const gaps = all.filter((g) => asked.has(g.id));
+  const remaining = gaps.filter((g) => !g.ok).length;
   const sheets = ['Pre-Op', 'Record', 'PACU', 'Billing'].filter((s) => gaps.some((g) => g.sheet === s));
 
   const answerNA = (g: Gap) => {
@@ -443,7 +453,7 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
         />
       )}
       <div className="pr-head">
-        <h2>{gaps.length ? `${gaps.length} blank${gaps.length === 1 ? '' : 's'} before printing` : 'Nothing left blank'}</h2>
+        <h2>{remaining ? `${remaining} blank${remaining === 1 ? '' : 's'} before printing` : 'Nothing left blank'}</h2>
         <button type="button" className="chip" onClick={onClose}>✕ Close</button>
       </div>
 
@@ -467,10 +477,11 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
           {gaps
             .filter((g) => g.sheet === s)
             .map((g) => (
-              <div className="pr-row" key={g.id}>
+              <div className={`pr-row${g.ok ? ' answered' : ''}`} key={g.id}>
                 <span className="pr-label">
+                  {g.ok && <span className="pr-tick" aria-label="answered">✓</span>}
                   {g.label}
-                  {g.note && <span className="pr-note">{g.note}</span>}
+                  {g.note && !g.ok && <span className="pr-note">{g.note}</span>}
                 </span>
                 <span className="pr-ctl">{control(g)}</span>
                 {g.kind !== 'goto' && g.kind !== 'sig' && (
@@ -483,7 +494,7 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
 
       <div className="pr-foot">
         <button type="button" className="pk-big" onClick={onPrint}>
-          {gaps.length ? `🖨 Print anyway (${gaps.length} blank)` : '🖨 Print all 4 pages'}
+          {remaining ? `🖨 Print anyway (${remaining} blank)` : '🖨 Print all 4 pages'}
         </button>
         <button type="button" className="chip" onClick={onClose}>Back to the packet</button>
       </div>

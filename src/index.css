@@ -3504,6 +3504,59 @@ button.po-num.on {
   color: #445;
 }
 
+/* The value track. Vertical gestures belong to the list, so pan-y hands them
+   straight to the scroller; a sideways drag adjusts. */
+.cp-track {
+  position: relative;
+  flex: 1;
+  height: 40px;
+  touch-action: pan-y;
+  cursor: ew-resize;
+}
+
+.cp-track::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 4px;
+  background: #dde3ee;
+}
+
+.cp-track-fill {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 4px;
+  background: #2a5db0;
+}
+
+.cp-track-thumb {
+  position: absolute;
+  top: 50%;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px;
+  border-radius: 50%;
+  border: 2px solid #2a5db0;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+/* Never set: the thumb shows where it would start, in grey. */
+.cp-track.unset .cp-track-fill {
+  background: #c3ccdb;
+}
+
+.cp-track.unset .cp-track-thumb {
+  border-color: #aab3c4;
+}
+
 /* Column tool with no clock to count from. */
 .cp-nostart {
   display: flex;
@@ -3595,6 +3648,17 @@ button.po-num.on {
   font-size: 0.95rem;
   border: 1px solid #99a;
   border-radius: 5px;
+}
+
+/* Answered while the check is open: kept in place, marked, quieter. */
+.pr-row.answered {
+  opacity: 0.62;
+}
+
+.pr-tick {
+  color: #1a7a3a;
+  font-weight: 700;
+  margin-right: 0.3rem;
 }
 
 .pr-na {
