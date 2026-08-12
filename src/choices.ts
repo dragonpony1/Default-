@@ -6,7 +6,7 @@ const KEY = 'preop-custom-choices-v1';
 export type CustomChoices = Record<string, string[]>;
 
 // Procedures are grouped by surgical service, each stored under proc:<service>.
-export const SERVICES = ['Ortho', 'General', 'ENT', 'Podiatry', 'GYN'] as const;
+export const SERVICES = ['Ortho', 'General', 'ENT', 'Podiatry', 'GYN', 'Urology'] as const;
 export type Service = (typeof SERVICES)[number];
 export const procKey = (svc: string) => `proc:${svc}`;
 
@@ -58,6 +58,27 @@ const SEEDS: Array<[string, Record<string, string[]>]> = [
         'Ankle block',
         'Bier block',
         'TAP block',
+      ],
+    },
+  ],
+  [
+    'v4',
+    {
+      // Urology, drawn from the cases the billing sheet already carries codes
+      // for — so the list matches what actually comes through the room.
+      [procKey('Urology')]: [
+        'Cystoscopy',
+        'Cystoscopy with stent',
+        'Ureteroscopy',
+        'TURBT',
+        'TURP',
+        'Kidney stone extraction',
+        'ESWL',
+        'Circumcision',
+        'Orchiopexy',
+        'Hydrocelectomy',
+        'Prostate biopsy',
+        'Suprapubic catheter',
       ],
     },
   ],
