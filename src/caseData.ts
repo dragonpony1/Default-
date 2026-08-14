@@ -16,13 +16,15 @@ export interface CaseData {
   procedure: string; // proposed procedure, from the pre-op
   diagnosis: string; // problem list / diagnoses, from the pre-op
   surgeon: string;
+  asa: string; // physical status 1–5, from the pre-op
+  asaE: boolean; // emergency modifier
   caseDate: string; // MM/DD/YY
   anesStart: string; // HHMM
   anesStop: string; // HHMM
 }
 
 const KEY = 'anes-case-v1';
-const empty: CaseData = { allergies: '', weight: '', weightKg: '', height: '', procedure: '', diagnosis: '', surgeon: '', caseDate: '', anesStart: '', anesStop: '' };
+const empty: CaseData = { allergies: '', weight: '', weightKg: '', height: '', procedure: '', diagnosis: '', surgeon: '', asa: '', asaE: false, caseDate: '', anesStart: '', anesStop: '' };
 
 function read(): CaseData {
   try {

@@ -97,6 +97,18 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     localStorage.setItem(KEY, JSON.stringify(d));
   }, [d]);
 
+  // The ASA graded on the pre-op carries onto the record — but only while the
+  // record's own row is untouched, so a grade revised mid-case stands.
+  useEffect(() => {
+    if (!/^[1-5]$/.test(caseData.asa)) return;
+    setD((p) => {
+      if (['1', '2', '3', '4', '5'].some((n) => p.ck[`asa${n}`])) return p;
+      const ckn = { ...p.ck, [`asa${caseData.asa}`]: true };
+      if (caseData.asaE) ckn.asaE = true;
+      return { ...p, ck: ckn };
+    });
+  }, [caseData.asa, caseData.asaE]);
+
   // The record is where the case date and the anesthesia times are entered;
   // the billing sheet needs the same facts, so they go on the shared case.
   useEffect(() => {
@@ -868,7 +880,25 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             </div>
             <div className="ar-asa">
               <span className="lbl">ASA</span>
-              {ck('asa1', '1')}{ck('asa2', '2')}{ck('asa3', '3')}{ck('asa4', '4')}{ck('asa5', '5')}{ck('asaE', 'E')}
+              {['1', '2', '3', '4', '5'].map((n) => (
+                <label className="ck" key={`asa${n}`}>
+                  <input
+                    type="checkbox"
+                    checked={!!d.ck[`asa${n}`]}
+                    onChange={(e) => {
+                      // A patient has one ASA class: ticking this one unticks
+                      // the rest. The E modifier stays independent.
+                      const next = e.target.checked;
+                      setD((p) => {
+                        const ckn = { ...p.ck };
+                        ['1', '2', '3', '4', '5'].forEach((m) => { ckn[`asa${m}`] = m === n ? next : false; });
+                        return { ...p, ck: ckn };
+                      });
+                    }}
+                  />
+                  <span>{n}</span>
+                </label>
+              ))}{ck('asaE', 'E')}
             </div>
           </div>
           <div className="ar-bright">

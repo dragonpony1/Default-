@@ -244,7 +244,11 @@ export default function AnesWizard(api: WizardApi) {
       phase: 'Start of case',
       title: 'ASA physical status',
       render: () =>
-        group('ASA', <>{['1', '2', '3', '4', '5'].map((n) => chip(api.ck[`asa${n}`], () => api.setCk(`asa${n}`, !api.ck[`asa${n}`]), n, `asa${n}`))}{ckChip('asaE', 'E (Emergency)')}</>),
+        // One grade only — picking a class un-picks the others. E rides on top.
+        group('ASA', <>{['1', '2', '3', '4', '5'].map((n) => chip(api.ck[`asa${n}`], () => {
+          const next = !api.ck[`asa${n}`];
+          ['1', '2', '3', '4', '5'].forEach((m) => api.setCk(`asa${m}`, m === n ? next : false));
+        }, n, `asa${n}`))}{ckChip('asaE', 'E (Emergency)')}</>),
     },
     {
       phase: 'Start of case',
