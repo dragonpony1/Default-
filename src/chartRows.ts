@@ -86,11 +86,39 @@ export const PASS_ROWS: PassRow[] = [
 export const AS_NEEDED_ROWS: PassRow[] = [
   { key: 'mon4', label: 'Urine', kind: 'free', unit: 'mL' },
   { key: 'mon5', label: 'EBL', kind: 'free', unit: 'mL' },
-  { key: 'oth4', label: 'LR / D5LR / NS', kind: 'free', unit: 'mL' },
+  {
+    key: 'oth4',
+    label: 'LR / D5LR / NS',
+    kind: 'free',
+    unit: 'mL',
+    exclusiveCk: [
+      { ck: 'lrFluid', label: 'LR' },
+      { ck: 'd5lrFluid', label: 'D5LR' },
+      { ck: 'nsFluid', label: 'NS' },
+    ],
+  },
   { key: 'med3', label: 'Propofol', kind: 'free', unit: 'mg' },
   { key: 'med4', label: 'Anectine', kind: 'free', unit: 'mg' },
-  { key: 'med5', label: 'Vec / Roc', kind: 'free', unit: 'mg' },
-  { key: 'med6', label: 'Sufenta / Sublimaze', kind: 'free', unit: 'mcg' },
+  {
+    key: 'med5',
+    label: 'Vec / Roc',
+    kind: 'free',
+    unit: 'mg',
+    exclusiveCk: [
+      { ck: 'vecMed', label: 'Vec' },
+      { ck: 'rocMed', label: 'Roc' },
+    ],
+  },
+  {
+    key: 'med6',
+    label: 'Sufenta / Sublimaze',
+    kind: 'free',
+    unit: 'mcg',
+    exclusiveCk: [
+      { ck: 'sufMed', label: 'Sufenta' },
+      { ck: 'fentMed', label: 'Sublimaze' },
+    ],
+  },
   { key: 'med7', label: 'Versed', kind: 'free', unit: 'mg' },
   { key: 'med8', label: 'Reglan / Zofran', kind: 'free', unit: 'mg' },
   { key: 'oth0', label: 'Toradol', kind: 'free', unit: 'mg' },

@@ -18,7 +18,7 @@ import PostAnesNote from './PostAnesNote';
 import SignaturePad from './SignaturePad';
 import BillingSheet, { clearBillingDraft } from './BillingSheet';
 import { decodeChoices, loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
-import { setCaseField, clearCase } from './caseData';
+import { setCaseField, clearCase, getCase } from './caseData';
 import { useSigner, nowStamp } from './signer';
 import ProviderBar from './ProviderBar';
 import { applyProviderToDrafts, nameForSignature, type ProviderPrefs } from './providers';
@@ -128,6 +128,15 @@ export default function App() {
     if (d.physicalStatus) setCaseField('asa', d.physicalStatus);
     setCaseField('asaE', d.physicalStatusE);
   }, [d.physicalStatus, d.physicalStatusE]);
+
+  // The date on the signed pre-op evaluation is the case date. When the
+  // pre-op is the first document of the day, this is what carries the date
+  // onto the record, the PACU orders and the billing sheet. A date already on
+  // the case (typed on the record) is never overwritten.
+  useEffect(() => {
+    const date = (d.evalDateTime || '').trim().split(/\s+/)[0];
+    if (date && date.includes('/') && !getCase().caseDate) setCaseField('caseDate', date);
+  }, [d.evalDateTime]);
 
   const set = <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => setD((prev) => ({ ...prev, [k]: v }));
 

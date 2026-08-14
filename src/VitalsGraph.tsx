@@ -1,4 +1,4 @@
-import { useRef, type PointerEvent as ReactPointerEvent } from 'react';
+import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 
 // Draggable BP/HR marks rendered as an ABSOLUTE OVERLAY on top of the existing
 // vital-signs crosshatch — it changes no row heights or boxes. Systolic is a
@@ -52,7 +52,11 @@ export default function VitalsGraph({ cols, endCol, vitals, setVitals, carry }: 
   // Snapshot the series when a drag starts and rebuild from it on every move,
   // so re-timing a mark is one clean move rather than a chain of
   // delete-then-set steps that can race the render.
-  const drag = useRef<{ series: Series; col: number; base: Record<string, number> } | null>(null);
+  const drag = useRef<{ series: Series; col: number; base: Record<string, number>; moved: boolean } | null>(null);
+  // The series as it stood before the last drag that changed it — one tap
+  // puts it back, for the mark nudged by accident while zoomed in. Holds one
+  // move; the next drag replaces it.
+  const [undo, setUndo] = useState<{ series: Series; base: Record<string, number> } | null>(null);
   // Pointer moves can outrun React's re-render; without this the handler reads
   // a stale copy and re-creates the mark it just moved away from.
   const vitalsRef = useRef(vitals);
@@ -64,7 +68,7 @@ export default function VitalsGraph({ cols, endCol, vitals, setVitals, carry }: 
     e.preventDefault();
     e.stopPropagation();
     // A carried-forward mark becomes its own reading as soon as it is dragged.
-    drag.current = { series, col, base: { ...vitalsRef.current[series] } };
+    drag.current = { series, col, base: { ...vitalsRef.current[series] }, moved: false };
     plotRef.current?.setPointerCapture(e.pointerId); // capture on the stable overlay node
   };
 
@@ -79,13 +83,23 @@ export default function VitalsGraph({ cols, endCol, vitals, setVitals, carry }: 
     const entries = { ...base };
     delete entries[col];
     entries[nextCol] = value;
+    if (nextCol !== col || base[col] !== value) drag.current.moved = true;
     const next = { ...vitalsRef.current, [series]: entries };
     vitalsRef.current = next;
     setVitals(next);
   };
 
   const endDrag = () => {
+    if (drag.current?.moved) setUndo({ series: drag.current.series, base: drag.current.base });
     drag.current = null;
+  };
+
+  const undoMove = () => {
+    if (!undo) return;
+    const next = { ...vitalsRef.current, [undo.series]: undo.base };
+    vitalsRef.current = next;
+    setVitals(next);
+    setUndo(null);
   };
 
   const seriesLayer = (series: Series) => {
@@ -146,6 +160,16 @@ export default function VitalsGraph({ cols, endCol, vitals, setVitals, carry }: 
       onPointerCancel={endDrag}
     >
       {SERIES.map(seriesLayer)}
+      {undo && (
+        <button
+          type="button"
+          className="chip vg-undo screen-only"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={undoMove}
+        >
+          ↩ Undo {undo.series === 'sys' ? 'systolic' : undo.series === 'dia' ? 'diastolic' : 'HR'} move
+        </button>
+      )}
     </div>
   );
 }
