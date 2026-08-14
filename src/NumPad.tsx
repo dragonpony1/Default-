@@ -65,6 +65,21 @@ export default function NumPad() {
     const next = target.value.slice(0, start) + ch + target.value.slice(end);
     setNativeValue(target, next);
     target.setSelectionRange(start + ch.length, start + ch.length);
+
+    // Chained vitals (sys → dia → hr) hop to the next box once the number
+    // reads complete: three digits always; two digits when no plausible
+    // reading starts that way (98 is done, 13 is on its way to 132).
+    const chainNext = target.dataset.vnext;
+    if (chainNext && /^\d+$/.test(next)) {
+      const complete = next.length >= 3 || (next.length === 2 && next[0] >= '3');
+      if (complete) {
+        const el = document.querySelector(`input[data-vseq="${chainNext}"]`);
+        if (el instanceof HTMLInputElement) {
+          el.focus();
+          el.select();
+        }
+      }
+    }
   };
 
   const backspace = () => {
