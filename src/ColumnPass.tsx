@@ -254,12 +254,58 @@ export default function ColumnPass({
   // Write the whole column down as it stands — the values just adjusted plus
   // the ones carried in — exactly as a column is filled in on paper, so every
   // five-minute slot on the printed chart carries its own figures.
+  //
+  // The vitals go down as ONE update. Writing sys, dia and hr through three
+  // separate setVitals calls rebuilt the whole vitals object from the same
+  // stale snapshot each time, so the last write won and the BP quietly
+  // vanished — carried on screen, never on the grid.
   const fillColumn = () => {
+    const nextVitals = { sys: { ...vitals.sys }, dia: { ...vitals.dia }, hr: { ...vitals.hr } };
+    let touched = false;
     rows.forEach((r) => {
       const { value } = shownValue(r);
       if (value === '') return;
-      write(r, value); // writing a value it already holds is harmless
+      if (r.kind === 'vital') {
+        nextVitals[r.key as Series][col] = Math.round(Number(value));
+        touched = true;
+      } else {
+        setCell(`${r.key}:${col}`, value); // writing a value it already holds is harmless
+      }
     });
+    if (touched) setVitals(nextVitals);
+  };
+
+  // Thirty minutes go by, nothing got charted: one tap writes the running
+  // values into every empty slot up to the present, ready to be corrected
+  // where the case actually moved. Only carried rows and the vitals fill —
+  // drugs are events, not running values, and never repeat themselves.
+  const catchUp = () => {
+    if (nowCol < 0) return;
+    if (!window.confirm(`Fill every empty column up to ${times[nowCol]} with the values as they stand?`)) return;
+    const nextVitals = { sys: { ...vitals.sys }, dia: { ...vitals.dia }, hr: { ...vitals.hr } };
+    let touchedVitals = false;
+    (['sys', 'dia', 'hr'] as Series[]).forEach((series) => {
+      let last: number | null = null;
+      for (let c = 0; c <= nowCol; c++) {
+        const own = vitals[series]?.[c];
+        if (own != null) last = own;
+        else if (last != null) {
+          nextVitals[series][c] = last;
+          touchedVitals = true;
+        }
+      }
+    });
+    rows.forEach((r) => {
+      if (r.kind === 'vital' || !CARRY_ROWS.has(r.key)) return;
+      let last = '';
+      for (let c = 0; c <= nowCol; c++) {
+        const own = cells[`${r.key}:${c}`];
+        if (own !== undefined) last = own;
+        else if (last !== '') setCell(`${r.key}:${c}`, last);
+      }
+    });
+    if (touchedVitals) setVitals(nextVitals);
+    setCol(nowCol);
   };
 
   const filledCount = rows.filter((r) => {
@@ -399,6 +445,11 @@ export default function ColumnPass({
         <button type="button" className="chip cp-wipe" onClick={clearColumn}>
           🗑 Clear this column
         </button>
+        {nowCol > col && (
+          <button type="button" className="chip cp-catchup" onClick={catchUp} title="Write the running values into every empty column up to the present">
+            ⏩ Catch up to {times[nowCol]}
+          </button>
+        )}
         <button
           type="button"
           className="chip cp-fill"

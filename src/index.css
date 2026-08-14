@@ -3786,6 +3786,11 @@ input[type='checkbox']:checked::after {
   flex-wrap: wrap;
 }
 
+.cp-catchup {
+  border-color: #7a5a1a;
+  color: #7a5a1a;
+}
+
 .cp-fill {
   border-color: #1a7a3a;
   color: #1a7a3a;
