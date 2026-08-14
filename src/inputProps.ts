@@ -24,6 +24,15 @@ export const timePad = {
   'data-timefield': '1',
 } as const;
 
+// The NPO box: a time pad whose pad also offers the word Midnight.
+export const npoPad = {
+  ...noAuto,
+  inputMode: 'none',
+  'data-np': '1',
+  'data-timefield': '1',
+  'data-npo': '1',
+} as const;
+
 // Date boxes: floating date picker (Today plus wheels) instead of typing.
 export const datePad = {
   ...noAuto,
