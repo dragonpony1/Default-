@@ -19,7 +19,7 @@ import SignaturePad from './SignaturePad';
 import BillingSheet, { clearBillingDraft } from './BillingSheet';
 import { decodeChoices, loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 import { setCaseField, clearCase } from './caseData';
-import { clearSigner, useSigner, nowStamp } from './signer';
+import { useSigner, nowStamp } from './signer';
 import ProviderBar from './ProviderBar';
 import { applyProviderToDrafts, nameForSignature, type ProviderPrefs } from './providers';
 
@@ -184,7 +184,9 @@ export default function App() {
       clearPacuForNextCase();
       clearBillingDraft();
       clearCase();
-      clearSigner();
+      // Whoever is clicked in stays clicked in — the provider is not the
+      // patient's data. Their signatures on the cleared forms are gone with
+      // the forms.
       setD({ ...emptyPreopEval });
       setAnesReset((n) => n + 1);
     }
