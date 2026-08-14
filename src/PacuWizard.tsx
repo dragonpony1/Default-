@@ -71,6 +71,13 @@ export default function PacuWizard(api: PacuWizApi) {
     </label>
   );
 
+  const order = (k: string, label: string) => (
+    <label className="ck awiz-order" key={k}>
+      <input type="checkbox" checked={!!api.ck[k]} onChange={(e) => api.setCk(k, e.target.checked)} />
+      <span>{label}</span>
+    </label>
+  );
+
   const steps: WizStep[] = [
     {
       title: 'Patient',
@@ -97,6 +104,19 @@ export default function PacuWizard(api: PacuWizApi) {
             </label>
           </div>
         </>
+      ),
+    },
+    {
+      title: 'Standing orders',
+      nav: 'Orders',
+      hint: 'Circle the blanket orders that apply — these have no dose to set.',
+      render: () => (
+        <div className="awiz-orders">
+          {order('circle2', '2 · Post-anesthesia oxygen / narcotic-hold parameters (A–G)')}
+          {order('circle13', '13 · Call/contact anesthesia criteria (a–g)')}
+          {order('circle14', '14 · Discharge when MWMC PACU criteria met')}
+          {order('circle15', '15 · Incentive spirometer if alert and room-air SaO₂ < 90%')}
+        </div>
       ),
     },
     {
