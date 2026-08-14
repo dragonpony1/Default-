@@ -123,6 +123,12 @@ export default function App() {
   }, [d.surgicalDx]);
 
 
+  // The ASA graded on the pre-op is the case's ASA; the record reads it.
+  useEffect(() => {
+    if (d.physicalStatus) setCaseField('asa', d.physicalStatus);
+    setCaseField('asaE', d.physicalStatusE);
+  }, [d.physicalStatus, d.physicalStatusE]);
+
   const set = <K extends keyof PreopEval>(k: K, v: PreopEval[K]) => setD((prev) => ({ ...prev, [k]: v }));
 
   const packet = view === 'packet';
