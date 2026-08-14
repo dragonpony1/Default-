@@ -68,6 +68,7 @@ export const PASS_ROWS: PassRow[] = [
     ],
   },
   { key: 'med2', label: 'ISO / SEVO', kind: 'slider', unit: 'ET%' },
+  { key: 'vmode', label: 'Vent mode', kind: 'chips', options: ['VC', 'PC', 'SIMV', 'PS', 'SV'] },
   { key: 'vent0', label: 'Rate', kind: 'slider', unit: '/min' },
   { key: 'vent1', label: 'Tidal volume', kind: 'slider', unit: 'mL' },
   { key: 'vent2', label: 'FiO₂', kind: 'slider' },

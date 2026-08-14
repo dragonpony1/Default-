@@ -886,6 +886,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
             </div>
             {band('Vent', (
               <>
+                {crow('Mode', 'vmode')}
                 {crow('Rate', 'vent0')}
                 {crow('Volume', 'vent1')}
                 {crow('FiO₂', 'vent2')}
@@ -938,6 +939,9 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                 value={d.tx.remarks ?? ''}
                 onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, remarks: e.target.value } }))}
               />
+              {/* Tourniquet time — the pad's Now, dash and colon keys cover an
+                  up time, a range or a total. */}
+              <div className="ar-line"><span className="b">TT:</span>{txt('tt', 'grow')}</div>
             </div>
             <div className="ar-rbox">
               <div className="ar-h">Fluid Totals</div>
