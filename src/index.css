@@ -3618,19 +3618,19 @@ input[type='checkbox']:checked::after {
   font-size: 0.85rem;
 }
 
-/* The pre-op wizard's skip strip: forty small steps, so the chips run small
-   and wrap, and an answered step carries a green underline. */
+/* The pre-op wizard's skip strip: one chip per section, with the count of
+   answered steps riding on it. Solid green underline = section done, faint =
+   started. */
 .fbf-secnav {
   margin-bottom: 0.4rem;
 }
 
-.fbf-secnav .awiz-secbtn {
-  font-size: 0.68rem;
-  padding: 0.18rem 0.4rem;
-}
-
 .fbf-secnav .awiz-secbtn.has:not(.on) {
   border-bottom: 3px solid #1a7a3a;
+}
+
+.fbf-secnav .awiz-secbtn.part:not(.on) {
+  border-bottom: 3px solid #a8d5b5;
 }
 
 /* ---- Pre-print review: what is still blank, answerable in place ---- */

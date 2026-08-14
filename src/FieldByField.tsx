@@ -634,22 +634,51 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
   const done = step >= steps.length;
   const cur = done ? null : steps[step];
 
+  // The strip condenses the forty-odd steps into section-sized chips. Each
+  // step joins the section its title names; an unmatched title stays with the
+  // section before it, so a new step never breaks the strip.
+  const sectionFor = (title: string): string | null => {
+    // The whole top band of the form — procedure, demographics, vitals, NPO —
+    // is one bite, and the whole bottom band — ASA through the signature — is
+    // another, matching how the paper form reads.
+    // Everything above the physical exam — proposed procedure down through
+    // History From — is the form's top band, and one chip.
+    if (/procedure|surgical diagnosis|^(age|sex|height|weight)$|blood pressure|pulse|respirations|temperature|NPO|previous anesthesia|current medications|family history|allergies|history from/i.test(title)) return 'Top';
+    if (/mallampati|TMD|ROM/i.test(title)) return 'Airway';
+    if (/respiratory|tobacco|home o|cardiovascular|gastrointestinal|ethanol|street drug|musculoskeletal|endocrine|^other$/i.test(title)) return 'Systems';
+    if (/diagnostic|pregnancy|laboratory/i.test(title)) return 'Studies';
+    if (/physical status|problem list|planned anesthesia|medications ordered|evaluation date/i.test(title)) return 'Bottom';
+    return null;
+  };
+  const sections: Array<{ label: string; indices: number[] }> = [];
+  steps.forEach((s, i) => {
+    const label = sectionFor(s.title) ?? sections[sections.length - 1]?.label ?? 'More';
+    const last = sections[sections.length - 1];
+    if (last && last.label === label) last.indices.push(i);
+    else sections.push({ label, indices: [i] });
+  });
+
   return (
     <div className="fbf screen-only">
-      {/* Skip-anywhere strip, same as the record wizard's: every step a chip,
-          a dot under the ones already answered. */}
+      {/* Skip strip, condensed: the steps in section-sized bites — solid green
+          underline when a section is fully answered, faint when partly. */}
       <div className="awiz-secnav fbf-secnav">
-        {steps.map((s, i) => (
-          <button
-            key={s.title + i}
-            type="button"
-            className={`awiz-secbtn${i === step ? ' on' : ''}${s.summary() ? ' has' : ''}`}
-            onClick={() => go(i)}
-            title={s.title}
-          >
-            {s.title}
-          </button>
-        ))}
+        {sections.map((sec) => {
+          const answered = sec.indices.filter((i) => steps[i].summary()).length;
+          const state = answered === sec.indices.length ? ' has' : answered > 0 ? ' part' : '';
+          const on = !done && sec.indices.includes(step) ? ' on' : '';
+          return (
+            <button
+              key={sec.label}
+              type="button"
+              className={`awiz-secbtn${on}${state}`}
+              onClick={() => go(sec.indices[0])}
+              title={sec.indices.map((i) => steps[i].title).join(' · ')}
+            >
+              {sec.label} {answered}/{sec.indices.length}
+            </button>
+          );
+        })}
         <button
           type="button"
           className={`awiz-secbtn${done ? ' on' : ''}`}
