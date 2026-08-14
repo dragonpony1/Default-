@@ -6,7 +6,7 @@ import {
   type ProviderProfile,
   type ProviderPrefs,
 } from './providers';
-import { setSigner } from './signer';
+import { getSigner, setSigner } from './signer';
 import SignaturePad from './SignaturePad';
 
 // A row of provider buttons (by initials) on the front GUI. Tap a provider to
@@ -28,7 +28,12 @@ function newId(existing: ProviderProfile[]): string {
 
 export default function ProviderBar({ onApply }: Props) {
   const [list, setList] = useState<ProviderProfile[]>(loadProviders);
-  const [activeId, setActiveId] = useState<string | null>(null);
+  // Being clicked in survives a relaunch, so the bar comes back showing who
+  // is in — their Save / Load / signature buttons ready without a re-tap.
+  const [activeId, setActiveId] = useState<string | null>(() => {
+    const s = getSigner();
+    return s.initials ? loadProviders().find((p) => p.initials === s.initials)?.id ?? null : null;
+  });
   const [padOpen, setPadOpen] = useState(false);
 
   const persist = (next: ProviderProfile[]) => {
@@ -125,6 +130,17 @@ export default function ProviderBar({ onApply }: Props) {
         <>
           <button type="button" className="chip prov-save" onClick={saveActive}>
             💾 Save {active.initials}'s defaults
+          </button>
+          <button
+            type="button"
+            className="chip prov-load"
+            title="Lay your saved defaults onto the forms — after a clear, or any time"
+            onClick={() => {
+              onApply(active.prefs);
+              window.alert(`${active.initials}'s saved defaults are on the forms.`);
+            }}
+          >
+            ⤵ Load {active.initials}'s defaults
           </button>
           <button type="button" className="chip prov-sig" onClick={() => setPadOpen(true)}>
             ✍ {active.signature ? 'Update' : 'Add'} signature

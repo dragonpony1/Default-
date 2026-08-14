@@ -3515,6 +3515,11 @@ button.po-num.on {
   gap: 0.35rem;
 }
 
+.provbar .prov-load {
+  border-color: #1a7a3a;
+  color: #1a7a3a;
+}
+
 /* Quick-drug panel: pick, dose, time, done. */
 .qd-panel {
   background: #fff;
