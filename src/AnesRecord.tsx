@@ -926,6 +926,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
               </button>
               <div className="ar-line"><span className="b">TIME:</span>{txt('remarkTime', 'grow')}</div>
               {ck('preInduction', 'Pre-induction anesthestic reassessment')}
+              <div className="ar-line"><span className="b">Transfer care:</span>{txt('transferCare', 'grow')}</div>
               <textarea
                 {...noAuto}
                 className="a ar-remarks"

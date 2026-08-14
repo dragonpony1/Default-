@@ -69,7 +69,7 @@ const STANDARD_MONITORS = [
 ];
 
 // Every box that holds a clock time — they all get the Now key.
-const TIME_FIELDS = ['anesStart', 'anesStop', 'surgStart', 'surgStop', 'ettTime', 'recTime', 'condTime', 'remarkTime'];
+const TIME_FIELDS = ['anesStart', 'anesStop', 'surgStart', 'surgStop', 'ettTime', 'recTime', 'condTime', 'remarkTime', 'transferCare'];
 
 export default function AnesWizard(api: WizardApi) {
   const [step, setStep] = useState(0);
@@ -408,6 +408,7 @@ export default function AnesWizard(api: WizardApi) {
           {group('Status', <>{ckChip('awake', 'Awake')}{ckChip('drowsy', 'Drowsy')}{ckChip('somnolent', 'Somnolent')}{ckChip('stable', 'Stable')}{ckChip('unstable', 'Unstable')}</>)}
           {group('Airway / O₂', <>{ckChip('recNasalO2', 'Nasal O₂')}{ckChip('maskO2', 'Mask O₂')}{ckChip('recIntubated', 'Intubated')}{ckChip('tPiece', 'T-piece')}{ckChip('recVentilator', 'Ventilator')}{ckChip('oralNasalAirway', 'Oral/Nasal Airway')}{ckChip('recLma', 'LMA')}</>)}
           {group('Handoff', <>{ckChip('reportToRn', 'Report to RN')}{ckChip('recDentition', 'Dentition unchanged')}</>)}
+          {field('Transfer care (time)', 'transferCare', 'HHMM')}
         </>
       ),
     },
