@@ -52,7 +52,6 @@ const NAV_SHORT: Record<string, string> = {
   'Induction drugs': 'Induction',
   Positioning: 'Position',
   'Emergence & reversal': 'Emergence',
-  'Stop times': 'Stop',
   'Fluid totals': 'Fluids',
   'Recovery & handoff': 'Recovery',
 };
@@ -210,12 +209,18 @@ export default function AnesWizard(api: WizardApi) {
     {
       phase: 'Start of case',
       title: 'Times',
-      hint: 'The surgery start time anchors the charting grid.',
+      hint: 'All four in one place — the stops get filled at the end of the case. The anesthesia start anchors the charting grid.',
       render: () => (
-        <div className="irow">
-          {field('Anesthesia start', 'anesStart', 'HHMM')}
-          {field('Surgery start', 'surgStart', 'HHMM')}
-        </div>
+        <>
+          <div className="irow">
+            {field('Anesthesia start', 'anesStart', 'HHMM')}
+            {field('Surgery start', 'surgStart', 'HHMM')}
+          </div>
+          <div className="irow">
+            {field('Surgery stop', 'surgStop', 'HHMM')}
+            {field('Anesthesia stop', 'anesStop', 'HHMM')}
+          </div>
+        </>
       ),
     },
     {
@@ -301,6 +306,15 @@ export default function AnesWizard(api: WizardApi) {
           {/* "Oral / Nasal / RAE" on its own does not say what is going in —
               they are all tubes, so they are labelled as tubes. */}
           {group('Airway type', <>{ckChip('ettOral', 'ETT oral')}{ckChip('ettNasal', 'ETT nasal')}{ckChip('ettRae', 'ETT RAE')}{ckChip('lma', 'LMA')}{ckChip('mask', 'Mask')}</>)}
+          {api.ck.lma && (
+            <>
+              {pick('LMA size', 'lmaSize', ['3', '4', '5'], true, 'other')}
+              <label className="ifield" key="airMl">
+                <span>Air in cuff (mL)</span>
+                <input {...numPad} value={api.tx.airMl ?? ''} placeholder="mL" onChange={(e) => { api.setTx('airMl', e.target.value); api.setCk('air', e.target.value.trim() !== ''); api.setCk('lmaSizeCk', true); }} />
+              </label>
+            </>
+          )}
           {pick('Tube size (mm)', 'tubeSize', ['6.0', '6.5', '7.0', '7.5', '8.0'], true, 'other')}
           {pick('Blade', 'blade', ['Mac', 'Miller', 'McGrath', 'Glidescope'], true, 'other')}
           {pick('Blade size', 'bladeSize', ['2', '3', '4'], true, 'other')}
@@ -341,6 +355,7 @@ export default function AnesWizard(api: WizardApi) {
           </div>
           {settingRow(api.ck.airMed ? 'Air' : 'N₂O', 'med1:0', 'L/min', [0, 1, 2, 3], { min: 0, max: 10, inc: 0.5, start: 2 })}
           {settingRow('ISO / SEVO', 'med2:0', 'ET%', [0.8, 1, 1.5, 2, 2.5], { min: 0, max: 8, inc: 0.1, start: 1.5 })}
+          {settingRow('Vent mode', 'vmode:0', '', ['VC', 'PC', 'SIMV', 'PS', 'SV'])}
           {settingRow('Rate', 'vent0:0', 'breaths/min', [8, 10, 12, 14, 16], { min: 4, max: 30, inc: 1, start: 12 })}
           {settingRow('Tidal volume', 'vent1:0', 'mL', [400, 450, 500, 550, 600], { min: 200, max: 900, inc: 10, start: 500 })}
           {settingRow('FiO₂', 'vent2:0', 'fraction', ['.3', '.4', '.5', '.6', '1.0'], { min: 0.21, max: 1, inc: 0.05, start: 0.5 })}
@@ -394,17 +409,7 @@ export default function AnesWizard(api: WizardApi) {
         </>
       ),
     },
-    {
-      phase: 'End of case',
-      title: 'Stop times',
-      hint: 'The anesthesia stop time ends the BP/HR graph.',
-      render: () => (
-        <div className="irow">
-          {field('Surgery stop', 'surgStop', 'HHMM')}
-          {field('Anesthesia stop', 'anesStop', 'HHMM')}
-        </div>
-      ),
-    },
+
     {
       phase: 'End of case',
       title: 'Fluid totals',
