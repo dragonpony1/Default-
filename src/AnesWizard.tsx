@@ -116,6 +116,8 @@ export default function AnesWizard(api: WizardApi) {
       <span>{label}</span>
       <input
         {...numPad}
+        data-vseq={series}
+        data-vnext={series === 'sys' ? 'dia' : series === 'dia' ? 'hr' : ''}
         value={api.vitals[series][0] ?? ''}
         onChange={(e) => {
           const raw = e.target.value.trim();

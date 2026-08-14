@@ -302,6 +302,8 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
       <span>{label}</span>
       <input
         {...numPad}
+        data-vseq={series}
+        data-vnext={series === 'sys' ? 'dia' : series === 'dia' ? 'hr' : ''}
         value={d.vitals[series][0] ?? ''}
         onChange={(e) => {
           const raw = e.target.value.trim();
