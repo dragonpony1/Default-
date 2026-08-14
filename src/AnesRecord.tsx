@@ -486,6 +486,8 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
           setCk={(k, v) => setD((p) => ({ ...p, ck: { ...p.ck, [k]: v } }))}
           setTx={(k, v) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: v } }))}
           setCell={setCell}
+          vitals={d.vitals}
+          setVitals={setVitals}
           endCol={endCol}
           onDone={() => setMode('chart')}
         />
