@@ -3463,6 +3463,17 @@ input[type='checkbox']:checked::after {
   color: #445;
 }
 
+.awiz-stdmon {
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.awiz-bpside {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .lrn-group {
   margin-top: 0.7rem;
 }

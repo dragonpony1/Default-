@@ -53,6 +53,21 @@ const NAV_SHORT: Record<string, string> = {
   'Recovery & handoff': 'Recovery',
 };
 
+// The monitors that go on for every case — the one-tap set on the wizard's
+// Monitors step. Edit this list when the department's "usuals" change.
+const STANDARD_MONITORS = [
+  'bpAuto',
+  'pulseOx',
+  'capnography',
+  'ecg',
+  'nerveStim',
+  'o2Analyzer',
+  'temp',
+  'tempSk', // temp: skin
+  'bairHugger',
+  'hme',
+];
+
 // Every box that holds a clock time — they all get the Now key.
 const TIME_FIELDS = ['anesStart', 'anesStop', 'surgStart', 'surgStop', 'ettTime', 'recTime', 'condTime', 'remarkTime'];
 
@@ -184,6 +199,29 @@ export default function AnesWizard(api: WizardApi) {
       hint: 'Everything on the patient.',
       render: () => (
         <>
+          {/* The same set goes on nearly every patient — one tap ticks the
+              lot. Tapping again (with all of them on) takes them all off. */}
+          <div className="chips wrap awiz-stdmon">
+            <button
+              type="button"
+              className={`chip${STANDARD_MONITORS.every((k) => api.ck[k]) ? ' on' : ''}`}
+              onClick={() => {
+                const allOn = STANDARD_MONITORS.every((k) => api.ck[k]);
+                STANDARD_MONITORS.forEach((k) => api.setCk(k, !allOn));
+              }}
+            >
+              ⭐ Standard monitors
+            </button>
+            <span className="ihint">BP · pulse ox · capnography · ECG · nerve stim · O₂ analyzer · temp (skin) · Bair Hugger · HME</span>
+            {/* The one thing the set cannot guess: which arm the cuff is on. */}
+            {STANDARD_MONITORS.every((k) => api.ck[k]) && (
+              <span className="awiz-bpside">
+                <span className="ihint">BP side:</span>
+                {chip(!!api.ck.bpL, () => { api.setCk('bpL', !api.ck.bpL); if (!api.ck.bpL) api.setCk('bpR', false); }, 'L', 'bpsideL')}
+                {chip(!!api.ck.bpR, () => { api.setCk('bpR', !api.ck.bpR); if (!api.ck.bpR) api.setCk('bpL', false); }, 'R', 'bpsideR')}
+              </span>
+            )}
+          </div>
           {group('BP', <>{ckChip('bpAuto', 'Auto')}{ckChip('bpManual', 'Manual')}{ckChip('bpArm', 'Arm')}{ckChip('bpLeg', 'Leg')}{ckChip('bpL', 'L')}{ckChip('bpR', 'R')}</>)}
           {group('Standard', <>{ckChip('pulseOx', 'Pulse Oximeter')}{ckChip('capnography', 'Capnography')}{ckChip('ecg', 'ECG')}{ckChip('nerveStim', 'Nerve Stimulator')}{ckChip('o2Analyzer', 'O₂ Analyzer')}</>)}
           {group('Temp', <>{ckChip('temp', 'Temp')}{ckChip('tempE', 'E')}{ckChip('tempSk', 'SK')}{ckChip('tempBlad', 'Blad')}{ckChip('tempR', 'R')}</>)}
