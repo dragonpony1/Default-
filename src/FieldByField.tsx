@@ -526,7 +526,7 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       title: 'Diagnostic studies',
       render: () => (
         <>
-          {boolChip('dxNone', 'No diagnostic studies')}
+          {boolChip('dxNone', 'N/A — no studies needed')}
           {!d.dxNone && (
             <>
               <label className="ifield"><span>EKG</span>{input('dxEkg')}</label>
@@ -561,14 +561,25 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     },
     {
       title: 'Laboratory studies',
-      render: () => (
+      render: () => {
+        // One tap answers the whole box: N/A prints on each lab line, so the
+        // sheet says none were needed rather than leaving a reader guessing.
+        const labsNA = d.labHgb === 'N/A' && d.labElectrolytes === 'N/A' && d.labUrinalysis === 'N/A';
+        return (
         <>
+          {chip(labsNA, () => {
+            const v = labsNA ? '' : 'N/A';
+            set('labHgb', v);
+            set('labElectrolytes', v);
+            set('labUrinalysis', v);
+          }, 'N/A — no labs needed')}
           <label className="ifield"><span>Hgb / Hct / CBC</span>{input('labHgb')}</label>
           <label className="ifield"><span>Electrolytes</span>{input('labElectrolytes')}</label>
           <label className="ifield"><span>Urinalysis</span>{input('labUrinalysis')}</label>
           <label className="ifield"><span>Other labs</span>{input('labOther')}</label>
         </>
-      ),
+        );
+      },
       summary: () =>
         joinNonEmpty([
           ['Hgb/Hct/CBC', d.labHgb],
@@ -664,18 +675,19 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
           underline when a section is fully answered, faint when partly. */}
       <div className="awiz-secnav fbf-secnav">
         {sections.map((sec) => {
-          const answered = sec.indices.filter((i) => steps[i].summary()).length;
-          const state = answered === sec.indices.length ? ' has' : answered > 0 ? ' part' : '';
+          // Quiet, like the record's: the label alone, a green underline once
+          // the whole section is answered.
+          const doneSec = sec.indices.every((i) => steps[i].summary());
           const on = !done && sec.indices.includes(step) ? ' on' : '';
           return (
             <button
               key={sec.label}
               type="button"
-              className={`awiz-secbtn${on}${state}`}
+              className={`awiz-secbtn${on}${doneSec ? ' has' : ''}`}
               onClick={() => go(sec.indices[0])}
               title={sec.indices.map((i) => steps[i].title).join(' · ')}
             >
-              {sec.label} {answered}/{sec.indices.length}
+              {sec.label}
             </button>
           );
         })}
@@ -699,9 +711,7 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
                 Restart
               </button>
             )}
-            <button type="button" className="chip" onClick={() => go(steps.length)}>
-              Review all
-            </button>
+
           </>
         )}
       </div>
