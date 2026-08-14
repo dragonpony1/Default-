@@ -12,6 +12,16 @@ export interface ProviderPrefs {
   emergenceDoses?: { sugammadex?: string; zofran?: string; decadron?: string };
   narrative?: string; // record Remarks / narration
   plannedAnesthesia?: string;
+  // Pre-op wizard answers that are the provider's usual, not the patient's
+  // data: airway grading, NPO, where the history comes from. Patient facts
+  // (age, allergies, meds, histories, vitals, ASA) are never captured.
+  preop?: {
+    mallampati?: string;
+    tmd?: string;
+    rom?: string;
+    npo?: string;
+    hf?: Record<string, boolean>;
+  };
   providerName?: string; // stamped on record / PACU / billing signature lines
 }
 
@@ -51,6 +61,10 @@ const INDUCTION_CELLS = ['oth5:0', 'med3:0', 'med6:0', 'med7:0', 'med5:0', 'med4
 const AIRWAY_TX = ['tubeSize', 'tubeLength'];
 // Emergence drug grid rows.
 const EMERGENCE_ROWS = { sugammadex: 'oth3', zofran: 'med8', decadron: 'oth7' } as const;
+
+// History From checkboxes — provider style, captured with the pre-op defaults.
+const HF_FLAGS = ['hfPatient', 'hfParentGuardian', 'hfSignificantOther', 'hfChart', 'hfCommLanguage', 'hfPoorHistorian'];
+const str = (v: unknown): string => (typeof v === 'string' ? v : '');
 
 const STEP = 5;
 const COLS = 36;
@@ -239,6 +253,15 @@ export function captureCurrentPrefs(initials: string): ProviderPrefs {
     },
     narrative: recTx.remarks ?? '',
     plannedAnesthesia: typeof preop?.plannedAnesthesia === 'string' ? preop.plannedAnesthesia : '',
+    preop: {
+      mallampati: str(preop?.mallampati),
+      tmd: str(preop?.tmd),
+      rom: str(preop?.rom),
+      npo: str(preop?.npo),
+      hf: Object.fromEntries(
+        HF_FLAGS.map((k) => [k, preop?.[k] === true]).filter(([, v]) => v),
+      ) as Record<string, boolean>,
+    },
     providerName: recTx.anesthetist || initials,
   };
 }
@@ -246,7 +269,7 @@ export function captureCurrentPrefs(initials: string): ProviderPrefs {
 // Apply a provider's preferences to the form drafts by MERGING (so a case in
 // progress keeps its per-case data). Writes the record/PACU/billing drafts
 // directly; returns a patch for the pre-op state that App applies itself.
-export function applyProviderToDrafts(prefs: ProviderPrefs): { plannedAnesthesia?: string } {
+export function applyProviderToDrafts(prefs: ProviderPrefs): { preop: Record<string, unknown> } {
   const name = prefs.providerName ?? '';
 
   // PACU: merge their standing orders + stamp provider name.
@@ -291,5 +314,13 @@ export function applyProviderToDrafts(prefs: ProviderPrefs): { plannedAnesthesia
     localStorage.setItem(BILL, JSON.stringify({ ...bill, tx: { ...(bill.tx ?? {}), crna: name } }));
   }
 
-  return { plannedAnesthesia: prefs.plannedAnesthesia };
+  const pre: Record<string, unknown> = {};
+  if (prefs.plannedAnesthesia) pre.plannedAnesthesia = prefs.plannedAnesthesia;
+  const pd = prefs.preop ?? {};
+  if (pd.mallampati) pre.mallampati = pd.mallampati;
+  if (pd.tmd) pre.tmd = pd.tmd;
+  if (pd.rom) pre.rom = pd.rom;
+  if (pd.npo) pre.npo = pd.npo;
+  for (const [k, v] of Object.entries(pd.hf ?? {})) if (v) pre[k] = true;
+  return { preop: pre };
 }
