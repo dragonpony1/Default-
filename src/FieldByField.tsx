@@ -636,6 +636,28 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
 
   return (
     <div className="fbf screen-only">
+      {/* Skip-anywhere strip, same as the record wizard's: every step a chip,
+          a dot under the ones already answered. */}
+      <div className="awiz-secnav fbf-secnav">
+        {steps.map((s, i) => (
+          <button
+            key={s.title + i}
+            type="button"
+            className={`awiz-secbtn${i === step ? ' on' : ''}${s.summary() ? ' has' : ''}`}
+            onClick={() => go(i)}
+            title={s.title}
+          >
+            {s.title}
+          </button>
+        ))}
+        <button
+          type="button"
+          className={`awiz-secbtn${done ? ' on' : ''}`}
+          onClick={() => go(steps.length)}
+        >
+          Review
+        </button>
+      </div>
       <div className="fbf-progress">
         <div className="fbf-bar">
           <div className="fbf-fill" style={{ width: `${(Math.min(step, steps.length) / steps.length) * 100}%` }} />
