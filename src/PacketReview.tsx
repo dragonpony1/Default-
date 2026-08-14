@@ -240,6 +240,9 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
   rec('anesStop', 'Anesthesia stop', 'num');
   rec('surgStart', 'Surgery start', 'num');
   rec('surgStop', 'Surgery stop', 'num');
+  // Most cases never had a tourniquet up — N/A is the one-tap answer; a case
+  // that did gets its time onto the printed sheet instead of a blank TT box.
+  rec('tt', 'Tourniquet time (TT)');
 
   const asaMarked = ['asa1', 'asa2', 'asa3', 'asa4', 'asa5'].find((k) => anes.ck[k]);
   need(
