@@ -120,6 +120,27 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     if (d.tx.anesStop?.trim()) setCaseField('anesStop', d.tx.anesStop.trim());
   }, [d.tx.date, d.tx.anesStart, d.tx.anesStop]);
 
+  // Dates flow both ways: the record publishes its DATE to the case (above),
+  // and a case date set first somewhere else — a signed pre-op, the billing
+  // sheet — fills the record's blank DATE box. The Remarks box's TIME line is
+  // the anesthesia start written a second time on the paper form, so it fills
+  // itself from the start clock while it is blank.
+  useEffect(() => {
+    setD((p) => {
+      const txn = { ...p.tx };
+      let changed = false;
+      if (!(txn.date ?? '').trim() && caseData.caseDate) {
+        txn.date = caseData.caseDate;
+        changed = true;
+      }
+      if (!(txn.remarkTime ?? '').trim() && (txn.anesStart ?? '').trim()) {
+        txn.remarkTime = txn.anesStart.trim();
+        changed = true;
+      }
+      return changed ? { ...p, tx: txn } : p;
+    });
+  }, [caseData.caseDate, d.tx.anesStart, d.tx.date, d.tx.remarkTime]);
+
   // Clear form bumps resetSignal — reload from the (now-cleared) storage
   // directly so the mounted record can't autosave stale data back.
   const seenReset = useRef(resetSignal);
@@ -178,6 +199,24 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
         checked={!!d.ck[k]}
         onChange={(e) =>
           setD((p) => ({ ...p, ck: { ...p.ck, [k]: e.target.checked, [other]: false } }))
+        }
+      />
+      <span>{label}</span>
+    </label>
+  );
+
+  // One of a printed set of three or more: ticking one clears the rest.
+  const xckg = (k: string, others: string[], label: string) => (
+    <label className="ck" key={k}>
+      <input
+        type="checkbox"
+        checked={!!d.ck[k]}
+        onChange={(e) =>
+          setD((p) => {
+            const ckn = { ...p.ck, [k]: e.target.checked };
+            others.forEach((o) => { ckn[o] = false; });
+            return { ...p, ck: ckn };
+          })
         }
       />
       <span>{label}</span>
@@ -374,10 +413,10 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
   };
 
   // Value row: label | tappable time-columns | totals input
-  const crow = (label: ReactNode, key: string) => (
+  const crow = (label: ReactNode, key: string, overlay?: ReactNode) => (
     <div className="ar-crow" key={key}>
       <div className="ar-clabel">{label}</div>
-      <div className="ar-cells">{Array.from({ length: COLS }, (_, c) => cell(key, c))}</div>
+      <div className="ar-cells">{Array.from({ length: COLS }, (_, c) => cell(key, c))}{overlay}</div>
       <input
         {...numPad}
         className="ar-cell ar-totalcell"
@@ -839,8 +878,8 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                 {crow('ISO/SEVO/ET%', 'med2')}
                 {crow('PROPOFOL IV mg', 'med3')}
                 {crow('ANECTINE IV mg', 'med4')}
-                {crow('VEC/ROC IV mg', 'med5')}
-                {crow('SUFENTA/SUBLIMAZE IV mcg', 'med6')}
+                {crow(<span className="ar-inlineck">{xck('vecMed', 'rocMed', 'VEC')}{xck('rocMed', 'vecMed', 'ROC')} IV mg</span>, 'med5')}
+                {crow(<span className="ar-inlineck">{xck('sufMed', 'fentMed', 'SUFENTA')}{xck('fentMed', 'sufMed', 'SUBLIMAZE')} IV mcg</span>, 'med6')}
                 {crow('VERSED IV mg', 'med7')}
                 {crow('REGLAN/ZOFRAN IV mg', 'med8')}
               </>
@@ -854,7 +893,21 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                 {crow('LIDOCAINE IV mg', 'oth5')}
                 {crow('ANCEF (cefazolin) g', 'oth6')}
                 {crow('DECADRON IV mg', 'oth7')}
-                {crow('LR/D5LR/NS', 'oth4')}
+                {/* The paper habit for a running fluid: circle which one, then
+                    draw an arrow through the boxes for as long as it runs.
+                    Circling LR / D5LR / NS draws the arrow to the anesthesia
+                    stop; the boxes stay tappable for volumes on top of it. */}
+                {crow(
+                  <span className="ar-inlineck">{xckg('lrFluid', ['d5lrFluid', 'nsFluid'], 'LR')}{xckg('d5lrFluid', ['lrFluid', 'nsFluid'], 'D5LR')}{xckg('nsFluid', ['lrFluid', 'd5lrFluid'], 'NS')}</span>,
+                  'oth4',
+                  (d.ck.lrFluid || d.ck.d5lrFluid || d.ck.nsFluid) ? (
+                    <div
+                      className="ar-fluidarrow"
+                      style={{ width: `${((endCol + 1) / COLS) * 100}%` }}
+                      aria-hidden="true"
+                    />
+                  ) : null,
+                )}
                 {Array.from({ length: customRowCount }, (_, i) => customRow(i))}
               </>
             ))}

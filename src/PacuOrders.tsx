@@ -68,6 +68,14 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
   const setCkVal = (k: string, v: boolean) => setD((p) => ({ ...p, ck: { ...p.ck, [k]: v } }));
   const setTxVal = (k: string, v: string) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: v } }));
 
+  // The case date — set on the record or by signing the pre-op — is the date
+  // on these orders too, so the printed form is never undated. Signing still
+  // stamps its own date and time over a blank.
+  useEffect(() => {
+    if (!caseData.caseDate) return;
+    setD((p) => ((p.tx.date ?? '').trim() ? p : { ...p, tx: { ...p.tx, date: caseData.caseDate } }));
+  }, [caseData.caseDate]);
+
   if (mode === 'wizard') {
     return (
       <PacuWizard
@@ -115,11 +123,29 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
     />
   );
 
-  // Items with no dose blank (standing orders) can be "circled" to mark them
-  // active, the way you'd circle the order number on paper.
-  const item = (n: number, body: ReactNode, circle = false) => (
+  // The form's election boxes: writing a dose into an order checks the box
+  // next to it, the way a chosen order is marked by hand. The box can also be
+  // ticked on its own (item 4 has no dose blank); while a dose is written the
+  // order stays elected, so the tick cannot be lost by accident.
+  const electCk = (k: string, doseKeys: string[]) => {
+    const elected = doseKeys.some((dk) => (d.tx[dk] ?? '').trim() !== '');
+    return (
+      <input
+        type="checkbox"
+        checked={!!d.ck[k] || elected}
+        onChange={(e) => setCkVal(k, e.target.checked)}
+      />
+    );
+  };
+
+  // Third argument marks the order: an election checkbox node, or `true` on
+  // the dose-less standing orders (items 2, 13, 14, 15), whose number can be
+  // "circled" the way it is circled on paper. The empty election span keeps
+  // every number in one column.
+  const item = (n: number, body: ReactNode, elect?: ReactNode) => (
     <div className="po-item" key={n}>
-      {circle ? (
+      <span className="po-electbox">{elect === true ? null : elect}</span>
+      {elect === true ? (
         <button
           type="button"
           className={`po-num po-circle${d.ck[`circle${n}`] ? ' on' : ''}`}
@@ -205,8 +231,8 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
             </div>
             <div className="po-or">~OR~</div>
           </>
-        ))}
-        {item(4, '800 mg Ibuprofen IV diluted in 250 mL Normal Saline run over 30 minutes times 1 PRN post-operative pain.')}
+        ), electCk('item3', ['toradolLow', 'toradolHigh']))}
+        {item(4, '800 mg Ibuprofen IV diluted in 250 mL Normal Saline run over 30 minutes times 1 PRN post-operative pain.', electCk('item4', []))}
 
         <div className="po-sechead flush">PACU nurse may administer one dose of one of the following oral pain medications:</div>
         {item(5, (
@@ -218,19 +244,19 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
             </div>
             <div className="po-or">~OR~</div>
           </>
-        ))}
+        ), electCk('item5', ['lortab']))}
         {item(6, (
           <div className="po-line">
             <span>Percocet (Oxycodone)</span>
             {txn('percocet')}
             <span>mg 1 tablet (pain scale 1-5) to 2 tablets (pain scale 6-10) PO PRN post-operative pain times 1 dose.</span>
           </div>
-        ))}
+        ), electCk('item6', ['percocet']))}
 
         <div className="po-sechead">BREAKTHROUGH PAIN (if choosing more than one medication, priority must be checked)</div>
         {item(7, (
           <div className="po-line">
-            {ck('morphine')}
+            {electCk('morphine', ['morphineLow', 'morphineHigh', 'morphineEvery', 'morphineMax'])}
             <span>Morphine Sulfate (Duramorph)</span>
             {txn('morphineLow')}
             <span>mg (pain scale 3-5) to</span>
@@ -244,7 +270,7 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
         ))}
         {item(8, (
           <div className="po-line">
-            {ck('dilaudid')}
+            {electCk('dilaudid', ['dilaudidLow', 'dilaudidHigh', 'dilaudidEvery', 'dilaudidMax'])}
             <span>Dilaudid (Hydromorphone)</span>
             {txn('dilaudidLow')}
             <span>mg (pain scale 3-5)</span>
@@ -258,7 +284,7 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
         ))}
         {item(9, (
           <div className="po-line">
-            {ck('fentanyl')}
+            {electCk('fentanyl', ['fentanylLow', 'fentanylHigh', 'fentanylEvery', 'fentanylMax'])}
             <span>Fentanyl (Sublimaze)</span>
             {txn('fentanylLow')}
             <span>mcg (pain scale 3-5)</span>
@@ -278,21 +304,21 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
             {txn('zofran')}
             <span>mg IV PRN post-operative nausea/vomiting may repeat times 1 15 minutes after first dose. (first, second)</span>
           </div>
-        ))}
+        ), electCk('item10', ['zofran']))}
         {item(11, (
           <div className="po-line">
             <span>Reglan (Metoclopramide)</span>
             {txn('reglan')}
             <span>mg IV PRN post-operative nausea/vomiting may repeat times 1 15 minutes after first dose. (first, second)</span>
           </div>
-        ))}
+        ), electCk('item11', ['reglan']))}
         {item(12, (
           <div className="po-line">
             <span>Inapsine (Droperidol)</span>
             {txn('inapsine')}
             <span>mg IV PRN post-operative nausea/vomiting may repeat times 1 15 minutes after first dose. (first, second)</span>
           </div>
-        ))}
+        ), electCk('item12', ['inapsine']))}
         {item(13, (
           <>
             <div>Call/Contact Anesthesia if:</div>
@@ -307,9 +333,9 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
         ), true)}
         {item(14, 'Discharge when MWMC PACU criteria met', true)}
         {item(15, 'Incentive Spirometer if patient alert and room air Sats are less than 90%', true)}
-        {item(16, tx('line16', 'grow'))}
-        {item(17, tx('line17', 'grow'))}
-        {item(18, tx('line18', 'grow'))}
+        {item(16, tx('line16', 'grow'), electCk('item16', ['line16']))}
+        {item(17, tx('line17', 'grow'), electCk('item17', ['line17']))}
+        {item(18, tx('line18', 'grow'), electCk('item18', ['line18']))}
       </div>
 
       <div className="po-sign">

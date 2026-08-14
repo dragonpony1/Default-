@@ -72,7 +72,7 @@ const STANDARD_MONITORS = [
 ];
 
 // Every box that holds a clock time — they all get the Now key.
-const TIME_FIELDS = ['anesStart', 'anesStop', 'surgStart', 'surgStop', 'ettTime', 'recTime', 'condTime', 'remarkTime', 'transferCare'];
+const TIME_FIELDS = ['anesStart', 'anesStop', 'surgStart', 'surgStop', 'ettTime', 'recTime', 'condTime', 'remarkTime', 'transferCare', 'tt'];
 
 export default function AnesWizard(api: WizardApi) {
   const [step, setStep] = useState(0);
@@ -144,16 +144,30 @@ export default function AnesWizard(api: WizardApi) {
       </div>
     </div>
   );
-  // A drug with common-dose quick-pick chips that fill the grid cell.
-  const drugDoses = (label: string, cellKey: string, unit: string, doses: number[]) => (
-    <div className="igroup" key={cellKey}>
-      <span>{label} <span className="awiz-unit">{unit}</span></span>
-      <div className="chips wrap">
-        {doses.map((dv) => chip(api.cells[cellKey] === String(dv), () => api.setCell(cellKey, api.cells[cellKey] === String(dv) ? '' : String(dv)), String(dv), cellKey + dv))}
-        <input {...numPad} className="awiz-doseinput" placeholder="other" value={doses.map(String).includes(api.cells[cellKey]) ? '' : (api.cells[cellKey] ?? '')} onChange={(e) => api.setCell(cellKey, e.target.value)} />
+  // A drug with common-dose quick-pick chips that fill the grid cell. Some
+  // rows print as a circled pair (VEC/ROC, SUFENTA/SUBLIMAZE) — giving the
+  // drug also circles its name on the record via `picks`.
+  const drugDoses = (label: string, cellKey: string, unit: string, doses: number[], picks?: { on: string; off: string[] }) => {
+    const gave = (v: string) => {
+      if (picks && v.trim() !== '') {
+        api.setCk(picks.on, true);
+        picks.off.forEach((o) => api.setCk(o, false));
+      }
+    };
+    return (
+      <div className="igroup" key={cellKey}>
+        <span>{label} <span className="awiz-unit">{unit}</span></span>
+        <div className="chips wrap">
+          {doses.map((dv) => chip(api.cells[cellKey] === String(dv), () => {
+            const next = api.cells[cellKey] === String(dv) ? '' : String(dv);
+            api.setCell(cellKey, next);
+            gave(next);
+          }, String(dv), cellKey + dv))}
+          <input {...numPad} className="awiz-doseinput" placeholder="other" value={doses.map(String).includes(api.cells[cellKey]) ? '' : (api.cells[cellKey] ?? '')} onChange={(e) => { api.setCell(cellKey, e.target.value); gave(e.target.value); }} />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // A continuously-running setting: pick a starting value and carry-forward
   // fills it across the chart until it is changed.
@@ -286,11 +300,14 @@ export default function AnesWizard(api: WizardApi) {
       hint: 'Tap the common dose or type another — these drop into the first (surgery-start) grid column.',
       render: () => (
         <>
+          {/* The reassessment box lives at the top of the record's Remarks —
+              easy to walk past on the form, so it is asked right here. */}
+          {group('Before induction', ckChip('preInduction', 'Pre-induction anesthetic reassessment done'))}
           {drugDoses('Lidocaine', 'oth5:0', 'mg', [40, 50, 100])}
           {drugDoses('Propofol', 'med3:0', 'mg', [100, 150, 200])}
-          {drugDoses('Fentanyl', 'med6:0', 'mcg', [50, 100, 150, 250])}
+          {drugDoses('Fentanyl', 'med6:0', 'mcg', [50, 100, 150, 250], { on: 'fentMed', off: ['sufMed'] })}
           {drugDoses('Versed', 'med7:0', 'mg', [1, 2])}
-          {drugDoses('Rocuronium', 'med5:0', 'mg', [30, 50])}
+          {drugDoses('Rocuronium', 'med5:0', 'mg', [30, 50], { on: 'rocMed', off: ['vecMed'] })}
           {drugDoses('Succinylcholine', 'med4:0', 'mg', [100])}
           {drugDoses('Ancef (cefazolin)', 'oth6:0', 'g', [1, 2, 3])}
         </>
@@ -406,6 +423,9 @@ export default function AnesWizard(api: WizardApi) {
           {drugDoses('Sugammadex', `oth3:${api.endCol}`, 'mg', [200, 400])}
           {drugDoses('Zofran (ondansetron)', `med8:${api.endCol}`, 'mg', [4])}
           {drugDoses('Decadron (dexamethasone)', `oth7:${api.endCol}`, 'mg', [4, 8, 10])}
+          {/* Tourniquet down — the TT line under the Remarks box. Entered at
+              the end of the case, so it is asked here with the Now key. */}
+          {field('TT — tourniquet time', 'tt', 'HHMM')}
         </>
       ),
     },

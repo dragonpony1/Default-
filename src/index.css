@@ -1640,7 +1640,33 @@ input[type='checkbox']:checked::after {
   flex: 1;
   min-width: 0;
   display: flex;
+  position: relative; /* anchors the running-fluid arrow overlay */
   border-bottom: 0.5px solid #777;
+}
+
+/* The running-fluid arrow: the hand-drawn "it's running" line through the
+   boxes, drawn when LR / D5LR / NS is circled. Ink only — the cells under it
+   stay tappable for volumes. */
+.ar-fluidarrow {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 0;
+  border-top: 1.2px solid #000;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ar-fluidarrow::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: -4px;
+  width: 0;
+  height: 0;
+  border-top: 3.5px solid transparent;
+  border-bottom: 3.5px solid transparent;
+  border-left: 5.5px solid #000;
 }
 
 .ar-crow:last-child .ar-cells {
@@ -2032,6 +2058,20 @@ input[type='checkbox']:checked::after {
 /* A real reading always wins a tie against the repeats carried from it. */
 .vg-mark.explicit {
   z-index: 2;
+}
+
+/* One-tap take-back for a mark nudged by accident (screen only). */
+.vg-undo {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  z-index: 5;
+  pointer-events: auto;
+  background: #fff;
+  border-color: #2a5db0;
+  color: #2a5db0;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 }
 
 .vg-glyph {
@@ -2473,6 +2513,19 @@ input[type='checkbox']:checked::after {
   flex: none;
   width: 1.6em;
   text-align: right;
+}
+
+/* Election box beside each choosable order — checks itself when the order's
+   dose is written in. The empty span on non-electable items keeps the
+   numbers in one column. */
+.po-electbox {
+  flex: none;
+  width: 1em;
+  padding-top: 1px;
+}
+
+.po-electbox input {
+  margin: 0;
 }
 
 /* Circle-able standing-order number (items 2, 13, 14, 15) */

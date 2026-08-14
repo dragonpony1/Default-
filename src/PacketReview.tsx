@@ -244,6 +244,27 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
   // that did gets its time onto the printed sheet instead of a blank TT box.
   rec('tt', 'Tourniquet time (TT)');
 
+  // The reassessment box at the top of the record's Remarks — small enough to
+  // walk right past on the form, so the check asks for it by name.
+  need(
+    {
+      id: 'anes.preInduction',
+      label: 'Pre-induction anesthetic reassessment',
+      sheet: 'Record',
+      tab: 'anes',
+      kind: 'choice',
+      options: ['✓ Done'],
+      value: anes.ck.preInduction ? '✓ Done' : '',
+      set: (v) => {
+        if (v !== '✓ Done') return; // N/A has no box to tick
+        writeSheetCk(ANES_KEY, 'preInduction', true);
+        touched();
+      },
+      note: 'Checks the box at the top of the Remarks box',
+    },
+    !!anes.ck.preInduction,
+  );
+
   const asaMarked = ['asa1', 'asa2', 'asa3', 'asa4', 'asa5'].find((k) => anes.ck[k]);
   need(
     {
