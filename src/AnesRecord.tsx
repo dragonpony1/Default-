@@ -9,6 +9,8 @@ import { composeNarrative } from './narrative';
 import ColumnPass from './ColumnPass';
 import SignaturePad from './SignaturePad';
 import LearnedInput from './LearnedInput';
+import QuickDrug from './QuickDrug';
+import { remember } from './learned';
 import { nameForSignature } from './providers';
 import { CARRY_ROWS, STEP_SPECS, carriedInto as carriedFrom } from './chartRows';
 
@@ -83,6 +85,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
   const signer = useSigner();
   const [mode, setMode] = useState<'chart' | 'wizard' | 'column'>('chart');
   const [signPad, setSignPad] = useState(false);
+  const [quickDrug, setQuickDrug] = useState(false);
   const [zoom, setZoom] = useState(1);
   const bumpZoom = (delta: number) => setZoom((z) => Math.min(2.5, Math.max(0.8, Math.round((z + delta) * 10) / 10)));
   // Zoom via transform scale (not CSS `zoom`, which breaks pointer-drag math).
@@ -199,6 +202,82 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
       onChange={(e) => setD((p) => ({ ...p, tx: { ...p.tx, [k]: e.target.value } }))}
     />
   );
+
+  // Where a mid-case drug lands. The commons map onto the printed rows the
+  // form already has; anything else finds or makes an add-a-med row. Repeat
+  // boluses in the same column fold to "dose×n" so the cell stays readable.
+  const FIXED_DRUG_ROWS: Record<string, [key: string, label: string]> = {
+    phenylephrine: ['oth2', 'NEO IV mg'],
+    neo: ['oth2', 'NEO IV mg'],
+    sugammadex: ['oth3', 'SUGAMMADEX IV mg'],
+    zofran: ['med8', 'REGLAN/ZOFRAN IV mg'],
+    reglan: ['med8', 'REGLAN/ZOFRAN IV mg'],
+    decadron: ['oth7', 'DECADRON IV mg'],
+    propofol: ['med3', 'PROPOFOL IV mg'],
+    versed: ['med7', 'VERSED IV mg'],
+    toradol: ['oth0', 'TORADOL IV mg'],
+    robinul: ['oth1', 'ROBINUL IV mg'],
+    lidocaine: ['oth5', 'LIDOCAINE IV mg'],
+    ancef: ['oth6', 'ANCEF (cefazolin) g'],
+  };
+
+  const colForTime = (hhmm: string): number => {
+    const start = parseTime(chartStart);
+    const n = new Date();
+    const t = hhmm ? parseTime(hhmm) : n.getHours() * 60 + n.getMinutes();
+    if (start == null || t == null) return 0; // no clock yet: the case's first column
+    let diff = t - start;
+    if (diff < 0) diff += 24 * 60;
+    return Math.max(0, Math.min(COLS - 1, Math.floor(diff / stepMin)));
+  };
+
+  const drugRowFor = (name: string): { key: string; label: string; makes: boolean } => {
+    const fixed = FIXED_DRUG_ROWS[name.toLowerCase()];
+    if (fixed) return { key: fixed[0], label: fixed[1], makes: false };
+    for (let i = 0; i < customRowCount; i++) {
+      if ((d.tx[`custMed${i}`] ?? '').trim().toLowerCase() === name.toLowerCase()) {
+        return { key: `cust${i}`, label: name, makes: false };
+      }
+    }
+    return { key: '', label: name, makes: true };
+  };
+
+  const describeGive = (name: string, time: string): string => {
+    const row = drugRowFor(name);
+    const at = times[colForTime(time)] || 'the first column';
+    return `${row.makes ? `a new ${name} row` : `the ${row.label} row`} at ${at}`;
+  };
+
+  const giveDrug = (name: string, dose: string, time: string) => {
+    const col = colForTime(time);
+    const row = drugRowFor(name);
+    setD((p) => {
+      const tx = { ...p.tx };
+      let key = row.key;
+      if (row.makes) {
+        // First empty add-a-med slot, or a fresh one below the last.
+        const count = Math.max(2, Number(tx.customRowCount ?? 2) || 2);
+        let slot = -1;
+        for (let i = 0; i < count; i++) {
+          if (!(tx[`custMed${i}`] ?? '').trim()) { slot = i; break; }
+        }
+        if (slot < 0) {
+          slot = count;
+          tx.customRowCount = String(count + 1);
+        }
+        tx[`custMed${slot}`] = name;
+        key = `cust${slot}`;
+      }
+      const cellKey = `${key}:${col}`;
+      const held = (p.cells[cellKey] ?? '').trim();
+      let next = dose;
+      const folded = held.match(/^(.+)×(\d+)$/);
+      if (folded && folded[1] === dose) next = `${dose}×${Number(folded[2]) + 1}`;
+      else if (held === dose) next = `${dose}×2`;
+      else if (held) next = `${held}+${dose}`;
+      return { ...p, tx, cells: { ...p.cells, [cellKey]: next } };
+    });
+  };
 
   // Emptying a cell removes the entry rather than storing a blank, so a cell
   // poked by accident goes back to whatever it should have been — nothing, or
@@ -416,6 +495,17 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
 
   return (
     <div className="ar-wrap">
+      {quickDrug && (
+        <QuickDrug
+          describe={describeGive}
+          onGive={(name, dose, time) => {
+            giveDrug(name, dose, time);
+            // Typed drugs are remembered; the commons are always offered anyway.
+            if (!(name.toLowerCase() in FIXED_DRUG_ROWS)) remember('medRow', name);
+          }}
+          onClose={() => setQuickDrug(false)}
+        />
+      )}
       {signPad && (
         <SignaturePad
           onSave={(sig) => {
@@ -429,6 +519,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
       <div className="awiz-switch screen-only">
         <button type="button" className="chip" onClick={() => setMode('wizard')}>⛑ Guided setup wizard</button>
         <button type="button" className="chip on cp-enter" onClick={() => setMode('column')}>⏱ Chart the case, column by column</button>
+        <button type="button" className="chip qd-enter" onClick={() => setQuickDrug(true)}>💉 Drug / adjunct</button>
       </div>
       <div className="ar-topbar screen-only">
         <span className="ar-topgroup">
