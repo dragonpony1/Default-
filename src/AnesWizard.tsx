@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { composeNarrative } from './narrative';
+import type { VitalsData, Series } from './VitalsGraph';
 import { noAuto, numPad, tempPad, timePad } from './inputProps';
 
 // "0730"/"7:30"/"730" → minutes since midnight, or null.
@@ -29,6 +30,9 @@ export interface WizardApi {
   setCk: (k: string, v: boolean) => void;
   setTx: (k: string, v: string) => void;
   setCell: (k: string, v: string) => void;
+  /** The vitals series, so the first BP and HR are a wizard step too. */
+  vitals: VitalsData;
+  setVitals: (next: VitalsData) => void;
   endCol: number;
   onDone: () => void;
 }
@@ -105,6 +109,25 @@ export default function AnesWizard(api: WizardApi) {
       <input {...(['recT'].includes(k) ? tempPad : TIME_FIELDS.includes(k) ? timePad : ['tubeLength', 'attempts', 'crystalloid', 'fluidEbl', 'fluidUrine', 'fluidBlood', 'recBp', 'recO2', 'recP', 'recR', 'recRoom'].includes(k) ? numPad : noAuto)} value={api.tx[k] ?? ''} placeholder={ph} onChange={(e) => api.setTx(k, e.target.value)} />
     </label>
   );
+  // First reading of a vitals series → column 0, same as the fields on the
+  // chart. One series per keystroke, so no write can clobber another.
+  const vitalField = (label: string, series: Series) => (
+    <label className="ifield" key={series}>
+      <span>{label}</span>
+      <input
+        {...numPad}
+        value={api.vitals[series][0] ?? ''}
+        onChange={(e) => {
+          const raw = e.target.value.trim();
+          const next = { ...api.vitals[series] };
+          if (raw === '' || Number.isNaN(Number(raw))) delete next[0];
+          else next[0] = Math.round(Number(raw));
+          api.setVitals({ ...api.vitals, [series]: next });
+        }}
+      />
+    </label>
+  );
+
   const group = (title: string, children: ReactNode) => (
     <div className="igroup"><span>{title}</span><div className="chips wrap">{children}</div></div>
   );
@@ -329,6 +352,13 @@ export default function AnesWizard(api: WizardApi) {
       hint: 'First readings off the monitor. These carry forward too — chart a new value only when it changes.',
       render: () => (
         <>
+          {/* The first BP and heart rate: come back to this step any time —
+              the boxes are the same ones sitting above the chart's graph. */}
+          <div className="irow">
+            {vitalField('BP systolic', 'sys')}
+            {vitalField('BP diastolic', 'dia')}
+            {vitalField('Heart rate', 'hr')}
+          </div>
           {settingRow('EtCO₂', 'mon0:0', 'mmHg', [30, 32, 34, 36, 38], { min: 15, max: 65, inc: 1, start: 35 })}
           {settingRow('SaO₂', 'mon1:0', '%', [96, 97, 98, 99, 100], { min: 70, max: 100, inc: 1, start: 99 })}
           {settingRow('Temp', 'mon2:0', '°C', [35.5, 36, 36.5, 37])}
