@@ -3670,9 +3670,6 @@ button.po-num.on {
   border-bottom: 3px solid #1a7a3a;
 }
 
-.fbf-secnav .awiz-secbtn.part:not(.on) {
-  border-bottom: 3px solid #a8d5b5;
-}
 
 /* ---- Pre-print review: what is still blank, answerable in place ---- */
 
