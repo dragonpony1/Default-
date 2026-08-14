@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import SigImg from './SigImg';
-import { noAuto, numPad, tempPad, timePad } from './inputProps';
+import { noAuto, npoPad, numPad, tempPad } from './inputProps';
 import { emptyPreopEval, type PreopEval, type YesNo } from './types';
 import { SYSTEMS, selectedProblems, effectiveWnl, type SystemBand } from './formConfig';
 import { clearDraft, loadDraft, saveDraft } from './storage';
@@ -208,11 +208,6 @@ export default function App() {
   // Borderless inline text input
   const txt = (k: StringKeys, cls = '') => (
     <input {...noAuto} className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
-  );
-
-  // Clock times: the 10-key with a Now key on it.
-  const txtime = (k: StringKeys, cls = '') => (
-    <input {...timePad} className={`t ${cls}`} value={d[k]} onChange={(e) => set(k, e.target.value)} />
   );
 
   // Date/time blank with a one-tap "Now" stamp beside it.
@@ -712,7 +707,8 @@ export default function App() {
               <div>
                 <span className="b caps">Airway / Teeth / Head and Neck</span>
                 <span className="b gap">Mallampati Class</span>{txt('mallampati', 'u med')}
-                <span className="b gap">NPO</span>{txtime('npo', 'u med')}
+                <span className="b gap">NPO</span>
+                <input {...npoPad} className="t u med" value={d.npo} onChange={(e) => set('npo', e.target.value)} />
               </div>
               <div>
                 <span className="b">TMD</span>{txt('tmd', 'u med')}

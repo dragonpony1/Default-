@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { noAuto, numPad, tempPad, timePad } from './inputProps';
+import { noAuto, npoPad, numPad, tempPad } from './inputProps';
 import type { PreopEval, YesNo } from './types';
 import { SYSTEMS, selectedProblems, screenItems, type SystemBand, effectiveWnl } from './formConfig';
 import type { CustomChoices } from './choices';
@@ -291,10 +291,15 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     {
       title: 'NPO since',
       render: () => (
-        <label className="ifield">
-          <span>NPO since</span>
-          <input {...timePad} value={d.npo} placeholder="HHMM" onChange={(e) => set('npo', e.target.value)} />
-        </label>
+        <>
+          <div className="chips">
+            {chip(d.npo === 'Midnight', () => set('npo', d.npo === 'Midnight' ? '' : 'Midnight'), '🌙 Midnight', 'npoMn')}
+          </div>
+          <label className="ifield">
+            <span>NPO since</span>
+            <input {...npoPad} value={d.npo} placeholder="HHMM or Midnight" onChange={(e) => set('npo', e.target.value)} />
+          </label>
+        </>
       ),
       summary: () => d.npo,
     },

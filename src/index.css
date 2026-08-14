@@ -3812,6 +3812,16 @@ button.po-num.on {
   grid-template-columns: 1fr 1fr 2fr;
 }
 
+/* NPO pad: ABC · Midnight · Now · Done */
+.np-bottom4 {
+  grid-template-columns: 1fr 1.6fr 1.2fr 1.2fr;
+}
+
+.np-bottom4 .np-key {
+  font-size: 0.85rem;
+  padding: 0 0.2rem;
+}
+
 .cp-foot {
   gap: 0.5rem;
   flex-wrap: wrap;

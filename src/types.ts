@@ -154,7 +154,7 @@ export const emptyPreopEval: PreopEval = {
   allergies: '',
   allergiesNone: false,
   mallampati: '',
-  npo: 'MN', // midnight unless changed
+  npo: 'Midnight', // the word, unless a time is put in
   tmd: '',
   rom: '',
   hfPatient: true, // the history nearly always comes from the patient

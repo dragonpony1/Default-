@@ -159,8 +159,11 @@ export default function NumPad() {
         {key('Clear', clearAll, 'np-fn np-small')}
         {key('-', () => type('-'), 'np-fn')}
       </div>
-      <div className={`np-bottom${target.dataset.timefield === '1' ? ' np-bottom3' : ''}`}>
+      <div className={`np-bottom${target.dataset.npo === '1' ? ' np-bottom4' : target.dataset.timefield === '1' ? ' np-bottom3' : ''}`}>
         {key('ABC', abc, 'np-fn np-small')}
+        {/* NPO is midnight far more often than it is a clock time. */}
+        {target.dataset.npo === '1' &&
+          key('🌙 Midnight', () => setNativeValue(target, 'Midnight'), 'np-fn np-now')}
         {/* Times are nearly always "right now" — one key beats four taps. */}
         {target.dataset.timefield === '1' &&
           key('🕐 Now', () => {
