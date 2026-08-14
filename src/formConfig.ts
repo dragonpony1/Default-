@@ -92,3 +92,18 @@ export const SYSTEMS: SystemBand[] = [
     col2: ['Immunosuppressed', 'Loss of Hearing', 'Loss of Vision', 'Recent Steroids', 'Transfusion History'],
   },
 ];
+
+// A system is Within Normal Limits until something in its box says otherwise.
+// Ticking any condition (built-in or custom) takes the system off WNL; with
+// nothing ticked, WNL holds unless it was explicitly tapped off. The stored
+// flag only records an explicit choice — absence means the default.
+export function effectiveWnl(
+  d: { wnl: Record<string, boolean>; checks: Record<string, boolean>; customConditions: Record<string, string[]> },
+  key: string,
+): boolean {
+  const anyChecked =
+    Object.entries(d.checks).some(([k, v]) => v && k.startsWith(`${key}:`)) ||
+    (d.customConditions[key] ?? []).length > 0;
+  if (anyChecked) return false;
+  return d.wnl[key] ?? true;
+}

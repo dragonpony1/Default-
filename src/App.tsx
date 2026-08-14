@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import SigImg from './SigImg';
 import { noAuto, numPad, tempPad, timePad } from './inputProps';
 import { emptyPreopEval, type PreopEval, type YesNo } from './types';
-import { SYSTEMS, selectedProblems, type SystemBand } from './formConfig';
+import { SYSTEMS, selectedProblems, effectiveWnl, type SystemBand } from './formConfig';
 import { clearDraft, loadDraft, saveDraft } from './storage';
 import Barcode39 from './Barcode39';
 import NumPad from './NumPad';
@@ -197,8 +197,10 @@ export default function App() {
   // reload with the applied preferences.
   const applyProvider = (prefs: ProviderPrefs) => {
     const patch = applyProviderToDrafts(prefs);
-    if (patch.plannedAnesthesia != null && patch.plannedAnesthesia !== '') {
-      setD((prev) => ({ ...prev, plannedAnesthesia: patch.plannedAnesthesia as string }));
+    // The saved pre-op answers land on the wizard — only the fields that were
+    // saved, merged over the case in progress.
+    if (Object.keys(patch.preop).length) {
+      setD((prev) => ({ ...prev, ...patch.preop }));
     }
     setAnesReset((n) => n + 1);
   };
@@ -364,7 +366,7 @@ export default function App() {
       <div className="cell wnlc">
         <input
         type="checkbox"
-          checked={!!d.wnl[s.key]}
+          checked={effectiveWnl(d, s.key)}
           onChange={(e) => set('wnl', { ...d.wnl, [s.key]: e.target.checked })}
         />
       </div>

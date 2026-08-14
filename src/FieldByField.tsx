@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { noAuto, numPad, tempPad, timePad } from './inputProps';
 import type { PreopEval, YesNo } from './types';
-import { SYSTEMS, selectedProblems, screenItems, type SystemBand } from './formConfig';
+import { SYSTEMS, selectedProblems, screenItems, type SystemBand, effectiveWnl } from './formConfig';
 import type { CustomChoices } from './choices';
 import AddEntry from './AddEntry';
 import DateTimeField from './DateTimeField';
@@ -173,13 +173,18 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     const items = screenItems(s).concat(customChoices[s.key] ?? []);
     return {
       title: s.title,
-      hint: 'Tap every condition that applies, or WNL if the system is normal. Type anything not listed below.',
+      hint: 'The system starts as WNL — tapping any condition takes it off. Type anything not listed below.',
       render: () => {
         const custom = d.customConditions[s.key] ?? [];
         return (
           <>
             <div className="chips wrap">
-              {chip(!!d.wnl[s.key], () => set('wnl', { ...d.wnl, [s.key]: !d.wnl[s.key] }), 'WNL')}
+              {chip(effectiveWnl(d, s.key), () => {
+                const anyChecked =
+                  Object.entries(d.checks).some(([k, v]) => v && k.startsWith(`${s.key}:`)) ||
+                  (d.customConditions[s.key] ?? []).length > 0;
+                if (!anyChecked) set('wnl', { ...d.wnl, [s.key]: !effectiveWnl(d, s.key) });
+              }, 'WNL')}
               {items.map((label) => {
                 const id = `${s.key}:${label}`;
                 return chip(
@@ -212,7 +217,7 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       },
       summary: () => {
         const parts: string[] = [];
-        if (d.wnl[s.key]) parts.push('WNL');
+        if (effectiveWnl(d, s.key)) parts.push('WNL');
         parts.push(...items.filter((l) => d.checks[`${s.key}:${l}`]));
         parts.push(...(d.customConditions[s.key] ?? []));
         if (d.comments[s.key]) parts.push(d.comments[s.key]);
