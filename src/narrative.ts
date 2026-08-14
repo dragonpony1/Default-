@@ -78,6 +78,7 @@ export function composeNarrative(ck: Ck, tx: Tx, cells: Cells): string {
     add(`Transported to ${dest}${status ? ` ${status}` : ''}${o2}${tx.recTime ? ` at ${tx.recTime}` : ''}.`);
   }
   if (ck.reportToRn) add('Report given to receiving RN.');
+  if (tx.transferCare) add(`Care transferred at ${tx.transferCare}.`);
   if (tx.anesStop) add(`Anesthesia stop ${tx.anesStop}.`);
 
   // How the case ended is the point of the note, so it closes on it. An
