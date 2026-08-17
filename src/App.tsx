@@ -18,7 +18,7 @@ import PostAnesNote from './PostAnesNote';
 import SignaturePad from './SignaturePad';
 import BillingSheet, { clearBillingDraft } from './BillingSheet';
 import { decodeChoices, loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
-import { setCaseField, clearCase, getCase } from './caseData';
+import { setCaseField, clearCase, getCase, useCaseData } from './caseData';
 import { useSigner, nowStamp } from './signer';
 import ProviderBar from './ProviderBar';
 import { applyProviderToDrafts, nameForSignature, type ProviderPrefs } from './providers';
@@ -45,6 +45,7 @@ export default function App() {
   const beforeChoices = useRef<typeof view>('fields');
   const [choices, setChoicesState] = useState<CustomChoices>(loadCustomChoices);
   const signer = useSigner();
+  const caseData = useCaseData();
   const [signTarget, setSignTarget] = useState<{ sig: 'panSig' | 'evalSig' | 'inpSig'; dt: StringKeys; nm: StringKeys } | null>(null);
 
   const setChoices = (c: CustomChoices) => {
@@ -824,6 +825,12 @@ export default function App() {
                 <div className="blmain grow">
                   <div className="cellrow">
                     <span className="lbl">Problem List / Diagnoses</span>
+                    {/* The surgical diagnosis leads the box — the indication
+                        for the operation, read off the shared case so it shows
+                        here no matter which form it was typed on. */}
+                    {caseData.diagnosis.trim() && (
+                      <div className="detline"><span className="b">Surgical Dx:</span> {caseData.diagnosis.trim()}</div>
+                    )}
                     {(() => {
                       const probs = selectedProblems(d.checks, d.customConditions, d.checkDetails);
                       return probs.length ? <div className="detline">{probs.join(', ')}</div> : null;
