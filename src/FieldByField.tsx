@@ -603,9 +603,9 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       hint: 'Everything you checked in the systems review is carried here automatically and prints on the form. Use the box only for anything extra.',
       render: () => (
         <>
-          {selectedProblems(d.checks, d.customConditions).length > 0 && (
+          {selectedProblems(d.checks, d.customConditions, d.checkDetails).length > 0 && (
             <div className="chips wrap">
-              {selectedProblems(d.checks, d.customConditions).map((l) => (
+              {selectedProblems(d.checks, d.customConditions, d.checkDetails).map((l) => (
                 <span className="chip fixed" key={l}>{l}</span>
               ))}
             </div>
@@ -614,7 +614,7 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
         </>
       ),
       summary: () => {
-        const probs = selectedProblems(d.checks, d.customConditions);
+        const probs = selectedProblems(d.checks, d.customConditions, d.checkDetails);
         return [probs.join(', '), d.problemList].filter(Boolean).join('; ');
       },
     },

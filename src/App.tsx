@@ -825,10 +825,10 @@ export default function App() {
                   <div className="cellrow">
                     <span className="lbl">Problem List / Diagnoses</span>
                     {(() => {
-                      const probs = selectedProblems(d.checks, d.customConditions);
+                      const probs = selectedProblems(d.checks, d.customConditions, d.checkDetails);
                       return probs.length ? <div className="detline">{probs.join(', ')}</div> : null;
                     })()}
-                    {ta('problemList', selectedProblems(d.checks, d.customConditions).length && !d.problemList ? 1 : 2, selectedProblems(d.checks, d.customConditions).length && !d.problemList ? 'np' : '')}
+                    {ta('problemList', selectedProblems(d.checks, d.customConditions, d.checkDetails).length && !d.problemList ? 1 : 2, selectedProblems(d.checks, d.customConditions, d.checkDetails).length && !d.problemList ? 'np' : '')}
                   </div>
                   <div className="cellrow last">
                     <span className="lbl">Planned Anesthesia / Special Monitors</span>
