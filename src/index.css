@@ -923,6 +923,14 @@ input[type='checkbox']:checked::after {
     break-inside: avoid;
   }
 
+  /* The pre-op sheet has the least on it and printed at two-thirds of the
+     page height. A larger face fills the sheet — and everything typed on it
+     (problem list included) prints bigger with it. */
+  .preop-page {
+    font-size: 8.6pt;
+    line-height: 1.25;
+  }
+
   * {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
@@ -2006,6 +2014,28 @@ input[type='checkbox']:checked::after {
     transform: none !important;
   }
 
+  /* What was typed steps up from the 7px scaffold — the grid stays put, but
+     the ink on it (Dx, times, narrative, doses) prints at handwriting size. */
+  .ar .t,
+  .ar-remarks {
+    font-size: 8px;
+  }
+
+  .ar-cell {
+    font-size: 7.5px;
+  }
+
+  /* The grid gained rows as features were added and crept past one printed
+     page. Each row gives back a sliver in print — across 40-odd rows that is
+     the better part of an inch — so the record fits one sheet again. */
+  .ar-crow {
+    height: 0.14in;
+  }
+
+  .vsband .ar-crow {
+    height: 0.17in;
+  }
+
 }
 
 /* ---- Vital-signs draggable overlay (sits on the crosshatch) ---- */
@@ -2546,6 +2576,24 @@ button.po-num.on {
   font-weight: 700;
 }
 
+/* Priority words — "(first, second, third)" — circled by hand when more than
+   one order is elected. The transparent border reserves the circle's room so
+   nothing shifts when one is picked. */
+button.po-priw {
+  font: inherit;
+  background: transparent;
+  border: 1.3px solid transparent;
+  border-radius: 999px;
+  padding: 0 3px;
+  cursor: pointer;
+  color: inherit;
+}
+
+button.po-priw.on {
+  border-color: #000;
+  font-weight: 700;
+}
+
 .po-body {
   flex: 1;
   min-width: 0;
@@ -2750,13 +2798,15 @@ button.po-num.on {
 }
 
 @media print {
+  /* Sized to fill the printed page: one notch below where a filled form
+     wraps onto a second sheet (PACU's long order sentences wrap early). */
   .po-page {
-    font-size: 8.5pt;
+    font-size: 9pt;
     line-height: 1.3;
   }
 
   .bs-page {
-    font-size: 8pt;
+    font-size: 10pt;
     line-height: 1.25;
   }
 
@@ -3412,6 +3462,17 @@ button.po-num.on {
   align-items: flex-end;
 }
 
+/* The stamp box as a tappable input (PACU sign-off): same look, no chrome. */
+input.pan-stampval {
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid #000;
+  border-radius: 0;
+  padding: 0;
+  width: 6rem;
+}
+
 /* Hydration: fluid choice then how much */
 .pan-amt {
   display: flex;
@@ -3531,7 +3592,7 @@ button.po-num.on {
 
 @media print {
   .signame {
-    font-size: 6pt;
+    font-size: 8pt;
   }
 }
 

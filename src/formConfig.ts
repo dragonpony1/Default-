@@ -17,27 +17,33 @@ export function screenItems(s: SystemBand): string[] {
 
 // Every condition selected in the systems review (built-in, custom-choice,
 // and per-patient custom entries), in band order — feeds the Problem List.
+// The detail typed under a checked condition ("Arthritis — osteoarthritis")
+// rides along, so the problem list carries the actual diagnosis and not just
+// the checkbox's word.
 export function selectedProblems(
   checks: Record<string, boolean>,
   customConditions: Record<string, string[]>,
+  details: Record<string, string> = {},
 ): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
-  const push = (label: string) => {
-    if (label && !seen.has(label)) {
-      seen.add(label);
-      out.push(label);
+  const push = (label: string, key?: string) => {
+    const detail = key ? (details[key] ?? '').trim() : '';
+    const full = detail ? `${label} — ${detail}` : label;
+    if (full && !seen.has(full)) {
+      seen.add(full);
+      out.push(full);
     }
   };
   for (const s of SYSTEMS) {
     for (const [k, v] of Object.entries(checks)) {
-      if (v && k.startsWith(`${s.key}:`)) push(k.slice(s.key.length + 1));
+      if (v && k.startsWith(`${s.key}:`)) push(k.slice(s.key.length + 1), k);
     }
-    for (const label of customConditions[s.key] ?? []) push(label);
+    for (const label of customConditions[s.key] ?? []) push(label, `${s.key}:${label}`);
   }
   // Anything checked under a band not in SYSTEMS (future-proofing)
   for (const [k, v] of Object.entries(checks)) {
-    if (v && k.includes(':')) push(k.slice(k.indexOf(':') + 1));
+    if (v && k.includes(':')) push(k.slice(k.indexOf(':') + 1), k);
   }
   return out;
 }

@@ -11,13 +11,14 @@ const KEY = 'learned-v1';
 const MAX_PER_BUCKET = 40;
 const MIN_LENGTH = 2;
 
-export type Bucket = 'surgeon' | 'procedure' | 'diagnosis' | 'medRow';
+export type Bucket = 'surgeon' | 'procedure' | 'diagnosis' | 'medRow' | 'pacuOrder';
 
 export const BUCKET_LABELS: Record<Bucket, string> = {
   surgeon: 'Surgeons',
   procedure: 'Procedures',
   diagnosis: 'Diagnoses',
   medRow: 'Added med rows',
+  pacuOrder: 'Added PACU orders',
 };
 
 interface Entry {

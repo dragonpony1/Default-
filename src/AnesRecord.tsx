@@ -380,6 +380,28 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
     return Math.max(0, Math.min(COLS - 1, Math.floor(diff / stepMin)));
   })();
 
+  // The running-fluid arrow is drawn like the hand does it: only as far as the
+  // fluid has actually run. Until a stop time is written its tip sits at the
+  // current time's column and creeps forward with the clock; the stop time
+  // then fixes it, which is what the printed chart shows.
+  const fluidOn = !!(d.ck.lrFluid || d.ck.d5lrFluid || d.ck.nsFluid);
+  const fluidLive = fluidOn && parseTime(d.tx.anesStop ?? '') == null;
+  const [, bumpClock] = useState(0);
+  useEffect(() => {
+    if (!fluidLive) return;
+    const t = setInterval(() => bumpClock((n) => n + 1), 60_000);
+    return () => clearInterval(t);
+  }, [fluidLive]);
+  const fluidEndCol = (() => {
+    if (!fluidLive) return endCol;
+    const s = parseTime(chartStart);
+    if (s == null) return 0;
+    const now = new Date();
+    let diff = now.getHours() * 60 + now.getMinutes() - s;
+    if (diff < 0) diff += 24 * 60;
+    return Math.max(0, Math.min(COLS - 1, Math.floor(diff / stepMin)));
+  })();
+
 // One tappable charting cell.
   // Value carried into a column from the last entry at or before it. An
   // explicitly blanked cell stops the carry, so turning something off works.
@@ -895,15 +917,17 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
                 {crow('DECADRON IV mg', 'oth7')}
                 {/* The paper habit for a running fluid: circle which one, then
                     draw an arrow through the boxes for as long as it runs.
-                    Circling LR / D5LR / NS draws the arrow to the anesthesia
-                    stop; the boxes stay tappable for volumes on top of it. */}
+                    Circling LR / D5LR / NS starts the arrow at the current
+                    column and it creeps along with the clock until the
+                    anesthesia stop pins it; the boxes stay tappable for
+                    volumes on top of it. */}
                 {crow(
                   <span className="ar-inlineck">{xckg('lrFluid', ['d5lrFluid', 'nsFluid'], 'LR')}{xckg('d5lrFluid', ['lrFluid', 'nsFluid'], 'D5LR')}{xckg('nsFluid', ['lrFluid', 'd5lrFluid'], 'NS')}</span>,
                   'oth4',
-                  (d.ck.lrFluid || d.ck.d5lrFluid || d.ck.nsFluid) ? (
+                  fluidOn ? (
                     <div
                       className="ar-fluidarrow"
-                      style={{ width: `${((endCol + 1) / COLS) * 100}%` }}
+                      style={{ width: `${((fluidEndCol + 1) / COLS) * 100}%` }}
                       aria-hidden="true"
                     />
                   ) : null,

@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { noAuto, numPad, timePad } from './inputProps';
 import WizardShell, { type WizStep } from './WizardShell';
 import { PROCEDURE_CODES, BLOCK_CODES } from './BillingSheet';
+import { useCaseData, setCaseField } from './caseData';
+import LearnedInput from './LearnedInput';
+import type { Bucket } from './learned';
 
 // Guided walk-through of the Deseret Peak billing sheet — fills the same draft
 // as the full form. Case info first, then a type-to-find CPT code picker,
@@ -18,13 +21,60 @@ export interface BillingWizApi {
 
 export default function BillingWizard(api: BillingWizApi) {
   const [q, setQ] = useState('');
+  const caseData = useCaseData();
 
-  const field = (label: string, k: string, ph = '', cls = '') => (
-    <label className={`ifield ${cls}`} key={k}>
-      <span>{label}</span>
-      <input {...(['startTime', 'endTime'].includes(k) ? timePad : ['dateM', 'dateD', 'dateY', 'addCode'].includes(k) ? numPad : noAuto)} value={api.tx[k] ?? ''} placeholder={ph} onChange={(e) => api.setTx(k, e.target.value)} />
-    </label>
-  );
+  // The case facts — date, procedure, surgeon, diagnosis, anesthesia times —
+  // live on the shared case, exactly as on the full form: the record's time
+  // box and the pre-op fill them, and they arrive here already entered.
+  const [dm = '', dd = '', dy = ''] = (caseData.caseDate || '').split('/');
+  const caseVal = (k: string): string | null => {
+    switch (k) {
+      case 'dateM': return dm;
+      case 'dateD': return dd;
+      case 'dateY': return dy;
+      case 'procedure': return caseData.procedure;
+      case 'surgeon': return caseData.surgeon;
+      case 'dx': return caseData.diagnosis;
+      case 'startTime': return caseData.anesStart;
+      case 'endTime': return caseData.anesStop;
+      default: return null;
+    }
+  };
+  const setCaseVal = (k: string, v: string) => {
+    if (k === 'dateM' || k === 'dateD' || k === 'dateY') {
+      const parts = [dm, dd, dy];
+      parts[{ dateM: 0, dateD: 1, dateY: 2 }[k]] = v;
+      setCaseField('caseDate', parts.every((x) => !x) ? '' : parts.join('/'));
+    } else if (k === 'procedure') setCaseField('procedure', v);
+    else if (k === 'surgeon') setCaseField('surgeon', v);
+    else if (k === 'dx') setCaseField('diagnosis', v);
+    else if (k === 'startTime') setCaseField('anesStart', v);
+    else if (k === 'endTime') setCaseField('anesStop', v);
+  };
+
+  // The fields the rest of the app learns suggestions for learn here too.
+  const BUCKETS: Record<string, Bucket> = { procedure: 'procedure', surgeon: 'surgeon', dx: 'diagnosis' };
+
+  const field = (label: string, k: string, ph = '', cls = '') => {
+    const cv = caseVal(k);
+    const value = cv ?? (api.tx[k] ?? '');
+    const onChange = (v: string) => (cv !== null ? setCaseVal(k, v) : api.setTx(k, v));
+    return (
+      <label className={`ifield ${cls}`} key={k}>
+        <span>{label}</span>
+        {BUCKETS[k] ? (
+          <LearnedInput bucket={BUCKETS[k]} value={value} placeholder={ph} onChange={onChange} />
+        ) : (
+          <input
+            {...(['startTime', 'endTime'].includes(k) ? timePad : ['dateM', 'dateD', 'dateY', 'addCode'].includes(k) ? numPad : noAuto)}
+            value={value}
+            placeholder={ph}
+            onChange={(e) => onChange(e.target.value)}
+          />
+        )}
+      </label>
+    );
+  };
 
   const codeToggle = ([code, desc]: [string, string]) => (
     <button

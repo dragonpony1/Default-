@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { noAuto, numPad } from './inputProps';
+import { datePad, noAuto, numPad, timePad } from './inputProps';
 import WizardShell, { type WizStep } from './WizardShell';
 import SigImg from './SigImg';
 import { nameForSignature } from './providers';
@@ -218,15 +218,18 @@ export default function PacuWizard(api: PacuWizApi) {
               </div>
             </div>
 
+            {/* Stamped by signing, but tappable too: the boxes summon the
+                date and time pads (each with its own Today / Now key), so a
+                sign-off written down late can carry the true clock time. */}
             <div className="pan-sigcell">
               <span className="pan-siglabel">Date</span>
-              <div className="pan-stampval">{api.tx.date || '—'}</div>
+              <input {...datePad} className="pan-stampval" value={api.tx.date ?? ''} placeholder="—" onChange={(e) => api.setTx('date', e.target.value)} />
               <button type="button" className="chip" onClick={() => api.setTx('date', nowStamp().date)}>📅 Today</button>
             </div>
 
             <div className="pan-sigcell">
               <span className="pan-siglabel">Time</span>
-              <div className="pan-stampval">{api.tx.time || '—'}</div>
+              <input {...timePad} className="pan-stampval" value={api.tx.time ?? ''} placeholder="—" onChange={(e) => api.setTx('time', e.target.value)} />
               <button type="button" className="chip" onClick={() => api.setTx('time', nowStamp().time)}>🕐 Now</button>
             </div>
           </div>

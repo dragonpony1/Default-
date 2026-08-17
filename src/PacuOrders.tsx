@@ -4,6 +4,8 @@ import { useCaseData, setCaseField } from './caseData';
 import Barcode39 from './Barcode39';
 import PacuWizard from './PacuWizard';
 import SignatureStamp from './SignatureStamp';
+import LearnedInput from './LearnedInput';
+import { learned, remember } from './learned';
 
 // Post-Anesthesia Recovery Room Orders replicating Mountain West Medical
 // Center form 170-165-1131001HMSFAC (01/15, Rev. 07/15, 07/22), portrait US
@@ -50,6 +52,8 @@ export function clearPacuForNextCase(): void {
 export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }) {
   const [d, setD] = useState<PacuDraft>(loadPacu);
   const [mode, setMode] = useState<'form' | 'wizard'>('form');
+  const [addOrder, setAddOrder] = useState(false);
+  const [orderText, setOrderText] = useState('');
   const caseData = useCaseData(); // shared allergies (pre-populated from pre-op)
 
   useEffect(() => {
@@ -167,12 +171,106 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
     </div>
   );
 
+  // The "(first, second, third)" at the end of an order is the anesthesia
+  // provider's ranking for the PACU nurse: circle which drug to give first.
+  // Each word is tappable and circles like the standing-order numbers. One
+  // priority per line (circling second lets go of first), and one line per
+  // priority — giving fentanyl "first" takes "first" off the other narcotics
+  // in its group, the way it could only be circled once on paper.
+  const PAIN_PRI = ['morphinePri', 'dilaudidPri', 'fentanylPri'];
+  const NAUSEA_PRI = ['zofranPri', 'reglanPri', 'inapsinePri'];
+  const priority = (k: string, words: string[], group: string[]) => (
+    <span className="po-pri">
+      {'('}
+      {words.map((w, i) => (
+        <span key={w}>
+          <button
+            type="button"
+            className={`po-priw${d.ck[k + w] ? ' on' : ''}`}
+            onClick={() =>
+              setD((p) => {
+                const ckn = { ...p.ck };
+                const on = !ckn[k + w];
+                for (const o of words) delete ckn[k + o];
+                for (const g of group) delete ckn[g + w];
+                if (on) ckn[k + w] = true;
+                return { ...p, ck: ckn };
+              })
+            }
+          >
+            {w}
+          </button>
+          {i < words.length - 1 ? ', ' : ''}
+        </span>
+      ))}
+      {')'}
+    </span>
+  );
+
+  // The first blank of the three write-in lines at the bottom.
+  const freeLine = ['line16', 'line17', 'line18'].find((k) => !(d.tx[k] ?? '').trim());
+  const rememberedOrders = learned('pacuOrder').slice(0, 8);
+
   return (
     <>
       <div className="awiz-switch screen-only">
         <button type="button" className="chip" onClick={() => setMode('wizard')}>⛑ Guided PACU wizard</button>
+        <button type="button" className="chip" onClick={() => setAddOrder(true)}>💉 Add an order</button>
         <span className="awiz-switch-hint">Walks you through the standing orders and doses. The full form stays fillable.</span>
       </div>
+      {addOrder && (
+        <div className="sigpad-backdrop" onClick={() => setAddOrder(false)}>
+          <div className="qd-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="qd-title">💉 Add an order</div>
+            <div className="igroup">
+              <span>Order</span>
+              {rememberedOrders.length > 0 && (
+                <div className="chips wrap">
+                  {rememberedOrders.map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      className={`chip${orderText === v ? ' on' : ''}`}
+                      onClick={() => setOrderText(orderText === v ? '' : v)}
+                    >
+                      {v}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <LearnedInput
+                bucket="pacuOrder"
+                className="qd-input"
+                placeholder="e.g. Tylenol 1000 mg PO times 1 PRN pain…"
+                value={orderText}
+                onChange={setOrderText}
+              />
+            </div>
+            <p className="ihint">
+              {freeLine
+                ? `Goes on line ${freeLine.replace('line', '')} and checks its box. It's remembered for next time.`
+                : 'All three write-in lines are full — clear one to add another order.'}
+            </p>
+            <div className="qd-actions">
+              <button type="button" className="chip" onClick={() => setAddOrder(false)}>Cancel</button>
+              <button
+                type="button"
+                className="chip on qd-give"
+                disabled={!orderText.trim() || !freeLine}
+                onClick={() => {
+                  const v = orderText.trim();
+                  remember('pacuOrder', v);
+                  setD((p) => ({ ...p, tx: { ...p.tx, [freeLine as string]: v } }));
+                  setOrderText('');
+                  setAddOrder(false);
+                }}
+              >
+                ✓ Add to the orders
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     <div className="page po-page">
       <div className="page-top">
         <div className="bc-wrap">
@@ -265,7 +363,8 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
             {txn('morphineEvery')}
             <span>minutes PRN post-operative pain. Maximum dose of</span>
             {txn('morphineMax')}
-            <span>mg (first, second, third)</span>
+            <span>mg</span>
+            {priority('morphinePri', ['first', 'second', 'third'], PAIN_PRI)}
           </div>
         ))}
         {item(8, (
@@ -279,7 +378,8 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
             {txn('dilaudidEvery')}
             <span>minutes PRN post-operative pain. Maximum dose of</span>
             {txn('dilaudidMax')}
-            <span>mg (first, second, third)</span>
+            <span>mg</span>
+            {priority('dilaudidPri', ['first', 'second', 'third'], PAIN_PRI)}
           </div>
         ))}
         {item(9, (
@@ -293,7 +393,8 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
             {txn('fentanylEvery')}
             <span>minutes PRN post-operative pain. Maximum dose of</span>
             {txn('fentanylMax')}
-            <span>mcg (first, second, third)</span>
+            <span>mcg</span>
+            {priority('fentanylPri', ['first', 'second', 'third'], PAIN_PRI)}
           </div>
         ))}
 
@@ -302,21 +403,24 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
           <div className="po-line">
             <span>Zofran (Ondansetron)</span>
             {txn('zofran')}
-            <span>mg IV PRN post-operative nausea/vomiting may repeat times 1 15 minutes after first dose. (first, second)</span>
+            <span>mg IV PRN post-operative nausea/vomiting may repeat times 1 15 minutes after first dose.</span>
+            {priority('zofranPri', ['first', 'second'], NAUSEA_PRI)}
           </div>
         ), electCk('item10', ['zofran']))}
         {item(11, (
           <div className="po-line">
             <span>Reglan (Metoclopramide)</span>
             {txn('reglan')}
-            <span>mg IV PRN post-operative nausea/vomiting may repeat times 1 15 minutes after first dose. (first, second)</span>
+            <span>mg IV PRN post-operative nausea/vomiting may repeat times 1 15 minutes after first dose.</span>
+            {priority('reglanPri', ['first', 'second'], NAUSEA_PRI)}
           </div>
         ), electCk('item11', ['reglan']))}
         {item(12, (
           <div className="po-line">
             <span>Inapsine (Droperidol)</span>
             {txn('inapsine')}
-            <span>mg IV PRN post-operative nausea/vomiting may repeat times 1 15 minutes after first dose. (first, second)</span>
+            <span>mg IV PRN post-operative nausea/vomiting may repeat times 1 15 minutes after first dose.</span>
+            {priority('inapsinePri', ['first', 'second'], NAUSEA_PRI)}
           </div>
         ), electCk('item12', ['inapsine']))}
         {item(13, (
