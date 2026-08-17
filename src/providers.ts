@@ -29,12 +29,13 @@ export interface ProviderPrefs {
 // A provider's defaults come in flavors — the setup for a general with a tube
 // is not the setup for an LMA case or a spinal. Legacy profiles saved before
 // flavors existed live in `prefs`, which doubles as the General slot.
-export type TechniqueKey = 'general' | 'lma' | 'regional';
+export type TechniqueKey = 'general' | 'lma' | 'regional' | 'mac';
 
 export const TECHNIQUES: Array<{ key: TechniqueKey; label: string }> = [
   { key: 'general', label: 'General' },
   { key: 'lma', label: 'LMA' },
   { key: 'regional', label: 'Regional' },
+  { key: 'mac', label: 'MAC' },
 ];
 
 export interface ProviderProfile {
