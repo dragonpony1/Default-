@@ -608,7 +608,18 @@ export default function App() {
         <FieldByField d={d} set={set} customChoices={choices} onFinish={() => setView('form')} />
       )}
       {view === 'choices' && <EditChoices choices={choices} setChoices={setChoices} />}
-      {view === 'anes' && <AnesRecord resetSignal={anesReset} />}
+      {view === 'anes' && (
+        <AnesRecord
+          resetSignal={anesReset}
+          // Landing the case ends at the pre-print check: everything still
+          // blank across the packet gets asked in one sweep, then print.
+          onLand={() => {
+            setSolo(null);
+            setView('packet');
+            setReview(true);
+          }}
+        />
+      )}
       {view === 'pacu' && <PostAnesNote d={d} set={set} />}
       {view === 'pacu' && <PacuOrders resetSignal={anesReset} />}
       {view === 'billing' && <BillingSheet resetSignal={anesReset} />}
