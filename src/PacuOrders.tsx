@@ -171,11 +171,15 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
     </div>
   );
 
-  // The "(first, second, third)" at the end of an order is circled by hand
-  // when more than one is elected — the header says priority must be marked.
-  // Each word is tappable and circles like the standing-order numbers; one
-  // priority per line, so circling second lets go of first.
-  const priority = (k: string, words: string[]) => (
+  // The "(first, second, third)" at the end of an order is the anesthesia
+  // provider's ranking for the PACU nurse: circle which drug to give first.
+  // Each word is tappable and circles like the standing-order numbers. One
+  // priority per line (circling second lets go of first), and one line per
+  // priority — giving fentanyl "first" takes "first" off the other narcotics
+  // in its group, the way it could only be circled once on paper.
+  const PAIN_PRI = ['morphinePri', 'dilaudidPri', 'fentanylPri'];
+  const NAUSEA_PRI = ['zofranPri', 'reglanPri', 'inapsinePri'];
+  const priority = (k: string, words: string[], group: string[]) => (
     <span className="po-pri">
       {'('}
       {words.map((w, i) => (
@@ -188,6 +192,7 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
                 const ckn = { ...p.ck };
                 const on = !ckn[k + w];
                 for (const o of words) delete ckn[k + o];
+                for (const g of group) delete ckn[g + w];
                 if (on) ckn[k + w] = true;
                 return { ...p, ck: ckn };
               })
@@ -359,7 +364,7 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
             <span>minutes PRN post-operative pain. Maximum dose of</span>
             {txn('morphineMax')}
             <span>mg</span>
-            {priority('morphinePri', ['first', 'second', 'third'])}
+            {priority('morphinePri', ['first', 'second', 'third'], PAIN_PRI)}
           </div>
         ))}
         {item(8, (
@@ -374,7 +379,7 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
             <span>minutes PRN post-operative pain. Maximum dose of</span>
             {txn('dilaudidMax')}
             <span>mg</span>
-            {priority('dilaudidPri', ['first', 'second', 'third'])}
+            {priority('dilaudidPri', ['first', 'second', 'third'], PAIN_PRI)}
           </div>
         ))}
         {item(9, (
@@ -389,7 +394,7 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
             <span>minutes PRN post-operative pain. Maximum dose of</span>
             {txn('fentanylMax')}
             <span>mcg</span>
-            {priority('fentanylPri', ['first', 'second', 'third'])}
+            {priority('fentanylPri', ['first', 'second', 'third'], PAIN_PRI)}
           </div>
         ))}
 
@@ -399,7 +404,7 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
             <span>Zofran (Ondansetron)</span>
             {txn('zofran')}
             <span>mg IV PRN post-operative nausea/vomiting may repeat times 1 15 minutes after first dose.</span>
-            {priority('zofranPri', ['first', 'second'])}
+            {priority('zofranPri', ['first', 'second'], NAUSEA_PRI)}
           </div>
         ), electCk('item10', ['zofran']))}
         {item(11, (
@@ -407,7 +412,7 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
             <span>Reglan (Metoclopramide)</span>
             {txn('reglan')}
             <span>mg IV PRN post-operative nausea/vomiting may repeat times 1 15 minutes after first dose.</span>
-            {priority('reglanPri', ['first', 'second'])}
+            {priority('reglanPri', ['first', 'second'], NAUSEA_PRI)}
           </div>
         ), electCk('item11', ['reglan']))}
         {item(12, (
@@ -415,7 +420,7 @@ export default function PacuOrders({ resetSignal = 0 }: { resetSignal?: number }
             <span>Inapsine (Droperidol)</span>
             {txn('inapsine')}
             <span>mg IV PRN post-operative nausea/vomiting may repeat times 1 15 minutes after first dose.</span>
-            {priority('inapsinePri', ['first', 'second'])}
+            {priority('inapsinePri', ['first', 'second'], NAUSEA_PRI)}
           </div>
         ), electCk('item12', ['inapsine']))}
         {item(13, (
