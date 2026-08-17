@@ -824,6 +824,15 @@ input[type='checkbox']:checked::after {
   align-items: baseline;
 }
 
+/* In a vitals row the options must shrink and wrap. The generic `.vrow >
+   span` is flex:none, which let a long chip row poke past the page edge —
+   and one over-wide element makes the browser shrink the WHOLE print job to
+   fit it, which is what squeezed every packet sheet short of its page. */
+.vrow > .panopts {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .panopts .ck {
   margin-right: 0;
   white-space: nowrap;
@@ -953,8 +962,8 @@ input[type='checkbox']:checked::after {
      page height. A larger face fills the sheet — and everything typed on it
      (problem list included) prints bigger with it. */
   .preop-page {
-    font-size: 8.6pt;
-    line-height: 1.25;
+    font-size: 8pt;
+    line-height: 1.1;
   }
 
   * {
@@ -2012,11 +2021,14 @@ input[type='checkbox']:checked::after {
 }
 
 @media print {
-  /* Give the print layout a fixed letter width so phones don't size the
-     record to their narrow screen (which clipped it to a thin slice). */
+  /* Give the print layout a fixed width so phones don't size the record to
+     their narrow screen (which clipped it to a thin slice). The PRINTABLE
+     width — letter minus the 0.25in margins — not the paper width: a body
+     even slightly wider than the printable area makes the browser shrink
+     the whole job to fit, which squeezed every sheet short of its page. */
   html,
   body {
-    width: 8.5in;
+    width: 8in;
   }
 
   .ar-wrap {
@@ -2827,13 +2839,13 @@ button.po-priw.on {
   /* Sized to fill the printed page: one notch below where a filled form
      wraps onto a second sheet (PACU's long order sentences wrap early). */
   .po-page {
-    font-size: 9pt;
-    line-height: 1.3;
+    font-size: 8.75pt;
+    line-height: 1.25;
   }
 
   .bs-page {
-    font-size: 10pt;
-    line-height: 1.25;
+    font-size: 9.75pt;
+    line-height: 1.22;
   }
 
   .po-page,
