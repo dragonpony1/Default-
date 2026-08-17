@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { datePad, noAuto, numPad } from './inputProps';
 import { ANES_KEY, BILLING_KEY, PACU_KEY, readSheet, writeSheetCk, writeSheetTx } from './drafts';
 import { setCaseField, useCaseData } from './caseData';
@@ -67,6 +67,26 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
     setTick((t) => t + 1);
     onDraftsChanged();
   };
+
+  // The PACU vitals typed into the record's Recovery box are the same numbers
+  // the Post-Anesthesia Note asks for, so the check was asking for them twice.
+  // A blank note field takes the record's value here; one filled on the note
+  // itself is left alone.
+  useEffect(() => {
+    const flow = [
+      ['recBp', 'panBp'],
+      ['recP', 'panP'],
+      ['recR', 'panR'],
+      ['recO2', 'panO2'],
+    ] as const;
+    const rec = readSheet(ANES_KEY);
+    for (const [from, to] of flow) {
+      const v = (rec.tx[from] ?? '').trim();
+      if (v && !String(d[to] ?? '').trim()) set(to, v);
+    }
+    // Mount-only: the copy happens when the check opens, never underneath it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const sheetTx = (key: string) => (field: string) => (v: string) => {
     writeSheetTx(key, field, v);
