@@ -3,6 +3,8 @@ import { noAuto, numPad, timePad } from './inputProps';
 import WizardShell, { type WizStep } from './WizardShell';
 import { PROCEDURE_CODES, BLOCK_CODES } from './BillingSheet';
 import { useCaseData, setCaseField } from './caseData';
+import LearnedInput from './LearnedInput';
+import type { Bucket } from './learned';
 
 // Guided walk-through of the Deseret Peak billing sheet — fills the same draft
 // as the full form. Case info first, then a type-to-find CPT code picker,
@@ -50,17 +52,26 @@ export default function BillingWizard(api: BillingWizApi) {
     else if (k === 'endTime') setCaseField('anesStop', v);
   };
 
+  // The fields the rest of the app learns suggestions for learn here too.
+  const BUCKETS: Record<string, Bucket> = { procedure: 'procedure', surgeon: 'surgeon', dx: 'diagnosis' };
+
   const field = (label: string, k: string, ph = '', cls = '') => {
     const cv = caseVal(k);
+    const value = cv ?? (api.tx[k] ?? '');
+    const onChange = (v: string) => (cv !== null ? setCaseVal(k, v) : api.setTx(k, v));
     return (
       <label className={`ifield ${cls}`} key={k}>
         <span>{label}</span>
-        <input
-          {...(['startTime', 'endTime'].includes(k) ? timePad : ['dateM', 'dateD', 'dateY', 'addCode'].includes(k) ? numPad : noAuto)}
-          value={cv ?? (api.tx[k] ?? '')}
-          placeholder={ph}
-          onChange={(e) => (cv !== null ? setCaseVal(k, e.target.value) : api.setTx(k, e.target.value))}
-        />
+        {BUCKETS[k] ? (
+          <LearnedInput bucket={BUCKETS[k]} value={value} placeholder={ph} onChange={onChange} />
+        ) : (
+          <input
+            {...(['startTime', 'endTime'].includes(k) ? timePad : ['dateM', 'dateD', 'dateY', 'addCode'].includes(k) ? numPad : noAuto)}
+            value={value}
+            placeholder={ph}
+            onChange={(e) => onChange(e.target.value)}
+          />
+        )}
       </label>
     );
   };

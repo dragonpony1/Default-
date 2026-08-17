@@ -614,7 +614,7 @@ export default function App() {
 
 
       {view !== 'anes' && view !== 'pacu' && view !== 'billing' && (
-      <div className={`page${view === 'form' || packet ? '' : ' print-only-block'}${packet ? soloCls(0) : ''}`}>
+      <div className={`page preop-page${view === 'form' || packet ? '' : ' print-only-block'}${packet ? soloCls(0) : ''}`}>
         <div className="page-top">
           <div className="bc-wrap">
             <Barcode39 value="PRE" />

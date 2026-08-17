@@ -923,6 +923,14 @@ input[type='checkbox']:checked::after {
     break-inside: avoid;
   }
 
+  /* The pre-op sheet has the least on it and printed at two-thirds of the
+     page height. A larger face fills the sheet — and everything typed on it
+     (problem list included) prints bigger with it. */
+  .preop-page {
+    font-size: 8.2pt;
+    line-height: 1.25;
+  }
+
   * {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
@@ -2004,6 +2012,28 @@ input[type='checkbox']:checked::after {
     padding: 0;
     padding-top: 0.06in;
     transform: none !important;
+  }
+
+  /* What was typed steps up from the 7px scaffold — the grid stays put, but
+     the ink on it (Dx, times, narrative, doses) prints at handwriting size. */
+  .ar .t,
+  .ar-remarks {
+    font-size: 8px;
+  }
+
+  .ar-cell {
+    font-size: 7.5px;
+  }
+
+  /* The grid gained rows as features were added and crept past one printed
+     page. Each row gives back a sliver in print — across 40-odd rows that is
+     the better part of an inch — so the record fits one sheet again. */
+  .ar-crow {
+    height: 0.14in;
+  }
+
+  .vsband .ar-crow {
+    height: 0.17in;
   }
 
 }
@@ -3542,7 +3572,7 @@ input.pan-stampval {
 
 @media print {
   .signame {
-    font-size: 6pt;
+    font-size: 8pt;
   }
 }
 
