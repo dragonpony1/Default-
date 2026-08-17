@@ -2576,6 +2576,24 @@ button.po-num.on {
   font-weight: 700;
 }
 
+/* Priority words — "(first, second, third)" — circled by hand when more than
+   one order is elected. The transparent border reserves the circle's room so
+   nothing shifts when one is picked. */
+button.po-priw {
+  font: inherit;
+  background: transparent;
+  border: 1.3px solid transparent;
+  border-radius: 999px;
+  padding: 0 3px;
+  cursor: pointer;
+  color: inherit;
+}
+
+button.po-priw.on {
+  border-color: #000;
+  font-weight: 700;
+}
+
 .po-body {
   flex: 1;
   min-width: 0;
