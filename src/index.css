@@ -2048,7 +2048,6 @@ input[type='checkbox']:checked::after {
        device viewport on a phone, which squished the grid to a slice. */
     width: 8in;
     padding: 0;
-    padding-top: 0.06in;
     transform: none !important;
   }
 
@@ -2065,13 +2064,15 @@ input[type='checkbox']:checked::after {
 
   /* The grid gained rows as features were added and crept past one printed
      page. Each row gives back a sliver in print — across 40-odd rows that is
-     the better part of an inch — so the record fits one sheet again. */
+     the better part of an inch — so the record fits one sheet, WITH room for
+     the added-med rows a real case carries (each one costs a row height, and
+     a record fitted with zero slack turned into a five-page packet). */
   .ar-crow {
-    height: 0.14in;
+    height: 0.13in;
   }
 
   .vsband .ar-crow {
-    height: 0.17in;
+    height: 0.165in;
   }
 
 }
