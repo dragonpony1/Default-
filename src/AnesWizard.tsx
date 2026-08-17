@@ -49,6 +49,7 @@ const NAV_SHORT: Record<string, string> = {
   'Machine & technique': 'Machine',
   'IV access': 'IV',
   'ASA physical status': 'ASA',
+  'Regional block': 'Regional',
   'Induction drugs': 'Induction',
   Positioning: 'Position',
   'Emergence & reversal': 'Emergence',
@@ -168,6 +169,43 @@ export default function AnesWizard(api: WizardApi) {
       </div>
     );
   };
+
+  // Regional Anesthesia box entries: each printed line is a checkbox and a
+  // blank, and the check rides the value — writing a dose ticks its drug,
+  // clearing it unticks.
+  const condSet = (ckKey: string, txKey: string) => (v: string) => {
+    api.setTx(txKey, v);
+    api.setCk(ckKey, v.trim() !== '');
+  };
+  const condDrug = (label: string, ckKey: string, txKey: string, unit: string) => (
+    <label className="ifield" key={txKey}>
+      <span>{label} <span className="awiz-unit">{unit}</span></span>
+      <input {...numPad} value={api.tx[txKey] ?? ''} placeholder="dose" onChange={(e) => condSet(ckKey, txKey)(e.target.value)} />
+    </label>
+  );
+  const condText = (label: string, ckKey: string, txKey: string) => (
+    <label className="ifield" key={txKey}>
+      <span>{label}</span>
+      <input {...noAuto} value={api.tx[txKey] ?? ''} onChange={(e) => condSet(ckKey, txKey)(e.target.value)} />
+    </label>
+  );
+  const condPick = (title: string, ckKey: string, txKey: string, opts: string[], free = true) => (
+    <div className="igroup" key={txKey}>
+      <span>{title}</span>
+      <div className="chips wrap">
+        {opts.map((o) => chip(api.tx[txKey] === o, () => condSet(ckKey, txKey)(api.tx[txKey] === o ? '' : o), o, txKey + o))}
+        {free && (
+          <input {...numPad} className="awiz-doseinput" placeholder="other" value={opts.includes(api.tx[txKey]) ? '' : (api.tx[txKey] ?? '')} onChange={(e) => condSet(ckKey, txKey)(e.target.value)} />
+        )}
+      </div>
+    </div>
+  );
+  const condTimeField = () => (
+    <label className="ifield" key="condTime">
+      <span>Block time</span>
+      <input {...timePad} value={api.tx.condTime ?? ''} placeholder="HHMM" onChange={(e) => condSet('condTimeCk', 'condTime')(e.target.value)} />
+    </label>
+  );
 
   // A continuously-running setting: pick a starting value and carry-forward
   // fills it across the chart until it is changed.
@@ -293,6 +331,50 @@ export default function AnesWizard(api: WizardApi) {
           const next = !api.ck[`asa${n}`];
           ['1', '2', '3', '4', '5'].forEach((m) => api.setCk(`asa${m}`, m === n ? next : false));
         }, n, `asa${n}`))}{ckChip('asaE', 'E (Emergency)')}</>),
+    },
+    {
+      phase: 'Start of case',
+      title: 'Regional block',
+      hint: 'The Regional Anesthesia box, top right of the record: what was placed, with what, and where. Skip it for a straight general.',
+      render: () => (
+        <>
+          {group('Technique', (
+            <>
+              {ckChip('spinal', 'Spinal')}
+              {ckChip('epidural', 'Epidural')}
+              {ckChip('bier', 'Bier')}
+              {ckChip('axillary', 'Axillary')}
+              {ckChip('local', 'Local')}
+              {ckChip('condOther', 'Other')}
+            </>
+          ))}
+          {condDrug('Duramorph', 'duramorphCk', 'duramorph', 'mg')}
+          {condDrug('Fentanyl', 'fentanylCk', 'fentanyl', 'mcg')}
+          {condDrug('Sufenta', 'sufentaCk', 'sufenta', 'mcg')}
+          {condDrug('Naropin', 'naropinCk', 'naropin', 'mL')}
+          {condDrug('Nesacaine', 'nesacaineCk', 'nesacaine', 'mL')}
+          {condDrug('Sensorcaine', 'sensorcaineCk', 'sensorcaine', 'mL')}
+          {condDrug('Xylocaine', 'xylocaineCk', 'xylocaine', 'mL')}
+          {condText('Other drug', 'condOther1Ck', 'condOther1')}
+          {condPick('Needle size', 'needleSizeCk', 'needleSize', ['22', '25', '27'])}
+          {condPick('# Attempts', 'condAttemptsCk', 'condAttempts', ['1', '2', '3'])}
+          {condPick('Site / level', 'siteCk', 'site', ['L2-3', 'L3-4', 'L4-5'], true)}
+          {group('On the way in', (
+            <>
+              {ckChip('paresthesia', 'Paresthesia')}
+              {ckChip('cffcsf', 'CFFCSF')}
+            </>
+          ))}
+          {condTimeField()}
+          {group('The vial (this case)', (
+            <div className="irow">
+              {field('Lot #', 'lotNum')}
+              {field('Expiration date', 'expDate')}
+              {field('Manufacturer', 'manufacturer')}
+            </div>
+          ))}
+        </>
+      ),
     },
     {
       phase: 'Start of case',

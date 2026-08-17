@@ -3,8 +3,11 @@ import {
   loadProviders,
   saveProviders,
   captureCurrentPrefs,
+  variantPrefs,
+  TECHNIQUES,
   type ProviderProfile,
   type ProviderPrefs,
+  type TechniqueKey,
 } from './providers';
 import { getSigner, setSigner } from './signer';
 import SignaturePad from './SignaturePad';
@@ -35,6 +38,9 @@ export default function ProviderBar({ onApply }: Props) {
     return s.initials ? loadProviders().find((p) => p.initials === s.initials)?.id ?? null : null;
   });
   const [padOpen, setPadOpen] = useState(false);
+  // Save / Load opens a quick technique pick — General, LMA, or Regional —
+  // because a provider's usual setup differs by how the case is done.
+  const [pickFor, setPickFor] = useState<null | 'save' | 'load'>(null);
 
   const persist = (next: ProviderProfile[]) => {
     saveProviders(next);
@@ -63,8 +69,41 @@ export default function ProviderBar({ onApply }: Props) {
 
   const clickIn = (p: ProviderProfile) => {
     setActiveId(p.id);
+    setPickFor(null);
     setSigner({ initials: p.initials, name: p.prefs.providerName ?? '', signature: p.signature ?? '' });
-    onApply(p.prefs);
+    // Clicking in applies the General defaults (a saved-before-flavors profile
+    // is the General set); the Load button offers LMA / Regional.
+    onApply(variantPrefs(p, 'general') ?? p.prefs);
+  };
+
+  const pickTechnique = (key: TechniqueKey, label: string) => {
+    const p = list.find((x) => x.id === activeId);
+    if (!p) return;
+    if (pickFor === 'save') {
+      const captured = captureCurrentPrefs(p.initials);
+      const next = list.map((x) =>
+        x.id === p.id
+          ? {
+              ...x,
+              // General doubles as the legacy single set, so devices and code
+              // paths that predate flavors keep reading the same defaults.
+              ...(key === 'general' ? { prefs: captured } : {}),
+              variants: { ...x.variants, [key]: captured },
+            }
+          : x,
+      );
+      persist(next);
+      window.alert(`Saved the current forms as ${p.initials}'s ${label} defaults.`);
+    } else {
+      const prefs = variantPrefs(p, key);
+      if (!prefs) {
+        window.alert(`No ${label} defaults saved for ${p.initials} yet — set the forms up the way you like and tap Save.`);
+      } else {
+        onApply(prefs);
+        window.alert(`${p.initials}'s ${label} defaults are on the forms.`);
+      }
+    }
+    setPickFor(null);
   };
 
   const saveSignature = (dataUrl: string) => {
@@ -76,15 +115,6 @@ export default function ProviderBar({ onApply }: Props) {
     setPadOpen(false);
   };
 
-  const saveActive = () => {
-    const p = list.find((x) => x.id === activeId);
-    if (!p) return;
-    const next = list.map((x) =>
-      x.id === p.id ? { ...x, prefs: captureCurrentPrefs(x.initials) } : x,
-    );
-    persist(next);
-    window.alert(`Updated ${p.initials}'s defaults from the current forms.`);
-  };
 
   // The name shown on signature lines, editable after the fact.
   const renameActive = () => {
@@ -128,20 +158,37 @@ export default function ProviderBar({ onApply }: Props) {
       </button>
       {active && (
         <>
-          <button type="button" className="chip prov-save" onClick={saveActive}>
+          <button
+            type="button"
+            className={`chip prov-save${pickFor === 'save' ? ' on' : ''}`}
+            onClick={() => setPickFor(pickFor === 'save' ? null : 'save')}
+          >
             💾 Save {active.initials}'s defaults
           </button>
           <button
             type="button"
-            className="chip prov-load"
+            className={`chip prov-load${pickFor === 'load' ? ' on' : ''}`}
             title="Lay your saved defaults onto the forms — after a clear, or any time"
-            onClick={() => {
-              onApply(active.prefs);
-              window.alert(`${active.initials}'s saved defaults are on the forms.`);
-            }}
+            onClick={() => setPickFor(pickFor === 'load' ? null : 'load')}
           >
             ⤵ Load {active.initials}'s defaults
           </button>
+          {pickFor && (
+            <span className="prov-pick">
+              <span className="prov-pick-label">{pickFor === 'save' ? 'Save as:' : 'Load:'}</span>
+              {TECHNIQUES.map(({ key, label }) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`chip prov-pick-chip${pickFor === 'load' && !variantPrefs(active, key) ? ' prov-pick-empty' : ''}`}
+                  onClick={() => pickTechnique(key, label)}
+                >
+                  {label}
+                </button>
+              ))}
+              <button type="button" className="chip" onClick={() => setPickFor(null)}>✕</button>
+            </span>
+          )}
           <button type="button" className="chip prov-sig" onClick={() => setPadOpen(true)}>
             ✍ {active.signature ? 'Update' : 'Add'} signature
           </button>
