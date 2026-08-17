@@ -3412,6 +3412,17 @@ button.po-num.on {
   align-items: flex-end;
 }
 
+/* The stamp box as a tappable input (PACU sign-off): same look, no chrome. */
+input.pan-stampval {
+  font-family: inherit;
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid #000;
+  border-radius: 0;
+  padding: 0;
+  width: 6rem;
+}
+
 /* Hydration: fluid choice then how much */
 .pan-amt {
   display: flex;
