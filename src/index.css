@@ -927,7 +927,7 @@ input[type='checkbox']:checked::after {
      page height. A larger face fills the sheet — and everything typed on it
      (problem list included) prints bigger with it. */
   .preop-page {
-    font-size: 8.2pt;
+    font-size: 8.6pt;
     line-height: 1.25;
   }
 
@@ -2798,13 +2798,15 @@ button.po-priw.on {
 }
 
 @media print {
+  /* Sized to fill the printed page: one notch below where a filled form
+     wraps onto a second sheet (PACU's long order sentences wrap early). */
   .po-page {
-    font-size: 8.5pt;
+    font-size: 9pt;
     line-height: 1.3;
   }
 
   .bs-page {
-    font-size: 8pt;
+    font-size: 10pt;
     line-height: 1.25;
   }
 
