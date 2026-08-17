@@ -82,6 +82,32 @@ body {
   border-radius: 8px;
 }
 
+/* The technique pick that drops out of Save / Load: General, LMA, Regional. */
+.prov-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.45rem;
+  background: #fff;
+  border: 1.5px solid #2a5db0;
+  border-radius: 8px;
+}
+
+.prov-pick-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #2a5db0;
+}
+
+.prov-pick-chip {
+  border-color: #2a5db0;
+}
+
+/* Loading a flavor never saved: the chip still works (it explains), but reads muted. */
+.prov-pick-empty {
+  opacity: 0.45;
+}
+
 .provbar-label {
   font-weight: 700;
   color: #2a5db0;

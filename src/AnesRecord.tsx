@@ -811,7 +811,7 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
           </div>
 
           <div className="ar-sec ar-conduction">
-            <div className="ar-h">Conduction Anesthesia</div>
+            <div className="ar-h">Regional Anesthesia</div>
             <div className="ar-cond3">
               <div className="ar-condcol">
                 {ck('spinal', 'Spinal')}

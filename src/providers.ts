@@ -9,6 +9,7 @@ export interface ProviderPrefs {
   recordCk?: Record<string, boolean>; // record setup checkboxes (monitors, airway, positioning…)
   inductionCells?: Record<string, string>; // induction drug doses (surgery-start column)
   airwayTx?: Record<string, string>; // tube size / length
+  conductionTx?: Record<string, string>; // regional block drugs/doses, needle, site
   emergenceDoses?: { sugammadex?: string; zofran?: string; decadron?: string };
   narrative?: string; // record Remarks / narration
   plannedAnesthesia?: string;
@@ -25,11 +26,32 @@ export interface ProviderPrefs {
   providerName?: string; // stamped on record / PACU / billing signature lines
 }
 
+// A provider's defaults come in flavors — the setup for a general with a tube
+// is not the setup for an LMA case or a spinal. Legacy profiles saved before
+// flavors existed live in `prefs`, which doubles as the General slot.
+export type TechniqueKey = 'general' | 'lma' | 'regional';
+
+export const TECHNIQUES: Array<{ key: TechniqueKey; label: string }> = [
+  { key: 'general', label: 'General' },
+  { key: 'lma', label: 'LMA' },
+  { key: 'regional', label: 'Regional' },
+];
+
 export interface ProviderProfile {
   id: string;
   initials: string;
   prefs: ProviderPrefs;
+  variants?: Partial<Record<TechniqueKey, ProviderPrefs>>;
   signature?: string; // saved signature image (data URL PNG), stamped with date/time
+}
+
+/** The saved defaults for a technique, if any: General falls back to the
+ *  legacy single set so old profiles keep working untouched. */
+export function variantPrefs(p: ProviderProfile, key: TechniqueKey): ProviderPrefs | null {
+  const v = p.variants?.[key];
+  if (v) return v;
+  if (key === 'general') return p.prefs;
+  return null;
 }
 
 // Draft localStorage keys owned by the form components. Kept in sync with the
@@ -59,6 +81,13 @@ const RECORD_PERCASE = new Set([
 const INDUCTION_CELLS = ['oth5:0', 'med3:0', 'med6:0', 'med7:0', 'med5:0', 'med4:0', 'oth6:0'];
 // Airway text fields that are provider defaults (not per-case time/attempts).
 const AIRWAY_TX = ['tubeSize', 'tubeLength'];
+// Regional Anesthesia box fields that are a provider's usual block: the drugs
+// and doses, needle, and site. The block time, lot number, expiration and
+// manufacturer belong to the case's vial, never to a profile.
+const CONDUCTION_TX = [
+  'duramorph', 'fentanyl', 'sufenta', 'naropin', 'nesacaine', 'sensorcaine',
+  'xylocaine', 'condOther1', 'condOther2', 'needleSize', 'condAttempts', 'site',
+];
 // Emergence drug grid rows.
 const EMERGENCE_ROWS = { sugammadex: 'oth3', zofran: 'med8', decadron: 'oth7' } as const;
 
@@ -246,6 +275,7 @@ export function captureCurrentPrefs(initials: string): ProviderPrefs {
     recordCk,
     inductionCells: pick(recCells, INDUCTION_CELLS),
     airwayTx: pick(recTx, AIRWAY_TX),
+    conductionTx: pick(recTx, CONDUCTION_TX),
     emergenceDoses: {
       sugammadex: lastDoseForRow(recCells, EMERGENCE_ROWS.sugammadex),
       zofran: lastDoseForRow(recCells, EMERGENCE_ROWS.zofran),
@@ -301,6 +331,7 @@ export function applyProviderToDrafts(prefs: ProviderPrefs): { preop: Record<str
       tx: {
         ...recTx,
         ...(prefs.airwayTx ?? {}),
+        ...(prefs.conductionTx ?? {}),
         ...(prefs.narrative ? { remarks: prefs.narrative } : {}),
         ...(name ? { anesthetist: name } : {}),
       },
