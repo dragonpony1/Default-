@@ -123,7 +123,9 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
   pre('weight', 'Weight', 'num');
   pre('proposedProcedure', 'Proposed procedure');
   pre('surgicalDx', 'Surgical diagnosis', 'text');
-  pre('bp', 'Pre-op BP', 'text');
+  // BP is digits and a slash — the ten-key has both, so it answers on the pad
+  // like every other number instead of summoning the OS keyboard.
+  pre('bp', 'Pre-op BP', 'num');
   pre('p', 'Pre-op pulse', 'num');
   pre('r', 'Pre-op respirations', 'num');
   pre('t', 'Pre-op temperature', 'num');
@@ -262,7 +264,7 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
   rec('surgStop', 'Surgery stop', 'num');
   // Most cases never had a tourniquet up — N/A is the one-tap answer; a case
   // that did gets its time onto the printed sheet instead of a blank TT box.
-  rec('tt', 'Tourniquet time (TT)');
+  rec('tt', 'Tourniquet time (TT)', 'num');
 
   // The reassessment box at the top of the record's Remarks — small enough to
   // walk right past on the form, so the check asks for it by name.
@@ -355,7 +357,7 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
       },
       filled(String(d[id] ?? '')),
     );
-  pan('panBp', 'Post-anesthesia BP', 'text');
+  pan('panBp', 'Post-anesthesia BP');
   pan('panP', 'Post-anesthesia pulse');
   pan('panR', 'Post-anesthesia respirations');
   pan('panO2', 'Post-anesthesia O₂ sat');

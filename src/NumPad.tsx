@@ -66,12 +66,20 @@ export default function NumPad() {
     setNativeValue(target, next);
     target.setSelectionRange(start + ch.length, start + ch.length);
 
-    // Chained vitals (sys → dia → hr) hop to the next box once the number
-    // reads complete: three digits always; two digits when no plausible
-    // reading starts that way (98 is done, 13 is on its way to 132).
+    // Chained vitals (sys → dia → hr, and the PACU recovery set) hop to the
+    // next box once the number reads complete: three digits always; two
+    // digits when no plausible reading starts that way (98 is done, 13 is on
+    // its way to 132). A whole-BP box (118/76) waits for the slash and a
+    // finished diastolic.
     const chainNext = target.dataset.vnext;
-    if (chainNext && /^\d+$/.test(next)) {
-      const complete = next.length >= 3 || (next.length === 2 && next[0] >= '3');
+    if (chainNext) {
+      let complete = false;
+      if (target.dataset.vbp === '1') {
+        const m = next.match(/^\d{2,3}\/(\d+)$/);
+        complete = !!m && (m[1].length >= 3 || (m[1].length === 2 && m[1][0] >= '4'));
+      } else if (/^\d+$/.test(next)) {
+        complete = next.length >= 3 || (next.length === 2 && next[0] >= '3');
+      }
       if (complete) {
         const el = document.querySelector(`input[data-vseq="${chainNext}"]`);
         if (el instanceof HTMLInputElement) {

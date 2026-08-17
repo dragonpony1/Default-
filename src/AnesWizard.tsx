@@ -110,10 +110,20 @@ export default function AnesWizard(api: WizardApi) {
       api.setCk(k, next);
       if (next) api.setCk(other, false);
     }, label, k);
+  // The PACU vitals chain on the pad: finish the BP and it hops to O₂ sat,
+  // then pulse, then resps — one pad, no keyboard, landing-speed.
+  const REC_CHAIN: Record<string, string> = { recBp: 'recO2', recO2: 'recP', recP: 'recR', recR: '' };
   const field = (label: string, k: string, ph = '') => (
     <label className="ifield" key={k}>
       <span>{label}</span>
-      <input {...(['recT'].includes(k) ? tempPad : TIME_FIELDS.includes(k) ? timePad : ['tubeLength', 'attempts', 'crystalloid', 'fluidEbl', 'fluidUrine', 'fluidBlood', 'recBp', 'recO2', 'recP', 'recR', 'recRoom'].includes(k) ? numPad : noAuto)} value={api.tx[k] ?? ''} placeholder={ph} onChange={(e) => api.setTx(k, e.target.value)} />
+      <input
+        {...(['recT'].includes(k) ? tempPad : TIME_FIELDS.includes(k) ? timePad : ['tubeLength', 'attempts', 'crystalloid', 'fluidEbl', 'fluidUrine', 'fluidBlood', 'recBp', 'recO2', 'recP', 'recR', 'recRoom'].includes(k) ? numPad : noAuto)}
+        {...(k in REC_CHAIN ? { 'data-vseq': k, 'data-vnext': REC_CHAIN[k] } : {})}
+        {...(k === 'recBp' ? { 'data-vbp': '1' } : {})}
+        value={api.tx[k] ?? ''}
+        placeholder={ph}
+        onChange={(e) => api.setTx(k, e.target.value)}
+      />
     </label>
   );
   // First reading of a vitals series → column 0, same as the fields on the
