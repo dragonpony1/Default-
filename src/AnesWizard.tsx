@@ -35,6 +35,8 @@ export interface WizardApi {
   setVitals: (next: VitalsData) => void;
   endCol: number;
   onDone: () => void;
+  /** Open at the first step of this phase — 'End of case' is the landing pass. */
+  startPhase?: string;
 }
 
 interface Step {
@@ -51,6 +53,7 @@ const NAV_SHORT: Record<string, string> = {
   'ASA physical status': 'ASA',
   'Regional block': 'Regional',
   'Induction drugs': 'Induction',
+  'Wheels down': 'Landing',
   Positioning: 'Position',
   'Emergence & reversal': 'Emergence',
   'Fluid totals': 'Fluids',
@@ -77,6 +80,10 @@ const TIME_FIELDS = ['anesStart', 'anesStop', 'surgStart', 'surgStop', 'ettTime'
 
 export default function AnesWizard(api: WizardApi) {
   const [step, setStep] = useState(0);
+
+  // Landing the case starts the wizard at the end-of-case phase.
+  const { startPhase } = api;
+  const [jumped, setJumped] = useState(false);
 
   // Airway time auto-fills 7 minutes after the anesthesia start time (once, if
   // it hasn't been set yet — a manual entry is never overwritten).
@@ -498,6 +505,42 @@ export default function AnesWizard(api: WizardApi) {
     // ---------- Phase 3: End of case ----------
     {
       phase: 'End of case',
+      title: 'Wheels down',
+      hint: 'Landing the case: the gas comes off, the oxygen goes up, and the times go on the chart.',
+      render: () => {
+        // Where the landing writes on the grid: the anesthesia stop's column
+        // if a stop is entered, otherwise right now — same clock math as the
+        // chart itself.
+        const start = parseHHMM(api.tx.anesStart ?? '') ?? parseHHMM(api.tx.surgStart ?? '');
+        const stepMin = Number(api.tx.stepMin) > 0 ? Number(api.tx.stepMin) : 5;
+        const n = new Date();
+        const at = parseHHMM(api.tx.anesStop ?? '') ?? n.getHours() * 60 + n.getMinutes();
+        let col = 35; // last grid column when there is no start to count from
+        if (start != null) {
+          let diff = at - start;
+          if (diff < 0) diff += 24 * 60;
+          col = Math.max(0, Math.min(35, Math.floor(diff / stepMin)));
+        }
+        const wokeUp = api.cells[`med2:${col}`] === 'off' && api.cells[`med0:${col}`] === '10';
+        return (
+          <>
+            {group('Wake-up', chip(wokeUp, () => {
+              api.setCell(`med2:${col}`, wokeUp ? '' : 'off');
+              api.setCell(`med0:${col}`, wokeUp ? '' : '10');
+              if (api.ck.n2o) api.setCell(`med1:${col}`, wokeUp ? '' : 'off');
+            }, '💨 Gas off, O₂ up to 10'))}
+            <div className="irow">
+              {field('Surgery stop', 'surgStop', 'HHMM')}
+              {field('Anesthesia stop', 'anesStop', 'HHMM')}
+            </div>
+            {group('Tourniquet', chip(api.tx.tt === 'N/A', () => api.setTx('tt', api.tx.tt === 'N/A' ? '' : 'N/A'), 'No tourniquet — N/A'))}
+            {(api.tx.tt ?? '') !== 'N/A' && field('TT — tourniquet time', 'tt', 'HHMM')}
+          </>
+        );
+      },
+    },
+    {
+      phase: 'End of case',
       title: 'Emergence & reversal',
       hint: 'Doses drop into the grid near the anesthesia stop time.',
       render: () => (
@@ -505,9 +548,6 @@ export default function AnesWizard(api: WizardApi) {
           {drugDoses('Sugammadex', `oth3:${api.endCol}`, 'mg', [200, 400])}
           {drugDoses('Zofran (ondansetron)', `med8:${api.endCol}`, 'mg', [4])}
           {drugDoses('Decadron (dexamethasone)', `oth7:${api.endCol}`, 'mg', [4, 8, 10])}
-          {/* Tourniquet down — the TT line under the Remarks box. Entered at
-              the end of the case, so it is asked here with the Now key. */}
-          {field('TT — tourniquet time', 'tt', 'HHMM')}
         </>
       ),
     },
@@ -583,6 +623,16 @@ export default function AnesWizard(api: WizardApi) {
       ),
     },
   ];
+
+  // Landing the case: open at the first end-of-case step, once.
+  if (!jumped && startPhase) {
+    const at = steps.findIndex((s) => s.phase === startPhase);
+    setJumped(true);
+    if (at >= 0 && at !== step) {
+      setStep(at);
+      return null;
+    }
+  }
 
   const cur = steps[step];
   const phaseStart = steps.findIndex((s) => s.phase === cur.phase);

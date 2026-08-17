@@ -79,11 +79,14 @@ export function clearAnesDraft(): void {
   localStorage.removeItem(KEY);
 }
 
-export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }) {
+export default function AnesRecord({ resetSignal = 0, onLand }: { resetSignal?: number; onLand?: () => void }) {
   const [d, setD] = useState<AnesDraft>(loadAnes);
   const caseData = useCaseData(); // shared allergies (pre-populated from pre-op)
   const signer = useSigner();
   const [mode, setMode] = useState<'chart' | 'wizard' | 'column'>('chart');
+  // Entered via 🛬 Land the case: the wizard opens at the end-of-case phase
+  // and Done rolls into the pre-print check instead of back to the chart.
+  const [landing, setLanding] = useState(false);
   const [signPad, setSignPad] = useState(false);
   const [quickDrug, setQuickDrug] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -552,7 +555,14 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
           vitals={d.vitals}
           setVitals={setVitals}
           endCol={endCol}
-          onDone={() => setMode('chart')}
+          startPhase={landing ? 'End of case' : undefined}
+          onDone={() => {
+            setMode('chart');
+            if (landing) {
+              setLanding(false);
+              onLand?.();
+            }
+          }}
         />
       </>
     );
@@ -585,6 +595,14 @@ export default function AnesRecord({ resetSignal = 0 }: { resetSignal?: number }
         <button type="button" className="chip" onClick={() => setMode('wizard')}>⛑ Guided setup wizard</button>
         <button type="button" className="chip on cp-enter" onClick={() => setMode('column')}>⏱ Chart the case, column by column</button>
         <button type="button" className="chip qd-enter" onClick={() => setQuickDrug(true)}>💉 Drug / adjunct</button>
+        <button
+          type="button"
+          className="chip ar-land"
+          title="Gas off and O₂ up, stop times, emergence drugs, fluids, PACU vitals, narrative — then straight into the pre-print check"
+          onClick={() => { setLanding(true); setMode('wizard'); }}
+        >
+          🛬 Land the case
+        </button>
       </div>
       <div className="ar-topbar screen-only">
         <span className="ar-topgroup">
