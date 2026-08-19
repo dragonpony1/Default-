@@ -1700,6 +1700,16 @@ input[type='checkbox']:checked::after {
   z-index: 1;
 }
 
+/* A bag-change "1" written in the fluids row rides on top of the running
+   arrow: the digit gets a small white patch, like writing over the line,
+   and the arrow carries on either side of it. */
+.ar-cell.inked {
+  position: relative;
+  z-index: 2;
+  background: #fff;
+  font-weight: 700;
+}
+
 .ar-fluidarrow::after {
   content: '';
   position: absolute;
@@ -3629,6 +3639,38 @@ input.pan-stampval {
   display: flex;
   gap: 0.4rem;
   flex-wrap: wrap;
+}
+
+/* Regional Anesthesia N/A: the hand's one line through the whole box. */
+.ar-conduction {
+  position: relative;
+}
+
+.ar-condna {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(to bottom right, transparent calc(50% - 0.8px), #000 50%, transparent calc(50% + 0.8px));
+}
+
+.ar-condna-btn {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  z-index: 4;
+  font-size: 8px;
+  padding: 0 5px;
+  border: 1px solid #98a3b3;
+  border-radius: 999px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.ar-condna-btn.on {
+  border-color: #b3541e;
+  color: #b3541e;
+  font-weight: 700;
 }
 
 /* The typed name that rides with a signature, so a reader can make it out. */

@@ -353,16 +353,26 @@ export default function AnesWizard(api: WizardApi) {
       phase: 'Start of case',
       title: 'Regional block',
       hint: 'The Regional Anesthesia box, top right of the record: what was placed, with what, and where. Skip it for a straight general.',
-      render: () => (
+      render: () => {
+        // Picking a technique withdraws the N/A strike; N/A prints the hand's
+        // one line through the whole box.
+        const tech = (k: string, label: string) =>
+          chip(!!api.ck[k], () => {
+            const next = !api.ck[k];
+            api.setCk(k, next);
+            if (next) api.setCk('condNA', false);
+          }, label, k);
+        return (
         <>
+          {group('No block?', chip(!!api.ck.condNA, () => api.setCk('condNA', !api.ck.condNA), '🚫 N/A — no block (a line through the box)'))}
           {group('Technique', (
             <>
-              {ckChip('spinal', 'Spinal')}
-              {ckChip('epidural', 'Epidural')}
-              {ckChip('bier', 'Bier')}
-              {ckChip('axillary', 'Axillary')}
-              {ckChip('local', 'Local')}
-              {ckChip('condOther', 'Other')}
+              {tech('spinal', 'Spinal')}
+              {tech('epidural', 'Epidural')}
+              {tech('bier', 'Bier')}
+              {tech('axillary', 'Axillary')}
+              {tech('local', 'Local')}
+              {tech('condOther', 'Other')}
             </>
           ))}
           {condDrug('Duramorph', 'duramorphCk', 'duramorph', 'mg')}
@@ -391,7 +401,8 @@ export default function AnesWizard(api: WizardApi) {
             </div>
           ))}
         </>
-      ),
+        );
+      },
     },
     {
       phase: 'Start of case',

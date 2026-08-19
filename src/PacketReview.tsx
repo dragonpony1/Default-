@@ -297,6 +297,28 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
       !!anes.ck.preInduction,
     );
 
+    // The Regional Anesthesia box is never left ambiguous: a block fills it,
+    // no block strikes it through, same as the hand's one line on paper.
+    const blockMarked = ['spinal', 'epidural', 'bier', 'axillary', 'local', 'condOther'].some((k) => anes.ck[k]);
+    need(
+      {
+        id: 'anes.condNA',
+        label: 'Regional anesthesia box',
+        sheet: 'Record',
+        tab: 'anes',
+        kind: 'choice',
+        options: ['N/A — no block'],
+        value: anes.ck.condNA ? 'N/A — no block' : blockMarked ? 'marked' : '',
+        set: (v) => {
+          if (v !== 'N/A — no block') return;
+          writeSheetCk(ANES_KEY, 'condNA', true);
+          touched();
+        },
+        note: 'Prints a line through the box',
+      },
+      !!anes.ck.condNA || blockMarked,
+    );
+
     const asaMarked = ['asa1', 'asa2', 'asa3', 'asa4', 'asa5'].find((k) => anes.ck[k]);
     need(
       {
