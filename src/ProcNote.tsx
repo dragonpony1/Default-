@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { datePad, noAuto, timePad } from './inputProps';
-import { useCaseData, setCaseField } from './caseData';
+import { useCaseData, setCaseField, getCase } from './caseData';
 import { BILLING_KEY, readSheet, writeSheetTx } from './drafts';
 import Barcode39 from './Barcode39';
 import SigImg from './SigImg';
@@ -175,10 +175,16 @@ export default function ProcNote({ resetSignal = 0, onDraftsChanged }: { resetSi
       },
     }));
     // A standalone procedure prints the note and the billing sheet: picking
-    // the procedure names it on the case (billing reads that) and drops its
-    // CPT into billing's add-a-code box while the box is blank.
+    // the procedure populates billing — the procedure name onto the case,
+    // the CPT into the add-a-code box, and the note's date and time onto the
+    // case so billing's Date and Start boxes fill too. Tapping a different
+    // procedure replaces a CPT this tab wrote; a code typed by hand stands.
     setCaseField('procedure', t.procName);
-    if (!(readSheet(BILLING_KEY).tx.addCode ?? '').trim()) writeSheetTx(BILLING_KEY, 'addCode', t.cpt);
+    const curCode = (readSheet(BILLING_KEY).tx.addCode ?? '').trim();
+    if (!curCode || TEMPLATES.some((x) => x.cpt === curCode)) writeSheetTx(BILLING_KEY, 'addCode', t.cpt);
+    const c = getCase();
+    if (!c.caseDate) setCaseField('caseDate', date);
+    if (!c.anesStart) setCaseField('anesStart', time);
     onDraftsChanged?.();
   };
 
