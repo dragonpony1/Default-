@@ -230,6 +230,98 @@ export default function App() {
     }
   };
 
+  // Clear one form without touching the rest of the packet. The shared case
+  // facts (date, times, procedure, surgeon) belong to the case, not to any one
+  // sheet, so they stay — boxes that fill from them will fill again.
+  const [clearPageArmed, setClearPageArmed] = useState(false);
+  const clearPageTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const disarmClearPage = () => {
+    if (clearPageTimer.current) clearTimeout(clearPageTimer.current);
+    clearPageTimer.current = null;
+    setClearPageArmed(false);
+  };
+
+  // Changing tabs stands both armed clears down: an armed button must always
+  // be aiming at the page it was armed on.
+  useEffect(() => {
+    disarmClear();
+    disarmClearPage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
+
+  const pageClear = (() => {
+    switch (view) {
+      case 'fields':
+      case 'form':
+        return {
+          name: 'Pre-Op',
+          note: '',
+          run: () => {
+            clearDraft();
+            setD({ ...emptyPreopEval });
+          },
+        };
+      case 'anes':
+        return {
+          name: 'Anesthesia Record',
+          note: '',
+          run: () => {
+            clearAnesDraft();
+            // The endo assignment outlives the sheet: re-stamp the OR box.
+            if (endoDay) writeSheetTx(ANES_KEY, 'orNum', 'Endo');
+          },
+        };
+      case 'block':
+        return {
+          name: 'Block sheet',
+          note: 'The block page comes out of the packet too — filling it again puts it back.',
+          run: () => {
+            clearBlockDraft();
+            setCaseField('blockCase', false);
+          },
+        };
+      case 'proc':
+        return {
+          name: 'Proc Note',
+          note: 'The billing sheet under it is not touched.',
+          run: clearProcDraft,
+        };
+      case 'pacu':
+        return {
+          name: 'PACU Orders',
+          note: 'Your standing orders are kept — the signature, times and vitals go.',
+          run: clearPacuForNextCase,
+        };
+      case 'billing':
+        return {
+          name: 'Billing sheet',
+          note: '',
+          run: clearBillingDraft,
+        };
+      default:
+        return null;
+    }
+  })();
+
+  const handleClearPage = () => {
+    if (!pageClear) return;
+    if (!clearPageArmed) {
+      setClearPageArmed(true);
+      clearPageTimer.current = setTimeout(() => setClearPageArmed(false), 5000);
+      return;
+    }
+    disarmClearPage();
+    if (window.confirm(
+      `Clear the ${pageClear.name} only? The other forms are kept, and shared case facts `
+      + '(date, times, procedure) stay — boxes that come from them will refill.'
+      + (pageClear.note ? `\n\n${pageClear.note}` : ''),
+    )) {
+      pageClear.run();
+      setAnesReset((n) => n + 1);
+    }
+  };
+
   // A provider "clicks in": merge their saved standing choices into the drafts,
   // apply the pre-op patch, and bump the reset signal so the mounted forms
   // reload with the applied preferences.
@@ -545,8 +637,17 @@ export default function App() {
           <button onClick={() => window.print()}>Print</button>
           <button className="ghost" onClick={forceUpdate} title="Fetch the newest version">↻ Update</button>
           <button className="ghost" onClick={() => setShareOpen(true)} title="QR and link for another provider's phone or tablet">📤 Share app</button>
+          {pageClear && (
+            <button
+              className={`danger page-clear${clearPageArmed ? ' armed' : ''}`}
+              title={`Wipes the ${pageClear.name} only — every other form keeps what it has.`}
+              onClick={handleClearPage}
+            >
+              {clearPageArmed ? `⚠ Tap again — ${pageClear.name} only` : 'Clear this page'}
+            </button>
+          )}
           <button className={`danger${clearArmed ? ' armed' : ''}`} onClick={handleClear}>
-            {clearArmed ? '⚠ Tap again to clear all' : 'Clear form'}
+            {clearArmed ? '⚠ Tap again to clear all' : 'Clear all forms'}
           </button>
         </div>
         <ProviderBar onApply={applyProvider} />
