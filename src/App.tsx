@@ -328,15 +328,36 @@ export default function App() {
     }
   };
 
-  // A provider "clicks in": merge their saved standing choices into the drafts,
-  // apply the pre-op patch, and bump the reset signal so the mounted forms
-  // reload with the applied preferences.
-  const applyProvider = (prefs: ProviderPrefs) => {
-    const patch = applyProviderToDrafts(prefs);
-    // The saved pre-op answers land on the wizard — only the fields that were
-    // saved, merged over the case in progress.
+  // A provider "clicks in": their saved standing choices fill the BLANK boxes
+  // on the drafts (the explicit Load button overwrites instead), then the
+  // reset signal bumps so the mounted forms reload. The pre-op patch is
+  // blank-only in every case: on a tablet handed off mid-case — the board
+  // runner ran the pre-op, the next provider picks it up for the record — an
+  // exam already answered for this patient is never rewritten by the next
+  // provider's defaults.
+  const applyProvider = (prefs: ProviderPrefs, opts?: { overwrite?: boolean }) => {
+    const patch = applyProviderToDrafts(prefs, opts);
     if (Object.keys(patch.preop).length) {
-      setD((prev) => ({ ...prev, ...patch.preop }));
+      setD((prev) => {
+        const cur = prev as unknown as Record<string, unknown>;
+        const next = { ...cur };
+        // History From is one multi-box answer, and a fresh form already has
+        // "patient" checked. The saved boxes land only while the group still
+        // sits exactly at that untouched start; once anyone has changed it,
+        // it is an answer and stays.
+        const hfUntouched =
+          cur.hfPatient === true
+          && !['hfParentGuardian', 'hfSignificantOther', 'hfChart', 'hfCommLanguage', 'hfPoorHistorian']
+            .some((k) => cur[k] === true);
+        for (const [k, v] of Object.entries(patch.preop)) {
+          if (k.startsWith('hf')) {
+            if (hfUntouched) next[k] = v;
+          } else if (typeof cur[k] === 'string' ? !(cur[k] as string).trim() : !cur[k]) {
+            next[k] = v;
+          }
+        }
+        return next as unknown as typeof prev;
+      });
     }
     setAnesReset((n) => n + 1);
   };
