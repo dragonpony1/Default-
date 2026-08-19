@@ -21,10 +21,11 @@ export interface CaseData {
   caseDate: string; // MM/DD/YY
   anesStart: string; // HHMM
   anesStop: string; // HHMM
+  blockCase: boolean; // a peripheral nerve block was done — the block sheet joins the packet
 }
 
 const KEY = 'anes-case-v1';
-const empty: CaseData = { allergies: '', weight: '', weightKg: '', height: '', procedure: '', diagnosis: '', surgeon: '', asa: '', asaE: false, caseDate: '', anesStart: '', anesStop: '' };
+const empty: CaseData = { allergies: '', weight: '', weightKg: '', height: '', procedure: '', diagnosis: '', surgeon: '', asa: '', asaE: false, caseDate: '', anesStart: '', anesStop: '', blockCase: false };
 
 function read(): CaseData {
   try {

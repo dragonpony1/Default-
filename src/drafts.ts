@@ -6,6 +6,7 @@
 export const ANES_KEY = 'anes-record-draft-v1';
 export const PACU_KEY = 'pacu-orders-draft-v1';
 export const BILLING_KEY = 'billing-sheet-draft-v1';
+export const BLOCK_KEY = 'block-doc-draft-v1';
 
 export interface SheetDraft {
   ck: Record<string, boolean>;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { datePad, noAuto, numPad } from './inputProps';
-import { ANES_KEY, BILLING_KEY, PACU_KEY, readSheet, writeSheetCk, writeSheetTx } from './drafts';
+import { ANES_KEY, BILLING_KEY, BLOCK_KEY, PACU_KEY, readSheet, writeSheetCk, writeSheetTx } from './drafts';
 import { setCaseField, useCaseData } from './caseData';
 import { nowStamp, useSigner } from './signer';
 import SignaturePad from './SignaturePad';
@@ -13,7 +13,7 @@ import type { PreopEval } from './types';
 // that genuinely does not apply gets N/A — the point is that nothing on the
 // printed forms is left ambiguous, not that everything has a number in it.
 
-export type PacketTab = 'fields' | 'anes' | 'pacu' | 'billing';
+export type PacketTab = 'fields' | 'anes' | 'block' | 'pacu' | 'billing';
 
 type Kind = 'text' | 'num' | 'date' | 'choice' | 'sig' | 'goto';
 
@@ -41,6 +41,9 @@ interface Props {
   /** Endo day: the record stays out of the packet, so its questions are
    *  skipped — except the facts billing still needs, asked under Billing. */
   endo?: boolean;
+  /** A peripheral nerve block was done: the block sheet is in the packet,
+   *  so its blanks are checked too. */
+  block?: boolean;
 }
 
 const filled = (s: string | undefined) => !!(s ?? '').trim();
@@ -54,7 +57,7 @@ const LEARNS: Record<string, Bucket> = {
   surgicalDx: 'diagnosis',
 };
 
-export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsChanged, endo = false }: Props) {
+export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsChanged, endo = false, block = false }: Props) {
   const caseData = useCaseData();
   const signer = useSigner();
   // Bumped after every write so the list recomputes from fresh drafts.
@@ -64,6 +67,7 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
   const anes = readSheet(ANES_KEY);
   const pacu = readSheet(PACU_KEY);
   const billing = readSheet(BILLING_KEY);
+  const blockD = readSheet(BLOCK_KEY);
   void tick;
 
   const touched = () => {
@@ -377,6 +381,94 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
     );
   }
 
+  // ---- Block documentation (in the packet only on a block case) ----
+  if (block) {
+    const blk = (id: string, label: string, kind: Kind = 'text', options?: string[]) =>
+      need(
+        { id: `block.${id}`, label, sheet: 'Block', tab: 'block', kind, options, value: blockD.tx[id] ?? '', set: sheetTx(BLOCK_KEY)(id) },
+        filled(blockD.tx[id]),
+      );
+    blk('date', 'Block sheet date', 'date');
+    blk('blockStart', 'Block start time', 'num');
+    blk('blockEnd', 'Block end time', 'num');
+
+    const side = blockD.ck.sideRight ? 'Right' : blockD.ck.sideLeft ? 'Left' : '';
+    need(
+      {
+        id: 'block.side',
+        label: 'Block side',
+        sheet: 'Block',
+        tab: 'block',
+        kind: 'choice',
+        options: ['Right', 'Left'],
+        value: side,
+        set: (v) => {
+          writeSheetCk(BLOCK_KEY, 'sideRight', v === 'Right');
+          writeSheetCk(BLOCK_KEY, 'sideLeft', v === 'Left');
+          touched();
+        },
+      },
+      !!side,
+    );
+
+    const indication = blockD.ck.postopPain ? 'Post-operative pain' : blockD.ck.opAnesthesia ? 'Operative Anesthesia' : '';
+    need(
+      {
+        id: 'block.indication',
+        label: 'Block indication',
+        sheet: 'Block',
+        tab: 'block',
+        kind: 'choice',
+        options: ['Post-operative pain', 'Operative Anesthesia'],
+        value: indication,
+        set: (v) => {
+          writeSheetCk(BLOCK_KEY, 'postopPain', v === 'Post-operative pain');
+          writeSheetCk(BLOCK_KEY, 'opAnesthesia', v === 'Operative Anesthesia');
+          touched();
+        },
+      },
+      !!indication,
+    );
+
+    need(
+      {
+        id: 'block.consent',
+        label: 'Block consent — risks and benefits',
+        sheet: 'Block',
+        tab: 'block',
+        kind: 'choice',
+        options: ['✓ Discussed'],
+        value: blockD.ck.consent ? '✓ Discussed' : '',
+        set: (v) => {
+          if (v !== '✓ Discussed') return;
+          writeSheetCk(BLOCK_KEY, 'consent', true);
+          touched();
+        },
+      },
+      !!blockD.ck.consent,
+    );
+
+    need(
+      {
+        id: 'block.sig',
+        label: 'Block provider signature',
+        sheet: 'Block',
+        tab: 'block',
+        kind: 'sig',
+        value: blockD.tx.sigImg ? 'signed' : '',
+        set: (sig) => {
+          const { date, time } = nowStamp();
+          writeSheetTx(BLOCK_KEY, 'sigImg', sig);
+          writeSheetTx(BLOCK_KEY, 'sigDate', date);
+          writeSheetTx(BLOCK_KEY, 'sigTime', time);
+          writeSheetTx(BLOCK_KEY, 'sigName', signer.name || signer.initials);
+          touched();
+        },
+      },
+      filled(blockD.tx.sigImg),
+    );
+  }
+
   // ---- Post-anesthesia note (prints on the pre-op sheet, filled in PACU) ----
   const pan = (id: keyof PreopEval, label: string, kind: Kind = 'num', options?: string[]) =>
     need(
@@ -473,7 +565,7 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
   const [asked] = useState(() => new Set(all.filter((g) => !g.ok).map((g) => g.id)));
   const gaps = all.filter((g) => asked.has(g.id));
   const remaining = gaps.filter((g) => !g.ok).length;
-  const sheets = ['Pre-Op', 'Record', 'PACU', 'Billing'].filter((s) => gaps.some((g) => g.sheet === s));
+  const sheets = ['Pre-Op', 'Record', 'Block', 'PACU', 'Billing'].filter((s) => gaps.some((g) => g.sheet === s));
 
   const answerNA = (g: Gap) => {
     if (g.na) g.na();
@@ -599,7 +691,7 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
 
       <div className="pr-foot">
         <button type="button" className="pk-big" onClick={onPrint}>
-          {remaining ? `🖨 Print anyway (${remaining} blank)` : `🖨 Print all ${endo ? 3 : 4} pages`}
+          {remaining ? `🖨 Print anyway (${remaining} blank)` : `🖨 Print all ${(endo ? 3 : 4) + (block ? 1 : 0)} pages`}
         </button>
         <button type="button" className="chip" onClick={onClose}>Back to the packet</button>
       </div>
