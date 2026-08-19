@@ -2368,6 +2368,21 @@ input[type='checkbox']:checked::after {
   margin-bottom: 0.4rem;
 }
 
+/* Drug name + its 1st/2nd/3rd rank chips share one line in the wizard. */
+.awiz-priline {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.awiz-rank {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.3rem;
+}
+
 .awiz-orders {
   display: flex;
   flex-direction: column;

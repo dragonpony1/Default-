@@ -64,11 +64,39 @@ export default function PacuWizard(api: PacuWizApi) {
     </div>
   );
 
+  // The rank chips write the same keys the form's circled words do — one rank
+  // per drug, one drug per rank (picking 1st for fentanyl lets 1st go on the
+  // others). Tapping a held rank releases it.
+  const RANK_SHOW: Record<string, string> = { first: '1st', second: '2nd', third: '3rd' };
+  const PAIN_GROUP = ['morphine', 'dilaudid', 'fentanyl'];
+  const NAUSEA_GROUP = ['zofran', 'reglan', 'inapsine'];
+  const rank = (k: string, group: string[], words: string[]) => (
+    <span className="chips awiz-rank" key={`${k}Rank`}>
+      <span className="awiz-unit">give</span>
+      {words.map((w) =>
+        chip(
+          !!api.ck[`${k}Pri${w}`],
+          () => {
+            const on = !api.ck[`${k}Pri${w}`];
+            for (const o of words) api.setCk(`${k}Pri${o}`, false);
+            for (const g of group) api.setCk(`${g}Pri${w}`, false);
+            if (on) api.setCk(`${k}Pri${w}`, true);
+          },
+          RANK_SHOW[w],
+          k + w,
+        ),
+      )}
+    </span>
+  );
+
   const priority = (k: string, label: string) => (
-    <label className="ck awiz-priority" key={k}>
-      <input type="checkbox" checked={!!api.ck[k]} onChange={(e) => api.setCk(k, e.target.checked)} />
-      <span>{label} (mark if used)</span>
-    </label>
+    <div className="awiz-priline" key={k}>
+      <label className="ck awiz-priority">
+        <input type="checkbox" checked={!!api.ck[k]} onChange={(e) => api.setCk(k, e.target.checked)} />
+        <span>{label} (mark if used)</span>
+      </label>
+      {rank(k, PAIN_GROUP, ['first', 'second', 'third'])}
+    </div>
   );
 
   const order = (k: string, label: string) => (
@@ -145,7 +173,7 @@ export default function PacuWizard(api: PacuWizApi) {
     {
       title: 'Breakthrough pain',
       nav: 'Breakthrough',
-      hint: 'If choosing more than one, mark the priority for each.',
+      hint: 'If choosing more than one, tell the PACU nurse the order: tap 1st / 2nd / 3rd on each — it circles the word on the printed line.',
       render: () => (
         <>
           <div className="awiz-drugblock">
@@ -181,11 +209,12 @@ export default function PacuWizard(api: PacuWizApi) {
     {
       title: 'Nausea',
       nav: 'Nausea',
+      hint: 'If ordering more than one, tap 1st / 2nd to circle which the nurse tries first.',
       render: () => (
         <>
-          {dose('Zofran (ondansetron)', 'zofran', 'mg', [4])}
-          {dose('Reglan (metoclopramide)', 'reglan', 'mg', [10])}
-          {dose('Inapsine (droperidol)', 'inapsine', 'mg', [0.625, 1.25])}
+          {dose('Zofran (ondansetron)', 'zofran', 'mg', [4], rank('zofran', NAUSEA_GROUP, ['first', 'second']))}
+          {dose('Reglan (metoclopramide)', 'reglan', 'mg', [10], rank('reglan', NAUSEA_GROUP, ['first', 'second']))}
+          {dose('Inapsine (droperidol)', 'inapsine', 'mg', [0.625, 1.25], rank('inapsine', NAUSEA_GROUP, ['first', 'second']))}
         </>
       ),
     },
