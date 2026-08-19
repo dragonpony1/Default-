@@ -10,6 +10,7 @@ import ColumnPass from './ColumnPass';
 import SignaturePad from './SignaturePad';
 import LearnedInput from './LearnedInput';
 import QuickDrug from './QuickDrug';
+import ScanVial, { type VialScan } from './ScanVial';
 import { remember } from './learned';
 import { nameForSignature } from './providers';
 import { CARRY_ROWS, STEP_SPECS, carriedInto as carriedFrom } from './chartRows';
@@ -89,6 +90,7 @@ export default function AnesRecord({ resetSignal = 0, onLand }: { resetSignal?: 
   const [landing, setLanding] = useState(false);
   const [signPad, setSignPad] = useState(false);
   const [quickDrug, setQuickDrug] = useState(false);
+  const [scanVial, setScanVial] = useState(false);
   const [zoom, setZoom] = useState(1);
   const bumpZoom = (delta: number) => setZoom((z) => Math.min(2.5, Math.max(0.8, Math.round((z + delta) * 10) / 10)));
   // Zoom via transform scale (not CSS `zoom`, which breaks pointer-drag math).
@@ -591,6 +593,24 @@ export default function AnesRecord({ resetSignal = 0, onLand }: { resetSignal?: 
           onCancel={() => setSignPad(false)}
         />
       )}
+      {scanVial && (
+        <ScanVial
+          onClose={() => setScanVial(false)}
+          onUse={(scan: VialScan) => {
+            setD((p) => ({
+              ...p,
+              tx: {
+                ...p.tx,
+                ...(scan.lot ? { lotNum: scan.lot } : {}),
+                ...(scan.exp ? { expDate: scan.exp } : {}),
+                // A REF with no home of its own rides the Manufacturer line,
+                // only while that line is blank.
+                ...(scan.ref && !(p.tx.manufacturer ?? '').trim() ? { manufacturer: `REF ${scan.ref}` } : {}),
+              },
+            }));
+          }}
+        />
+      )}
       <div className="awiz-switch screen-only">
         <button type="button" className="chip" onClick={() => setMode('wizard')}>⛑ Guided setup wizard</button>
         <button type="button" className="chip on cp-enter" onClick={() => setMode('column')}>⏱ Chart the case, column by column</button>
@@ -870,7 +890,10 @@ export default function AnesRecord({ resetSignal = 0, onLand }: { resetSignal?: 
                 <div className="ar-line">{ck('condTimeCk', 'Time')}{txt('condTime', 'short')}</div>
               </div>
             </div>
-            <div className="ar-line"><span>Lot #</span>{tx('lotNum', 'grow')} <span>Expiration Date:</span>{tx('expDate', 'grow')}</div>
+            <div className="ar-line">
+              <span>Lot #</span>{tx('lotNum', 'grow')} <span>Expiration Date:</span>{tx('expDate', 'grow')}
+              <button type="button" className="ar-scan-btn screen-only" title="Scan the kit's barcode — lot and expiration fill themselves, read on this device only" onClick={() => setScanVial(true)}>📷</button>
+            </div>
             <div className="ar-line"><span>Manufacturer</span>{tx('manufacturer', 'grow')}</div>
           </div>
         </div>

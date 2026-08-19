@@ -4099,6 +4099,36 @@ input.pan-stampval {
   }
 }
 
+/* Scan-the-kit panel: live camera, decoded on this device only. */
+.scan-panel {
+  max-width: 420px;
+}
+
+.scan-video {
+  width: 100%;
+  max-height: 46vh;
+  background: #000;
+  border-radius: 8px;
+  display: block;
+}
+
+.scan-found {
+  background: #f1f4fa;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+/* The little camera button on the record's Regional box. */
+.ar-scan-btn {
+  border: 1px solid #98a3b3;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 8px;
+  padding: 0 4px;
+  cursor: pointer;
+}
+
 /* Share-the-app panel: QR front and center, link underneath. */
 .share-panel {
   max-width: 380px;
