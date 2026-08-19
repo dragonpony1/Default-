@@ -10,6 +10,7 @@ export interface ProviderPrefs {
   inductionCells?: Record<string, string>; // induction drug doses (surgery-start column)
   airwayTx?: Record<string, string>; // tube size / length
   conductionTx?: Record<string, string>; // regional block drugs/doses, needle, site
+  block?: { ck: Record<string, boolean>; tx: Record<string, string> }; // block sheet usuals
   emergenceDoses?: { sugammadex?: string; zofran?: string; decadron?: string };
   narrative?: string; // record Remarks / narration
   plannedAnesthesia?: string;
@@ -60,6 +61,7 @@ export function variantPrefs(p: ProviderProfile, key: TechniqueKey): ProviderPre
 const REC = 'anes-record-draft-v1';
 const PACU = 'pacu-orders-draft-v1';
 const BILL = 'billing-sheet-draft-v1';
+const BLOCK = 'block-doc-draft-v1';
 const PREOP = 'preop-eval-draft-v2';
 const PROV = 'providers-v1';
 
@@ -82,6 +84,12 @@ const RECORD_PERCASE = new Set([
 const INDUCTION_CELLS = ['oth5:0', 'med3:0', 'med6:0', 'med7:0', 'med5:0', 'med4:0', 'oth6:0'];
 // Airway text fields that are provider defaults (not per-case time/attempts).
 const AIRWAY_TX = ['tubeSize', 'tubeLength'];
+// Block sheet choices that are a provider's usual setup — monitors, prep,
+// needle, sedation and injectate. The side, site, times, findings, catheter
+// details and the vial are the case's, never a profile's.
+const BLOCK_CK = ['ekg', 'spo2', 'nibp', 'betadine', 'alcohol', 'chlorhexidine', 'duraprep', 'sedNo', 'sedYes', 'tuohy18', 'gauge22'];
+const BLOCK_TX = ['versed', 'fentanylSed', 'ropiPct', 'ropiVol'];
+
 // Regional Anesthesia box fields that are a provider's usual block: the drugs
 // and doses, needle, and site. The block time, lot number, expiration and
 // manufacturer belong to the case's vial, never to a profile.
@@ -260,6 +268,7 @@ export function nameForSignature(sig: string, storedName?: string): string {
 export function captureCurrentPrefs(initials: string): ProviderPrefs {
   const pacu = read<Draft>(PACU);
   const rec = read<RecDraft>(REC);
+  const blockD = read<Draft>(BLOCK);
   const preop = read<Record<string, unknown>>(PREOP);
 
   const recCk = rec?.ck ?? {};
@@ -277,6 +286,10 @@ export function captureCurrentPrefs(initials: string): ProviderPrefs {
     inductionCells: pick(recCells, INDUCTION_CELLS),
     airwayTx: pick(recTx, AIRWAY_TX),
     conductionTx: pick(recTx, CONDUCTION_TX),
+    block: {
+      ck: Object.fromEntries(BLOCK_CK.filter((k) => blockD?.ck?.[k]).map((k) => [k, true])),
+      tx: pick(blockD?.tx ?? {}, BLOCK_TX),
+    },
     emergenceDoses: {
       sugammadex: lastDoseForRow(recCells, EMERGENCE_ROWS.sugammadex),
       zofran: lastDoseForRow(recCells, EMERGENCE_ROWS.zofran),
@@ -339,6 +352,21 @@ export function applyProviderToDrafts(prefs: ProviderPrefs): { preop: Record<str
       cells,
     }),
   );
+
+  // Block sheet: merge the provider's usual setup. Written straight to the
+  // draft, which does NOT flag the case as a block case — only touching the
+  // sheet in the app does that.
+  if (prefs.block && (Object.keys(prefs.block.ck).length || Object.keys(prefs.block.tx).length)) {
+    const b = read<Draft>(BLOCK) ?? {};
+    localStorage.setItem(
+      BLOCK,
+      JSON.stringify({
+        ...b,
+        ck: { ...(b.ck ?? {}), ...prefs.block.ck },
+        tx: { ...(b.tx ?? {}), ...prefs.block.tx },
+      }),
+    );
+  }
 
   // Billing: stamp CRNA name.
   if (name) {
