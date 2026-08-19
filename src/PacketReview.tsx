@@ -510,6 +510,65 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
     !!d.panSig,
   );
 
+  // ---- Breakthrough / anti-nausea priorities ----
+  // The order sheet says it itself: "if choosing more than one medication,
+  // priority must be checked." When two or more drugs in a group are elected
+  // (box ticked or any dose written), every elected drug needs its rank
+  // circled so the PACU nurse knows what to reach for first.
+  const RANK_SHOW: Record<string, string> = { first: '1st', second: '2nd', third: '3rd' };
+  const priGroup = (
+    group: Array<{ k: string; ek: string; name: string; doseKeys: string[] }>,
+    words: string[],
+    what: string,
+  ) => {
+    const elected = group.filter(
+      (g) => pacu.ck[g.ek] || g.doseKeys.some((dk) => (pacu.tx[dk] ?? '').trim() !== ''),
+    );
+    if (elected.length < 2) return;
+    const rankOf = (k: string) => words.find((w) => pacu.ck[`${k}Pri${w}`]) ?? '';
+    for (const g of elected) {
+      need(
+        {
+          id: `pacu.${g.k}Pri`,
+          label: `${what} — ${g.name}`,
+          sheet: 'PACU',
+          tab: 'pacu',
+          kind: 'choice',
+          options: words.map((w) => RANK_SHOW[w]),
+          value: rankOf(g.k) ? RANK_SHOW[rankOf(g.k)] : '',
+          set: (v) => {
+            const w = words.find((x) => RANK_SHOW[x] === v);
+            if (!w) return;
+            for (const o of words) writeSheetCk(PACU_KEY, `${g.k}Pri${o}`, false);
+            for (const other of group) writeSheetCk(PACU_KEY, `${other.k}Pri${w}`, false);
+            writeSheetCk(PACU_KEY, `${g.k}Pri${w}`, true);
+            touched();
+          },
+          note: 'Circles the word on the order line',
+        },
+        !!rankOf(g.k),
+      );
+    }
+  };
+  priGroup(
+    [
+      { k: 'morphine', ek: 'morphine', name: 'give Morphine', doseKeys: ['morphineLow', 'morphineHigh', 'morphineEvery', 'morphineMax'] },
+      { k: 'dilaudid', ek: 'dilaudid', name: 'give Dilaudid', doseKeys: ['dilaudidLow', 'dilaudidHigh', 'dilaudidEvery', 'dilaudidMax'] },
+      { k: 'fentanyl', ek: 'fentanyl', name: 'give Fentanyl', doseKeys: ['fentanylLow', 'fentanylHigh', 'fentanylEvery', 'fentanylMax'] },
+    ],
+    ['first', 'second', 'third'],
+    'Breakthrough pain priority',
+  );
+  priGroup(
+    [
+      { k: 'zofran', ek: 'item10', name: 'try Zofran', doseKeys: ['zofran'] },
+      { k: 'reglan', ek: 'item11', name: 'try Reglan', doseKeys: ['reglan'] },
+      { k: 'inapsine', ek: 'item12', name: 'try Inapsine', doseKeys: ['inapsine'] },
+    ],
+    ['first', 'second'],
+    'Anti-nausea priority',
+  );
+
   need(
     {
       id: 'pacu.sig',
