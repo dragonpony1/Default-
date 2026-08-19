@@ -5,6 +5,7 @@ import Barcode39 from './Barcode39';
 import SignatureStamp from './SignatureStamp';
 import LearnedInput from './LearnedInput';
 import { BLOCK_KEY } from './drafts';
+import BlockWizard from './BlockWizard';
 
 // Block Documentation replicating Mountain West Medical Center form
 // 170-165-1130010HMS (09/09, Rev. 06/15), portrait US Letter, built from a
@@ -45,6 +46,7 @@ const SITES = [
 
 export default function BlockDoc({ resetSignal = 0 }: { resetSignal?: number }) {
   const [d, setD] = useState<BlockDraft>(loadBlock);
+  const [mode, setMode] = useState<'form' | 'wizard'>('form');
   const caseData = useCaseData();
 
   useEffect(() => {
@@ -56,6 +58,7 @@ export default function BlockDoc({ resetSignal = 0 }: { resetSignal?: number }) 
     if (resetSignal !== seenReset.current) {
       seenReset.current = resetSignal;
       setD(loadBlock());
+      setMode('form');
     }
   }, [resetSignal]);
 
@@ -70,7 +73,8 @@ export default function BlockDoc({ resetSignal = 0 }: { resetSignal?: number }) 
   };
   const setTx = (k: string, v: string) => {
     declare();
-    setD((p) => ({ ...p, tx: { ...p.tx, [k]: v } }));
+    // Typing in the stimulator's "at" box takes it over from the auto-fill.
+    setD((p) => ({ ...p, tx: { ...p.tx, [k]: v, ...(k === 'maAt1' ? { maAt1Auto: '' } : {}) } }));
   };
 
   // The case date is this sheet's date too, while its own box is blank.
@@ -78,6 +82,24 @@ export default function BlockDoc({ resetSignal = 0 }: { resetSignal?: number }) 
     if (!caseData.caseDate) return;
     setD((p) => ((p.tx.date ?? '').trim() ? p : { ...p, tx: { ...p.tx, date: caseData.caseDate } }));
   }, [caseData.caseDate]);
+
+  // The stimulator's "at" is the block itself — R Interscalene, L Femoral —
+  // so it writes itself from the side and site picked, while its box is
+  // blank. Typed text always stands.
+  const sideAbbr = d.ck.sideRight ? 'R' : d.ck.sideLeft ? 'L' : '';
+  const siteLabel = SITES.find(([k]) => d.ck[k])?.[1] ?? (d.ck.siteOtherCk ? (d.tx.siteOther ?? '').trim() : '');
+  useEffect(() => {
+    const at = [sideAbbr, siteLabel].filter(Boolean).join(' ');
+    if (!at) return;
+    setD((p) => {
+      const cur = (p.tx.maAt1 ?? '').trim();
+      // A value someone typed stands; one this auto-fill wrote keeps
+      // following the side and site as they are picked.
+      if (cur && p.tx.maAt1Auto !== '1') return p;
+      if (cur === at) return p;
+      return { ...p, tx: { ...p.tx, maAt1: at, maAt1Auto: '1' } };
+    });
+  }, [sideAbbr, siteLabel]);
 
   const ck = (k: string, label?: string) => (
     <label className="ck" key={k}>
@@ -142,7 +164,25 @@ export default function BlockDoc({ resetSignal = 0 }: { resetSignal?: number }) 
     </span>
   );
 
+  if (mode === 'wizard') {
+    return (
+      <BlockWizard
+        ck={d.ck}
+        tx={d.tx}
+        setCk={setCk}
+        setTx={setTx}
+        onBack={() => setMode('form')}
+        onDone={() => setMode('form')}
+      />
+    );
+  }
+
   return (
+    <>
+    <div className="awiz-switch screen-only">
+      <button type="button" className="chip" onClick={() => setMode('wizard')}>⛑ Guided block wizard</button>
+      <span className="awiz-switch-hint">Side, site, needle, injectate, findings, sign — made for a phone in the OR. The full form stays fillable.</span>
+    </div>
     <div className="page bd-page">
       <div className="bd-top">
         <div className="bd-topck">
@@ -322,5 +362,6 @@ export default function BlockDoc({ resetSignal = 0 }: { resetSignal?: number }) 
       </div>
       <div className="po-hospital">Mountain West Medical Center</div>
     </div>
+    </>
   );
 }
