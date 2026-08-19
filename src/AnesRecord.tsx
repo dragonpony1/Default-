@@ -430,7 +430,7 @@ export default function AnesRecord({ resetSignal = 0, onLand }: { resetSignal?: 
             }
           : {})}
         key={col}
-        className={`ar-cell${carried ? ' carried' : ''} len${Math.min(5, String(own ?? carried).length)}`}
+        className={`ar-cell${carried ? ' carried' : ''}${rowKey === 'oth4' && (own ?? '').trim() ? ' inked' : ''} len${Math.min(5, String(own ?? carried).length)}`}
         value={own ?? carried}
         onChange={(e) => setCell(`${rowKey}:${col}`, e.target.value)}
       />
@@ -829,6 +829,17 @@ export default function AnesRecord({ resetSignal = 0, onLand }: { resetSignal?: 
           </div>
 
           <div className="ar-sec ar-conduction">
+            {/* No block this case: the hand draws one line through the whole
+                box — the N/A toggle prints exactly that. */}
+            {d.ck.condNA && <div className="ar-condna" aria-hidden="true" />}
+            <button
+              type="button"
+              className={`ar-condna-btn screen-only${d.ck.condNA ? ' on' : ''}`}
+              title="No regional block this case — prints a line through the box"
+              onClick={() => setD((p) => ({ ...p, ck: { ...p.ck, condNA: !p.ck.condNA } }))}
+            >
+              N/A
+            </button>
             <div className="ar-h">Regional Anesthesia</div>
             <div className="ar-cond3">
               <div className="ar-condcol">
