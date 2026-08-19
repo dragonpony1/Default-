@@ -282,10 +282,16 @@ export default function App() {
           },
         };
       case 'proc':
+        // The proc tab shows the note with the billing sheet under it — on a
+        // stand-alone procedure those two print together, so they clear
+        // together too.
         return {
-          name: 'Proc Note',
-          note: 'The billing sheet under it is not touched.',
-          run: clearProcDraft,
+          name: 'Proc Note + Billing',
+          note: 'This tab shows both, so both are cleared together.',
+          run: () => {
+            clearProcDraft();
+            clearBillingDraft();
+          },
         };
       case 'pacu':
         return {
