@@ -17,6 +17,7 @@ import PacuOrders, { clearPacuForNextCase } from './PacuOrders';
 import PostAnesNote from './PostAnesNote';
 import SignaturePad from './SignaturePad';
 import BillingSheet, { clearBillingDraft } from './BillingSheet';
+import ShareApp from './ShareApp';
 import { decodeChoices, loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 import { setCaseField, clearCase, getCase, useCaseData } from './caseData';
 import { useSigner, nowStamp } from './signer';
@@ -47,6 +48,12 @@ export default function App() {
   const signer = useSigner();
   const caseData = useCaseData();
   const [signTarget, setSignTarget] = useState<{ sig: 'panSig' | 'evalSig' | 'inpSig'; dt: StringKeys; nm: StringKeys } | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
+  // Where the packet tab was entered from, so its Back button returns there.
+  const beforePacket = useRef<typeof view>('fields');
+  useEffect(() => {
+    if (view !== 'packet' && view !== 'choices') beforePacket.current = view;
+  }, [view]);
 
   const setChoices = (c: CustomChoices) => {
     saveCustomChoices(c);
@@ -510,6 +517,7 @@ export default function App() {
         <div className="toolbar-actions">
           <button onClick={() => window.print()}>Print</button>
           <button className="ghost" onClick={forceUpdate} title="Fetch the newest version">↻ Update</button>
+          <button className="ghost" onClick={() => setShareOpen(true)} title="QR and link for another provider's phone or tablet">📤 Share app</button>
           <button className={`danger${clearArmed ? ' armed' : ''}`} onClick={handleClear}>
             {clearArmed ? '⚠ Tap again to clear all' : 'Clear form'}
           </button>
@@ -542,6 +550,17 @@ export default function App() {
       {packet && (
         <section className="pk-head screen-only">
           <div className="pk-row">
+            <button
+              type="button"
+              className="chip pk-exit"
+              onClick={() => {
+                setReview(false);
+                setSolo(null);
+                setView(beforePacket.current);
+              }}
+            >
+              ← Back to the forms
+            </button>
             <button
               type="button"
               className="pk-big"
@@ -607,6 +626,7 @@ export default function App() {
       {view === 'fields' && (
         <FieldByField d={d} set={set} customChoices={choices} onFinish={() => setView('form')} />
       )}
+      {shareOpen && <ShareApp onClose={() => setShareOpen(false)} />}
       {view === 'choices' && <EditChoices choices={choices} setChoices={setChoices} />}
       {view === 'anes' && (
         <AnesRecord
