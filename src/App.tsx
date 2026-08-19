@@ -18,6 +18,7 @@ import PostAnesNote from './PostAnesNote';
 import SignaturePad from './SignaturePad';
 import BillingSheet, { clearBillingDraft } from './BillingSheet';
 import ShareApp from './ShareApp';
+import { ANES_KEY, writeSheetTx } from './drafts';
 import { decodeChoices, loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 import { setCaseField, clearCase, getCase, useCaseData } from './caseData';
 import { useSigner, nowStamp } from './signer';
@@ -54,6 +55,20 @@ export default function App() {
   useEffect(() => {
     if (view !== 'packet' && view !== 'choices') beforePacket.current = view;
   }, [view]);
+
+  // An endoscopy assignment: the endo nurse charts the vitals on her own
+  // record, so the packet prints without the anesthesia record — pre-op,
+  // PACU orders and billing only. The mode is the day's assignment, not
+  // patient data: it survives Clear form and stays until toggled off.
+  const [endoDay, setEndoDay] = useState(() => localStorage.getItem('endo-day-v1') === '1');
+  useEffect(() => {
+    localStorage.setItem('endo-day-v1', endoDay ? '1' : '0');
+    if (endoDay) {
+      // The record's OR box says Endo, so even an unprinted record agrees.
+      writeSheetTx(ANES_KEY, 'orNum', 'Endo');
+      setAnesReset((n) => n + 1);
+    }
+  }, [endoDay]);
 
   const setChoices = (c: CustomChoices) => {
     saveCustomChoices(c);
@@ -201,6 +216,8 @@ export default function App() {
       clearPacuForNextCase();
       clearBillingDraft();
       clearCase();
+      // The endo assignment outlives the case: re-stamp the fresh record.
+      if (endoDay) writeSheetTx(ANES_KEY, 'orNum', 'Endo');
       // Whoever is clicked in stays clicked in — the provider is not the
       // patient's data. Their signatures on the cleared forms are gone with
       // the forms.
@@ -571,18 +588,30 @@ export default function App() {
                 setReview(true);
               }}
             >
-              🖨 Print all 4 pages
+              🖨 Print all {endoDay ? 3 : 4} pages
+            </button>
+            <button
+              type="button"
+              className={`chip pk-endo${endoDay ? ' on' : ''}`}
+              title="Endoscopy assignment: the endo nurse charts vitals on her own record, so the packet prints without the anesthesia record. Stays on through Clear form until tapped off."
+              onClick={() => {
+                setEndoDay(!endoDay);
+                if (solo === 1) setSolo(null);
+              }}
+            >
+              🔬 Endo day{endoDay ? ' — no record sheet' : ''}
             </button>
             <span className="pk-hint">
-              Pre-op, anesthesia record, PACU orders and billing all live on this tab, laid out
-              below in printing order &mdash; what you scroll through here is what comes out.
-              Printing runs a last check for blanks first.
+              {endoDay
+                ? 'Endo: pre-op, PACU orders and billing print — the anesthesia record stays out (the endo nurse charts the vitals on her own record).'
+                : 'Pre-op, anesthesia record, PACU orders and billing all live on this tab, laid out below in printing order — what you scroll through here is what comes out. Printing runs a last check for blanks first.'}
             </span>
           </div>
           {review && (
             <PacketReview
               d={d}
               set={set}
+              endo={endoDay}
               onGo={(tab) => {
                 setReview(false);
                 setFromReview(true);
@@ -598,16 +627,18 @@ export default function App() {
           )}
           <div className="pk-row pk-solorow">
             <span className="pk-sololbl">Or one page at a time:</span>
-            {PACKET_SHEETS.map((name, i) => (
-              <button
-                key={name}
-                type="button"
-                className={`chip${solo === i ? ' on' : ''}`}
-                onClick={() => setSolo(solo === i ? null : i)}
-              >
-                {i + 1}. {name}
-              </button>
-            ))}
+            {PACKET_SHEETS.map((name, i) =>
+              endoDay && i === 1 ? null : (
+                <button
+                  key={name}
+                  type="button"
+                  className={`chip${solo === i ? ' on' : ''}`}
+                  onClick={() => setSolo(solo === i ? null : i)}
+                >
+                  {endoDay ? name : `${i + 1}. ${name}`}
+                </button>
+              ),
+            )}
             {solo !== null && (
               <button type="button" className="chip on" onClick={() => window.print()}>
                 🖨 Print page {solo + 1} only
@@ -924,7 +955,7 @@ export default function App() {
 
       {packet && (
         <>
-          <div className={`pa-sheet${soloCls(1)}`}><AnesRecord resetSignal={anesReset} /></div>
+          <div className={`pa-sheet${soloCls(1)}${endoDay ? ' pk-hide' : ''}`}><AnesRecord resetSignal={anesReset} /></div>
           <div className={`pa-sheet${soloCls(2)}`}><PacuOrders resetSignal={anesReset} /></div>
           <div className={`pa-sheet${soloCls(3)}`}><BillingSheet resetSignal={anesReset} /></div>
         </>
