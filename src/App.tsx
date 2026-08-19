@@ -18,6 +18,7 @@ import PostAnesNote from './PostAnesNote';
 import SignaturePad from './SignaturePad';
 import BillingSheet, { clearBillingDraft } from './BillingSheet';
 import ShareApp from './ShareApp';
+import BlockDoc, { clearBlockDraft } from './BlockDoc';
 import { ANES_KEY, writeSheetTx } from './drafts';
 import { decodeChoices, loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 import { setCaseField, clearCase, getCase, useCaseData } from './caseData';
@@ -26,14 +27,14 @@ import ProviderBar from './ProviderBar';
 import { applyProviderToDrafts, nameForSignature, type ProviderPrefs } from './providers';
 
 // The packet, in the order it prints.
-const PACKET_SHEETS = ['Pre-Op', 'Record', 'PACU Orders', 'Billing'];
+const PACKET_SHEETS = ['Pre-Op', 'Record', 'Block', 'PACU Orders', 'Billing'];
 
 type StringKeys = { [K in keyof PreopEval]: PreopEval[K] extends string ? K : never }[keyof PreopEval];
 type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : never }[keyof PreopEval];
 
 export default function App() {
   const [d, setD] = useState<PreopEval>(loadDraft);
-  const [view, setView] = useState<'fields' | 'form' | 'anes' | 'pacu' | 'billing' | 'choices' | 'packet'>('fields');
+  const [view, setView] = useState<'fields' | 'form' | 'anes' | 'block' | 'pacu' | 'billing' | 'choices' | 'packet'>('fields');
   const [anesReset, setAnesReset] = useState(0);
   // The Print Packet tab holds all four sheets at once, mounted and laid out
   // like any other tab, so printing it is an ordinary print of what is on the
@@ -215,6 +216,7 @@ export default function App() {
       clearAnesDraft();
       clearPacuForNextCase();
       clearBillingDraft();
+      clearBlockDraft();
       clearCase();
       // The endo assignment outlives the case: re-stamp the fresh record.
       if (endoDay) writeSheetTx(ANES_KEY, 'orNum', 'Endo');
@@ -506,6 +508,9 @@ export default function App() {
           <button className={view === 'anes' ? 'on' : ''} onClick={() => setView('anes')}>
             Anesthesia Record
           </button>
+          <button className={view === 'block' ? 'on' : ''} onClick={() => setView('block')}>
+            Block
+          </button>
           <button className={view === 'pacu' ? 'on' : ''} onClick={() => setView('pacu')}>
             PACU Orders
           </button>
@@ -588,7 +593,7 @@ export default function App() {
                 setReview(true);
               }}
             >
-              🖨 Print all {endoDay ? 3 : 4} pages
+              🖨 Print all {(endoDay ? 3 : 4) + (caseData.blockCase ? 1 : 0)} pages
             </button>
             <button
               type="button"
@@ -601,6 +606,17 @@ export default function App() {
             >
               🔬 Endo day{endoDay ? ' — no record sheet' : ''}
             </button>
+            <button
+              type="button"
+              className={`chip pk-endo${caseData.blockCase ? ' on' : ''}`}
+              title="A peripheral nerve block was done: the Block Documentation sheet joins the packet. Filling anything on the Block tab turns this on by itself."
+              onClick={() => {
+                setCaseField('blockCase', !caseData.blockCase);
+                if (solo === 2) setSolo(null);
+              }}
+            >
+              🦵 Block sheet{caseData.blockCase ? ' — in the packet' : ''}
+            </button>
             <span className="pk-hint">
               {endoDay
                 ? 'Endo: pre-op, PACU orders and billing print — the anesthesia record stays out (the endo nurse charts the vitals on her own record).'
@@ -612,6 +628,7 @@ export default function App() {
               d={d}
               set={set}
               endo={endoDay}
+              block={caseData.blockCase}
               onGo={(tab) => {
                 setReview(false);
                 setFromReview(true);
@@ -628,7 +645,7 @@ export default function App() {
           <div className="pk-row pk-solorow">
             <span className="pk-sololbl">Or one page at a time:</span>
             {PACKET_SHEETS.map((name, i) =>
-              endoDay && i === 1 ? null : (
+              (endoDay && i === 1) || (!caseData.blockCase && i === 2) ? null : (
                 <button
                   key={name}
                   type="button"
@@ -671,6 +688,7 @@ export default function App() {
           }}
         />
       )}
+      {view === 'block' && <BlockDoc resetSignal={anesReset} />}
       {view === 'pacu' && <PostAnesNote d={d} set={set} />}
       {view === 'pacu' && <PacuOrders resetSignal={anesReset} />}
       {view === 'billing' && <BillingSheet resetSignal={anesReset} />}
@@ -956,8 +974,9 @@ export default function App() {
       {packet && (
         <>
           <div className={`pa-sheet${soloCls(1)}${endoDay ? ' pk-hide' : ''}`}><AnesRecord resetSignal={anesReset} /></div>
-          <div className={`pa-sheet${soloCls(2)}`}><PacuOrders resetSignal={anesReset} /></div>
-          <div className={`pa-sheet${soloCls(3)}`}><BillingSheet resetSignal={anesReset} /></div>
+          <div className={`pa-sheet${soloCls(2)}${caseData.blockCase ? '' : ' pk-hide'}`}><BlockDoc resetSignal={anesReset} /></div>
+          <div className={`pa-sheet${soloCls(3)}`}><PacuOrders resetSignal={anesReset} /></div>
+          <div className={`pa-sheet${soloCls(4)}`}><BillingSheet resetSignal={anesReset} /></div>
         </>
       )}
     </div>

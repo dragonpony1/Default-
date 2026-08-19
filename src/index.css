@@ -3999,6 +3999,106 @@ input.pan-stampval {
   margin-bottom: 0.5rem;
 }
 
+/* ---- Block Documentation (170-165-1130010HMS) ---- */
+
+.bd-page {
+  max-width: 8.5in;
+  margin: 0 auto;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.bd-top {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 4px;
+}
+
+.bd-topck {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 3.4in;
+}
+
+.bd-form {
+  border: 1.5px solid #000;
+  padding: 4px 10px 6px;
+}
+
+.bd-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 3px 0;
+}
+
+.bd-wrapline {
+  flex-wrap: wrap;
+}
+
+.bd-line .lbl {
+  white-space: nowrap;
+}
+
+.bd-sec {
+  display: flex;
+  gap: 8px;
+  margin: 5px 0;
+}
+
+.bd-seclbl {
+  flex: none;
+  width: 1.35in;
+  font-weight: 700;
+}
+
+.bd-secbody {
+  flex: 1;
+  min-width: 0;
+}
+
+.bd-risks {
+  font-size: 0.92em;
+  margin: 2px 0;
+}
+
+.bd-pm {
+  white-space: nowrap;
+}
+
+.bd-pmck {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.bd-plans {
+  border-top: 1px solid #000;
+  margin-top: 6px;
+  padding-top: 4px;
+}
+
+.bd-comments {
+  min-height: 3.4em;
+}
+
+.bd-sign {
+  border-top: 1.5px solid #000;
+  margin-top: 4px;
+  padding-top: 2px;
+}
+
+@media print {
+  .bd-page {
+    font-size: 10.5pt;
+    line-height: 1.35;
+    max-width: none;
+  }
+}
+
 /* Share-the-app panel: QR front and center, link underneath. */
 .share-panel {
   max-width: 380px;
