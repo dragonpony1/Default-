@@ -18,7 +18,9 @@ import SignaturePad from './SignaturePad';
 // No patient data is involved — provider preferences only.
 
 interface Props {
-  onApply: (prefs: ProviderPrefs) => void;
+  // Clicking in fills blanks only; the explicit Load button passes
+  // overwrite so a chosen technique's values replace what a prior load put on.
+  onApply: (prefs: ProviderPrefs, opts?: { overwrite?: boolean }) => void;
 }
 
 function newId(existing: ProviderProfile[]): string {
@@ -99,7 +101,9 @@ export default function ProviderBar({ onApply }: Props) {
       if (!prefs) {
         window.alert(`No ${label} defaults saved for ${p.initials} yet — set the forms up the way you like and tap Save.`);
       } else {
-        onApply(prefs);
+        // Loading is a deliberate "put my values on": the chosen technique's
+        // defaults replace what an earlier click-in or load laid down.
+        onApply(prefs, { overwrite: true });
         window.alert(`${p.initials}'s ${label} defaults are on the forms.`);
       }
     }

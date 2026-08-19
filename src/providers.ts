@@ -160,6 +160,36 @@ function pick(src: Record<string, string>, keys: string[]): Record<string, strin
   return out;
 }
 
+// PACU draft keys that belong to the case in front of you, not to a profile:
+// a signature and its date/time must never ride along in saved defaults.
+const PACU_PERCASE = ['sigImg', 'sigName', 'date', 'time'];
+
+function stripKeys(src: Record<string, string>, keys: string[]): Record<string, string> {
+  const out = { ...src };
+  for (const k of keys) delete out[k];
+  return out;
+}
+
+/** Defaults land on BLANK boxes only: a value already on the form — entered by
+ *  whoever had the tablet before — is never rewritten by clicking in. */
+function fillBlanks(cur: Record<string, string>, def: Record<string, string>): Record<string, string> {
+  const out = { ...cur };
+  for (const [k, v] of Object.entries(def)) {
+    if (v && !(out[k] ?? '').trim()) out[k] = v;
+  }
+  return out;
+}
+
+/** Default checkmarks land only where the box has never been touched — a box
+ *  someone checked or deliberately un-checked stands. */
+function addChecks(cur: Record<string, boolean>, def: Record<string, boolean>): Record<string, boolean> {
+  const out = { ...cur };
+  for (const [k, v] of Object.entries(def)) {
+    if (v && out[k] === undefined) out[k] = true;
+  }
+  return out;
+}
+
 // The department's providers, seeded on first run: initials for the buttons,
 // full name for the signature lines. Each starts with no saved defaults — a
 // provider taps their button then "Save" once to store their setup.
@@ -281,7 +311,7 @@ export function captureCurrentPrefs(initials: string): ProviderPrefs {
   }
 
   return {
-    pacu: { ck: pacu?.ck ?? {}, tx: pacu?.tx ?? {} },
+    pacu: { ck: pacu?.ck ?? {}, tx: stripKeys(pacu?.tx ?? {}, PACU_PERCASE) },
     recordCk,
     inductionCells: pick(recCells, INDUCTION_CELLS),
     airwayTx: pick(recTx, AIRWAY_TX),
@@ -310,60 +340,101 @@ export function captureCurrentPrefs(initials: string): ProviderPrefs {
   };
 }
 
-// Apply a provider's preferences to the form drafts by MERGING (so a case in
-// progress keeps its per-case data). Writes the record/PACU/billing drafts
-// directly; returns a patch for the pre-op state that App applies itself.
-export function applyProviderToDrafts(prefs: ProviderPrefs): { preop: Record<string, unknown> } {
+// Apply a provider's preferences to the form drafts. NAMES restamp — whoever
+// is clicked in is the one signing from here on — but everything else fills
+// BLANK boxes only. A tablet handed off mid-case (the board runner ran the
+// pre-op, the CRNA picks it up for the record) must never have one provider's
+// defaults overwrite what another provider already charted for this patient.
+// Writes the record/PACU/billing drafts directly; returns a patch for the
+// pre-op state that App applies itself (blank-only there ALWAYS — the pre-op
+// exam is the patient's, whichever way the defaults arrive).
+//
+// The explicit "Load defaults" button passes overwrite:true — laying a chosen
+// technique's values onto the forms is a deliberate act (switching a case
+// from General to LMA must replace the tube size), so there the defaults win.
+export function applyProviderToDrafts(
+  prefs: ProviderPrefs,
+  opts?: { overwrite?: boolean },
+): { preop: Record<string, unknown> } {
+  const overwrite = opts?.overwrite === true;
+  const mergeTx = (cur: Record<string, string>, def: Record<string, string>) =>
+    overwrite ? { ...cur, ...def } : fillBlanks(cur, def);
+  const mergeCk = (cur: Record<string, boolean>, def: Record<string, boolean>) =>
+    overwrite ? { ...cur, ...def } : addChecks(cur, def);
   const name = prefs.providerName ?? '';
 
-  // PACU: merge their standing orders + stamp provider name.
+  // PACU: these are the signer's standing orders, so the clicked-in
+  // provider's saved set takes over — that is the one deliberate overwrite,
+  // since the orders belong to whoever signs them. Any signature or date/time
+  // that rode into an old profile is stripped, never applied.
   const pacu = read<Draft>(PACU) ?? {};
   localStorage.setItem(
     PACU,
     JSON.stringify({
       ck: { ...(pacu.ck ?? {}), ...(prefs.pacu?.ck ?? {}) },
-      tx: { ...(pacu.tx ?? {}), ...(prefs.pacu?.tx ?? {}), ...(name ? { provider: name } : {}) },
+      tx: {
+        ...(pacu.tx ?? {}),
+        ...stripKeys(prefs.pacu?.tx ?? {}, PACU_PERCASE),
+        ...(name ? { provider: name } : {}),
+      },
     }),
   );
 
-  // Record: merge setup checkboxes, induction doses, airway defaults, emergence
-  // doses (placed at the current end-of-graph column), narration, and name.
+  // Record: setup checkboxes, induction doses, airway defaults, emergence
+  // doses, narration — blanks only. The anesthetist name restamps.
   const rec = read<RecDraft>(REC) ?? {};
   const recTx = { ...(rec.tx ?? {}) };
   const endCol = endColFor(recTx);
-  const cells = { ...(rec.cells ?? {}), ...(prefs.inductionCells ?? {}) };
+  const cells = mergeTx(rec.cells ?? {}, prefs.inductionCells ?? {});
   const em = prefs.emergenceDoses ?? {};
-  if (em.sugammadex) cells[`${EMERGENCE_ROWS.sugammadex}:${endCol}`] = em.sugammadex;
-  if (em.zofran) cells[`${EMERGENCE_ROWS.zofran}:${endCol}`] = em.zofran;
-  if (em.decadron) cells[`${EMERGENCE_ROWS.decadron}:${endCol}`] = em.decadron;
+  // An emergence dose default lands (at the current end-of-graph column) only
+  // when its drug row is still empty — a dose already charted stands alone.
+  if (em.sugammadex && (overwrite || !lastDoseForRow(cells, EMERGENCE_ROWS.sugammadex))) {
+    cells[`${EMERGENCE_ROWS.sugammadex}:${endCol}`] = em.sugammadex;
+  }
+  if (em.zofran && (overwrite || !lastDoseForRow(cells, EMERGENCE_ROWS.zofran))) {
+    cells[`${EMERGENCE_ROWS.zofran}:${endCol}`] = em.zofran;
+  }
+  if (em.decadron && (overwrite || !lastDoseForRow(cells, EMERGENCE_ROWS.decadron))) {
+    cells[`${EMERGENCE_ROWS.decadron}:${endCol}`] = em.decadron;
+  }
+
+  const tx = mergeTx(recTx, {
+    ...(prefs.airwayTx ?? {}),
+    ...(prefs.conductionTx ?? {}),
+    ...(prefs.narrative ? { remarks: prefs.narrative } : {}),
+  });
+  if (name) tx.anesthetist = name;
 
   localStorage.setItem(
     REC,
     JSON.stringify({
       ...rec,
-      ck: { ...(rec.ck ?? {}), ...(prefs.recordCk ?? {}) },
-      tx: {
-        ...recTx,
-        ...(prefs.airwayTx ?? {}),
-        ...(prefs.conductionTx ?? {}),
-        ...(prefs.narrative ? { remarks: prefs.narrative } : {}),
-        ...(name ? { anesthetist: name } : {}),
-      },
+      ck: mergeCk(rec.ck ?? {}, prefs.recordCk ?? {}),
+      tx,
       cells,
     }),
   );
 
-  // Block sheet: merge the provider's usual setup. Written straight to the
-  // draft, which does NOT flag the case as a block case — only touching the
-  // sheet in the app does that.
+  // Block sheet: the provider's usual setup, blanks only. Written straight to
+  // the draft, which does NOT flag the case as a block case — only touching
+  // the sheet in the app does that.
   if (prefs.block && (Object.keys(prefs.block.ck).length || Object.keys(prefs.block.tx).length)) {
     const b = read<Draft>(BLOCK) ?? {};
+    const bck = b.ck ?? {};
+    // Sedation yes/no is one answer: once either box is marked the question
+    // is answered, and defaults stay out rather than checking both.
+    const defCk = { ...prefs.block.ck };
+    if (!overwrite && (bck.sedNo !== undefined || bck.sedYes !== undefined)) {
+      delete defCk.sedNo;
+      delete defCk.sedYes;
+    }
     localStorage.setItem(
       BLOCK,
       JSON.stringify({
         ...b,
-        ck: { ...(b.ck ?? {}), ...prefs.block.ck },
-        tx: { ...(b.tx ?? {}), ...prefs.block.tx },
+        ck: mergeCk(bck, defCk),
+        tx: mergeTx(b.tx ?? {}, prefs.block.tx),
       }),
     );
   }
