@@ -4099,6 +4099,92 @@ input.pan-stampval {
   }
 }
 
+/* ---- Procedure note on the Progress Notes sheet (QHC-NS-2505HMS) ---- */
+
+.pn-composer {
+  margin-bottom: 0.8rem;
+}
+
+.pn-page {
+  max-width: 8.5in;
+  margin: 0 auto;
+  font-size: 13px;
+}
+
+.pn-top {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+
+.pn-box {
+  border: 1.5px solid #000;
+}
+
+.pn-head {
+  display: flex;
+  border-bottom: 1px solid #000;
+  font-weight: 700;
+}
+
+.pn-hdate { width: 0.95in; padding: 2px 4px; border-right: 1px solid #888; font-variant: small-caps; }
+.pn-htime { width: 0.75in; padding: 2px 4px; border-right: 1px solid #888; font-variant: small-caps; }
+.pn-hnote { flex: 1; text-align: center; padding: 2px 4px; }
+
+/* The ruled body: lines run the full width; the columns divide them. */
+.pn-body {
+  display: flex;
+  align-items: stretch;
+  min-height: 8.4in;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent calc(0.28in - 1px),
+    #b9bfcc calc(0.28in - 1px),
+    #b9bfcc 0.28in
+  );
+}
+
+.pn-datecol { width: 0.95in; padding: 2px 4px; border-right: 1px solid #888; line-height: 0.28in; }
+.pn-timecol { width: 0.75in; padding: 2px 4px; border-right: 1px solid #888; line-height: 0.28in; }
+.pn-notecol { flex: 1; padding: 2px 8px; min-width: 0; }
+
+.pn-note {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font: inherit;
+  line-height: 0.28in;
+  resize: vertical;
+}
+
+.pn-notetext {
+  white-space: pre-wrap;
+  line-height: 0.28in;
+}
+
+.pn-sig {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.28in;
+}
+
+.pn-sigimg {
+  height: 0.5in;
+}
+
+.pn-sigdt {
+  font-size: 0.85em;
+}
+
+@media print {
+  .pn-page {
+    font-size: 11pt;
+    max-width: none;
+  }
+}
+
 /* Scan-the-kit panel: live camera, decoded on this device only. */
 .scan-panel {
   max-width: 420px;

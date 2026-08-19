@@ -19,6 +19,7 @@ import SignaturePad from './SignaturePad';
 import BillingSheet, { clearBillingDraft } from './BillingSheet';
 import ShareApp from './ShareApp';
 import BlockDoc, { clearBlockDraft } from './BlockDoc';
+import ProcNote, { clearProcDraft } from './ProcNote';
 import { ANES_KEY, writeSheetTx } from './drafts';
 import { decodeChoices, loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 import { setCaseField, clearCase, getCase, useCaseData } from './caseData';
@@ -34,7 +35,7 @@ type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : nev
 
 export default function App() {
   const [d, setD] = useState<PreopEval>(loadDraft);
-  const [view, setView] = useState<'fields' | 'form' | 'anes' | 'block' | 'pacu' | 'billing' | 'choices' | 'packet'>('fields');
+  const [view, setView] = useState<'fields' | 'form' | 'anes' | 'block' | 'proc' | 'pacu' | 'billing' | 'choices' | 'packet'>('fields');
   const [anesReset, setAnesReset] = useState(0);
   // The Print Packet tab holds all four sheets at once, mounted and laid out
   // like any other tab, so printing it is an ordinary print of what is on the
@@ -217,6 +218,7 @@ export default function App() {
       clearPacuForNextCase();
       clearBillingDraft();
       clearBlockDraft();
+      clearProcDraft();
       clearCase();
       // The endo assignment outlives the case: re-stamp the fresh record.
       if (endoDay) writeSheetTx(ANES_KEY, 'orNum', 'Endo');
@@ -511,6 +513,9 @@ export default function App() {
           <button className={view === 'block' ? 'on' : ''} onClick={() => setView('block')}>
             Block
           </button>
+          <button className={view === 'proc' ? 'on' : ''} onClick={() => setView('proc')}>
+            Proc Note
+          </button>
           <button className={view === 'pacu' ? 'on' : ''} onClick={() => setView('pacu')}>
             PACU Orders
           </button>
@@ -689,12 +694,16 @@ export default function App() {
         />
       )}
       {view === 'block' && <BlockDoc resetSignal={anesReset} />}
+      {view === 'proc' && <ProcNote resetSignal={anesReset} onDraftsChanged={() => setAnesReset((n) => n + 1)} />}
+      {/* A standalone procedure prints exactly two pages: the note and the
+          billing sheet — so billing rides along as the second printed page. */}
+      {view === 'proc' && <div className="pa-sheet"><BillingSheet resetSignal={anesReset} /></div>}
       {view === 'pacu' && <PostAnesNote d={d} set={set} />}
       {view === 'pacu' && <PacuOrders resetSignal={anesReset} />}
       {view === 'billing' && <BillingSheet resetSignal={anesReset} />}
 
 
-      {view !== 'anes' && view !== 'pacu' && view !== 'billing' && (
+      {view !== 'anes' && view !== 'pacu' && view !== 'billing' && view !== 'block' && view !== 'proc' && (
       <div className={`page preop-page${view === 'form' || packet ? '' : ' print-only-block'}${packet ? soloCls(0) : ''}`}>
         <div className="page-top">
           <div className="bc-wrap">
