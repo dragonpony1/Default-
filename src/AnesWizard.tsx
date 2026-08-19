@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { composeNarrative } from './narrative';
+import ScanVial, { type VialScan } from './ScanVial';
 import type { VitalsData, Series } from './VitalsGraph';
 import { noAuto, numPad, tempPad, timePad } from './inputProps';
 
@@ -80,6 +81,7 @@ const TIME_FIELDS = ['anesStart', 'anesStop', 'surgStart', 'surgStop', 'ettTime'
 
 export default function AnesWizard(api: WizardApi) {
   const [step, setStep] = useState(0);
+  const [scanVial, setScanVial] = useState(false);
 
   // Landing the case starts the wizard at the end-of-case phase.
   const { startPhase } = api;
@@ -394,12 +396,25 @@ export default function AnesWizard(api: WizardApi) {
           ))}
           {condTimeField()}
           {group('The vial (this case)', (
-            <div className="irow">
-              {field('Lot #', 'lotNum')}
-              {field('Expiration date', 'expDate')}
-              {field('Manufacturer', 'manufacturer')}
-            </div>
+            <>
+              {chip(false, () => setScanVial(true), '📷 Scan the kit — lot & expiration fill themselves')}
+              <div className="irow">
+                {field('Lot #', 'lotNum')}
+                {field('Expiration date', 'expDate')}
+                {field('Manufacturer', 'manufacturer')}
+              </div>
+            </>
           ))}
+          {scanVial && (
+            <ScanVial
+              onClose={() => setScanVial(false)}
+              onUse={(scan: VialScan) => {
+                if (scan.lot) api.setTx('lotNum', scan.lot);
+                if (scan.exp) api.setTx('expDate', scan.exp);
+                if (scan.ref && !(api.tx.manufacturer ?? '').trim()) api.setTx('manufacturer', `REF ${scan.ref}`);
+              }}
+            />
+          )}
         </>
         );
       },
