@@ -37,6 +37,14 @@ export function clearProcDraft(): void {
 
 type Params = Record<string, string>;
 
+// The lines every procedural note must carry, word for word, on every
+// template that has them: the consent sentence (agreed to risks and
+// benefits, other options discussed), sterile technique, and teaching.
+const CONSENT =
+  'Informed consent was obtained: the risks and benefits were discussed, the patient agreed to them, and other treatment options were discussed. ';
+const STERILE = 'Sterile technique was used throughout. ';
+const TEACHING = 'Patient teaching was done and post-procedure instructions were given.';
+
 interface Template {
   key: string;
   label: string;
@@ -45,6 +53,23 @@ interface Template {
   params: Array<{ k: string; label: string; opts: string[] }>;
   compose: (p: Params) => string;
 }
+
+// Vitals already taken on the pre-op form open the note, the way a bedside
+// note starts: whatever the pre-op knows comes over, nothing asked twice.
+const preopVitals = (): string => {
+  try {
+    const pre = JSON.parse(localStorage.getItem('preop-eval-draft-v2') ?? '{}') as Record<string, string>;
+    const parts = [
+      pre.bp ? `BP ${pre.bp}` : '',
+      pre.p ? `P ${pre.p}` : '',
+      pre.r ? `R ${pre.r}` : '',
+      pre.t ? `T ${pre.t}` : '',
+    ].filter(Boolean);
+    return parts.length ? `Pre-procedure vitals: ${parts.join(', ')}. ` : '';
+  } catch {
+    return '';
+  }
+};
 
 const TEMPLATES: Template[] = [
   {
@@ -58,12 +83,13 @@ const TEMPLATES: Template[] = [
       { k: 'position', label: 'Position', opts: ['lateral decubitus', 'sitting'] },
     ],
     compose: (p) =>
-      `Called to perform lumbar puncture. Consent obtained; risks and benefits discussed with the patient. ` +
+      `Called to perform lumbar puncture. ` + CONSENT +
       `Patient placed in the ${p.position || 'lateral decubitus'} position. The ${p.site || 'L3-4'} interspace was identified. ` +
       `The area was prepped and draped in sterile fashion and the skin infiltrated with 1% lidocaine. ` +
       `A ${p.needle || '22-gauge'} spinal needle was advanced and clear CSF returned. ` +
       `Samples were collected and sent to the laboratory. The needle was removed and a sterile dressing applied. ` +
-      `The patient tolerated the procedure well with no complications. Post-procedure instructions given.`,
+      STERILE +
+      `The patient tolerated the procedure well with no complications. ` + TEACHING,
   },
   {
     key: 'ebp',
@@ -75,12 +101,13 @@ const TEMPLATES: Template[] = [
       { k: 'volume', label: 'Blood volume', opts: ['10 mL', '15 mL', '20 mL'] },
     ],
     compose: (p) =>
-      `Called to perform an epidural blood patch for post-dural puncture headache. Consent obtained; risks and benefits discussed with the patient. ` +
+      `Called to perform an epidural blood patch for post-dural puncture headache. ` + CONSENT +
       `Patient positioned and the area prepped and draped in sterile fashion; skin infiltrated with 1% lidocaine. ` +
       `The epidural space was identified at ${p.level || 'L3-4'} using loss-of-resistance technique. ` +
       `${p.volume || '15 mL'} of autologous blood was drawn under sterile technique and injected slowly into the epidural space without difficulty. ` +
-      `The needle was removed and a sterile dressing applied. The patient reported improvement of symptoms and tolerated the procedure well with no complications. ` +
-      `Post-procedure instructions given, including to remain supine for one hour.`,
+      `The needle was removed and a sterile dressing applied. ` + STERILE +
+      `The patient reported improvement of symptoms and tolerated the procedure well with no complications. ` +
+      TEACHING + ` The patient was instructed to remain supine for one hour.`,
   },
   {
     key: 'ett',
@@ -142,7 +169,7 @@ export default function ProcNote({ resetSignal = 0, onDraftsChanged }: { resetSi
         ...p.tx,
         proc: t.key,
         ...params,
-        note: t.compose({ ...p.tx, ...params }),
+        note: preopVitals() + t.compose({ ...p.tx, ...params }),
         date: (p.tx.date ?? '').trim() || date,
         time: (p.tx.time ?? '').trim() || time,
       },
