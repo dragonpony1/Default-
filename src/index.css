@@ -2889,6 +2889,16 @@ button.po-priw.on {
   padding: 6px;
   width: 240px;
   user-select: none;
+  /* touch-action: none lives on the drag handle only. On the whole pad it
+     swallowed every swipe that started over it — on a phone the pad covers
+     half the screen, so the page behind it "stuck" and would not scroll. */
+}
+
+.np button {
+  touch-action: manipulation;
+}
+
+.np-handle {
   touch-action: none;
 }
 
@@ -3945,6 +3955,41 @@ input.pan-stampval {
   gap: 0.4rem;
   justify-content: center;
   margin-bottom: 0.5rem;
+}
+
+/* Share-the-app panel: QR front and center, link underneath. */
+.share-panel {
+  max-width: 380px;
+  text-align: center;
+}
+
+.share-qr {
+  width: min(320px, 78vw);
+  height: auto;
+  display: block;
+  margin: 0.4rem auto;
+  border: 1px solid #d3ddf0;
+  border-radius: 8px;
+}
+
+.share-hint {
+  text-align: left;
+}
+
+.share-url {
+  display: block;
+  font-size: 0.78rem;
+  word-break: break-all;
+  background: #f1f4fa;
+  border-radius: 6px;
+  padding: 0.35rem 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+/* The packet tab's way out, phone-sized. */
+.pk-exit {
+  font-size: 0.95rem;
+  white-space: nowrap;
 }
 
 /* Print all: each extra sheet starts its own page. */
