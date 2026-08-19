@@ -38,6 +38,9 @@ interface Props {
   onClose: () => void;
   /** Tells the mounted record / PACU / billing sheets to re-read their drafts. */
   onDraftsChanged: () => void;
+  /** Endo day: the record stays out of the packet, so its questions are
+   *  skipped — except the facts billing still needs, asked under Billing. */
+  endo?: boolean;
 }
 
 const filled = (s: string | undefined) => !!(s ?? '').trim();
@@ -51,7 +54,7 @@ const LEARNS: Record<string, Bucket> = {
   surgicalDx: 'diagnosis',
 };
 
-export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsChanged }: Props) {
+export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsChanged, endo = false }: Props) {
   const caseData = useCaseData();
   const signer = useSigner();
   // Bumped after every write so the list recomputes from fresh drafts.
@@ -251,67 +254,75 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
   );
 
   // ---- Anesthesia record ----
+  // On an endo day the record stays out of the packet (the endo nurse charts
+  // the vitals on her own document), so the record-only questions are not
+  // asked — but the facts billing still needs (date, times, surgeon,
+  // procedure, diagnosis) are, filed under Billing.
+  const recSheet = endo ? 'Billing' : 'Record';
+  const recTab: PacketTab = endo ? 'billing' : 'anes';
   const rec = (id: string, label: string, kind: Kind = 'text', options?: string[]) =>
     need(
-      { id: `anes.${id}`, label, sheet: 'Record', tab: 'anes', kind, options, value: anes.tx[id] ?? '', set: anesTx(id) },
+      { id: `anes.${id}`, label, sheet: recSheet, tab: recTab, kind, options, value: anes.tx[id] ?? '', set: anesTx(id) },
       filled(anes.tx[id]),
     );
   rec('date', 'Case date', 'date');
-  rec('orNum', 'OR', 'choice', ['1', '2', '3', '4', 'Endo']);
+  if (!endo) rec('orNum', 'OR', 'choice', ['1', '2', '3', '4', 'Endo']);
   rec('anesStart', 'Anesthesia start', 'num');
   rec('anesStop', 'Anesthesia stop', 'num');
-  rec('surgStart', 'Surgery start', 'num');
-  rec('surgStop', 'Surgery stop', 'num');
-  // Most cases never had a tourniquet up — N/A is the one-tap answer; a case
-  // that did gets its time onto the printed sheet instead of a blank TT box.
-  rec('tt', 'Tourniquet time (TT)', 'num');
+  if (!endo) {
+    rec('surgStart', 'Surgery start', 'num');
+    rec('surgStop', 'Surgery stop', 'num');
+    // Most cases never had a tourniquet up — N/A is the one-tap answer; a case
+    // that did gets its time onto the printed sheet instead of a blank TT box.
+    rec('tt', 'Tourniquet time (TT)', 'num');
 
-  // The reassessment box at the top of the record's Remarks — small enough to
-  // walk right past on the form, so the check asks for it by name.
-  need(
-    {
-      id: 'anes.preInduction',
-      label: 'Pre-induction anesthetic reassessment',
-      sheet: 'Record',
-      tab: 'anes',
-      kind: 'choice',
-      options: ['✓ Done'],
-      value: anes.ck.preInduction ? '✓ Done' : '',
-      set: (v) => {
-        if (v !== '✓ Done') return; // N/A has no box to tick
-        writeSheetCk(ANES_KEY, 'preInduction', true);
-        touched();
+    // The reassessment box at the top of the record's Remarks — small enough to
+    // walk right past on the form, so the check asks for it by name.
+    need(
+      {
+        id: 'anes.preInduction',
+        label: 'Pre-induction anesthetic reassessment',
+        sheet: 'Record',
+        tab: 'anes',
+        kind: 'choice',
+        options: ['✓ Done'],
+        value: anes.ck.preInduction ? '✓ Done' : '',
+        set: (v) => {
+          if (v !== '✓ Done') return; // N/A has no box to tick
+          writeSheetCk(ANES_KEY, 'preInduction', true);
+          touched();
+        },
+        note: 'Checks the box at the top of the Remarks box',
       },
-      note: 'Checks the box at the top of the Remarks box',
-    },
-    !!anes.ck.preInduction,
-  );
+      !!anes.ck.preInduction,
+    );
 
-  const asaMarked = ['asa1', 'asa2', 'asa3', 'asa4', 'asa5'].find((k) => anes.ck[k]);
-  need(
-    {
-      id: 'anes.asa',
-      label: 'ASA class',
-      sheet: 'Record',
-      tab: 'anes',
-      kind: 'choice',
-      options: ['1', '2', '3', '4', '5'],
-      value: asaMarked ? asaMarked.slice(-1) : '',
-      set: (v) => {
-        ['asa1', 'asa2', 'asa3', 'asa4', 'asa5'].forEach((k) => writeSheetCk(ANES_KEY, k, k === `asa${v}`));
-        touched();
+    const asaMarked = ['asa1', 'asa2', 'asa3', 'asa4', 'asa5'].find((k) => anes.ck[k]);
+    need(
+      {
+        id: 'anes.asa',
+        label: 'ASA class',
+        sheet: 'Record',
+        tab: 'anes',
+        kind: 'choice',
+        options: ['1', '2', '3', '4', '5'],
+        value: asaMarked ? asaMarked.slice(-1) : '',
+        set: (v) => {
+          ['asa1', 'asa2', 'asa3', 'asa4', 'asa5'].forEach((k) => writeSheetCk(ANES_KEY, k, k === `asa${v}`));
+          touched();
+        },
       },
-    },
-    !!asaMarked,
-  );
+      !!asaMarked,
+    );
+  }
 
   const caseField = (id: 'surgeon' | 'procedure' | 'diagnosis', label: string) =>
     need(
       {
         id: `case.${id}`,
         label,
-        sheet: 'Record',
-        tab: 'anes',
+        sheet: recSheet,
+        tab: recTab,
         kind: 'text',
         value: caseData[id],
         set: (v) => setCaseField(id, v),
@@ -322,25 +333,27 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
   caseField('procedure', 'Procedure');
   caseField('diagnosis', 'Diagnosis');
 
-  need(
-    {
-      id: 'anes.sig',
-      label: 'Anesthetist signature',
-      sheet: 'Record',
-      tab: 'anes',
-      kind: 'sig',
-      value: anes.tx.sigImg ? 'signed' : '',
-      set: (sig) => {
-        const { date, time } = nowStamp();
-        writeSheetTx(ANES_KEY, 'sigImg', sig);
-        writeSheetTx(ANES_KEY, 'sigDate', date);
-        writeSheetTx(ANES_KEY, 'sigTime', time);
-        writeSheetTx(ANES_KEY, 'sigName', signer.name || signer.initials);
-        touched();
+  if (!endo) {
+    need(
+      {
+        id: 'anes.sig',
+        label: 'Anesthetist signature',
+        sheet: 'Record',
+        tab: 'anes',
+        kind: 'sig',
+        value: anes.tx.sigImg ? 'signed' : '',
+        set: (sig) => {
+          const { date, time } = nowStamp();
+          writeSheetTx(ANES_KEY, 'sigImg', sig);
+          writeSheetTx(ANES_KEY, 'sigDate', date);
+          writeSheetTx(ANES_KEY, 'sigTime', time);
+          writeSheetTx(ANES_KEY, 'sigName', signer.name || signer.initials);
+          touched();
+        },
       },
-    },
-    filled(anes.tx.sigImg),
-  );
+      filled(anes.tx.sigImg),
+    );
+  }
 
   // ---- Post-anesthesia note (prints on the pre-op sheet, filled in PACU) ----
   const pan = (id: keyof PreopEval, label: string, kind: Kind = 'num', options?: string[]) =>
@@ -564,7 +577,7 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
 
       <div className="pr-foot">
         <button type="button" className="pk-big" onClick={onPrint}>
-          {remaining ? `🖨 Print anyway (${remaining} blank)` : '🖨 Print all 4 pages'}
+          {remaining ? `🖨 Print anyway (${remaining} blank)` : `🖨 Print all ${endo ? 3 : 4} pages`}
         </button>
         <button type="button" className="chip" onClick={onClose}>Back to the packet</button>
       </div>
