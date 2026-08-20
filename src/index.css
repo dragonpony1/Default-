@@ -2383,6 +2383,26 @@ input[type='checkbox']:checked::after {
   margin-left: 0.3rem;
 }
 
+/* The scan results are editable — an OCR read gets a once-over before use. */
+.scan-found .scan-fld {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.25rem 0;
+}
+
+.scan-found .scan-fld .b {
+  min-width: 5.5em;
+}
+
+.scan-found .scan-fld input {
+  flex: 1;
+  font: inherit;
+  border: 1px solid #c8d4e2;
+  border-radius: 6px;
+  padding: 0.25rem 0.45rem;
+}
+
 .awiz-orders {
   display: flex;
   flex-direction: column;
