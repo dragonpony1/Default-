@@ -15,7 +15,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // The .gz is the OCR language model and the big .wasm.js files are the
+        // OCR engine (public/tess) — precached so reading a kit label works
+        // fully offline; the size cap is raised for them.
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2,gz}'],
+        maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
       },
       manifest: {
         name: 'Anesthesia Charting',
