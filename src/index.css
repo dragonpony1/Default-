@@ -2368,6 +2368,22 @@ input[type='checkbox']:checked::after {
   margin-bottom: 0.4rem;
 }
 
+/* Endo-day reminder: loud, on every tab, one tap to stand down. */
+.endo-banner {
+  display: block;
+  width: 100%;
+  background: #ffedd5;
+  border: 1px solid #fb923c;
+  color: #9a3412;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  margin: 0.35rem 0;
+  cursor: pointer;
+  text-align: left;
+}
+
 /* Drug name + its 1st/2nd/3rd rank chips share one line in the wizard. */
 .awiz-priline {
   display: flex;

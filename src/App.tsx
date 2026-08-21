@@ -685,6 +685,18 @@ export default function App() {
         </p>
       </header>
 
+      {/* Endo day survives Clear form on purpose — so it must never be a
+          surprise. One loud banner on every tab; tapping it turns it off. */}
+      {endoDay && (
+        <button
+          type="button"
+          className="endo-banner screen-only"
+          onClick={() => setEndoDay(false)}
+        >
+          🔬 Endo day is ON — packets print 3 pages with no record sheet. Doing regular cases? Tap here to turn it off.
+        </button>
+      )}
+
       {fromReview && !packet && (
         <div className="pk-back screen-only">
           <span>Answering a blank the pre-print check found.</span>

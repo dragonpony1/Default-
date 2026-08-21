@@ -114,14 +114,46 @@ export default function AnesWizard(api: WizardApi) {
     }, label, k);
   // The PACU vitals chain on the pad: finish the BP and it hops to O₂ sat,
   // then pulse, then resps — one pad, no keyboard, landing-speed.
-  const REC_CHAIN: Record<string, string> = { recBp: 'recO2', recO2: 'recP', recP: 'recR', recR: '' };
+  const REC_CHAIN: Record<string, string> = { recO2: 'recP', recP: 'recR', recR: '' };
+  // Handoff BP as two hopping boxes: type the systolic, it jumps to the
+  // diastolic, then on into the O₂ → pulse → resps chain — one tap, then just
+  // digits. Stored as the record's single "sys/dia" value.
+  const bpBoxes = () => {
+    const [sys = '', dia = ''] = (api.tx.recBp ?? '').split('/');
+    const write = (s: string, dv: string) => api.setTx('recBp', dv ? `${s}/${dv}` : s);
+    return (
+      <>
+        <label className="ifield" key="recBpSys">
+          <span>BP sys</span>
+          <input
+            {...numPad}
+            data-vseq="recBpSys"
+            data-vnext="recBpDia"
+            value={sys}
+            placeholder="120"
+            onChange={(e) => write(e.target.value.replace(/[^0-9]/g, ''), dia)}
+          />
+        </label>
+        <label className="ifield" key="recBpDia">
+          <span>dia</span>
+          <input
+            {...numPad}
+            data-vseq="recBpDia"
+            data-vnext="recO2"
+            value={dia}
+            placeholder="80"
+            onChange={(e) => write(sys, e.target.value.replace(/[^0-9]/g, ''))}
+          />
+        </label>
+      </>
+    );
+  };
   const field = (label: string, k: string, ph = '') => (
     <label className="ifield" key={k}>
       <span>{label}</span>
       <input
-        {...(['recT'].includes(k) ? tempPad : TIME_FIELDS.includes(k) ? timePad : ['tubeLength', 'attempts', 'crystalloid', 'fluidEbl', 'fluidUrine', 'fluidBlood', 'recBp', 'recO2', 'recP', 'recR', 'recRoom'].includes(k) ? numPad : noAuto)}
+        {...(['recT'].includes(k) ? tempPad : TIME_FIELDS.includes(k) ? timePad : ['tubeLength', 'attempts', 'crystalloid', 'fluidEbl', 'fluidUrine', 'fluidBlood', 'recO2', 'recP', 'recR', 'recRoom'].includes(k) ? numPad : noAuto)}
         {...(k in REC_CHAIN ? { 'data-vseq': k, 'data-vnext': REC_CHAIN[k] } : {})}
-        {...(k === 'recBp' ? { 'data-vbp': '1' } : {})}
         value={api.tx[k] ?? ''}
         placeholder={ph}
         onChange={(e) => api.setTx(k, e.target.value)}
@@ -591,18 +623,35 @@ export default function AnesWizard(api: WizardApi) {
     {
       phase: 'End of case',
       title: 'Fluid totals',
+      hint: 'Tap a common crystalloid total, or type any number below.',
       render: () => (
-        <div className="irow">
-          {field('Crystalloid', 'crystalloid', 'mL')}
-          {field('EBL', 'fluidEbl', 'mL')}
-          {field('Urine', 'fluidUrine', 'mL')}
-          {field('Blood', 'fluidBlood', 'mL')}
-        </div>
+        <>
+          <div className="igroup" key="crysPicks">
+            <span>Crystalloid <span className="awiz-unit">mL</span></span>
+            <div className="chips wrap">
+              {[300, 500, 700, 900, 1000, 1500, 2000].map((v) =>
+                chip(
+                  api.tx.crystalloid === String(v),
+                  () => api.setTx('crystalloid', api.tx.crystalloid === String(v) ? '' : String(v)),
+                  String(v),
+                  `crys${v}`,
+                ),
+              )}
+            </div>
+          </div>
+          <div className="irow">
+            {field('Crystalloid', 'crystalloid', 'mL')}
+            {field('EBL', 'fluidEbl', 'mL')}
+            {field('Urine', 'fluidUrine', 'mL')}
+            {field('Blood', 'fluidBlood', 'mL')}
+          </div>
+        </>
       ),
     },
     {
       phase: 'End of case',
       title: 'Recovery & handoff',
+      hint: 'Vitals the easy way: tap the systolic box and just type — it hops to diastolic, then O₂, pulse and resps by itself. The time box pops its pad with a Now key; temp pops the slider.',
       render: () => (
         <>
           {pick('To', 'recLocation', ['PACU', 'Unit'], true, 'other')}
@@ -614,7 +663,7 @@ export default function AnesWizard(api: WizardApi) {
           )}
           <div className="irow">
             {field('Time', 'recTime', 'HHMM')}
-            {field('BP', 'recBp')}
+            {bpBoxes()}
             {field('O₂ Sat', 'recO2')}
             {field('P', 'recP')}
             {field('R', 'recR')}
