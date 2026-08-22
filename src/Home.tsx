@@ -40,7 +40,11 @@ export function sheetStatus(d: PreopEval, endoDay: boolean, blockCase: boolean) 
   const billing = readSheet(BILLING_KEY);
   const block = readSheet(BLOCK_KEY);
   return {
-    preop: !!d.evalSig,
+    // Signed is done — but so is substantively filled (procedure + vitals):
+    // the signature often comes at the end, and the rail must not point
+    // backward at a pre-op you are past. The pre-print check still holds the
+    // line on the missing signature before anything prints.
+    preop: !!d.evalSig || (!!d.proposedProcedure.trim() && !!d.bp.trim()),
     record: endoDay ? null : !!anes.tx.sigImg,
     block: blockCase ? !!block.tx.sigImg : null,
     pacu: !!pacu.tx.sigImg,
