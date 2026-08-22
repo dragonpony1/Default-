@@ -2379,6 +2379,21 @@ input[type='checkbox']:checked::after {
   margin-bottom: 0.4rem;
 }
 
+/* The healthy-patient shortcut: small, red-ringed, sitting with the section
+   chips — one tap charts an ASA 1 by exception. */
+.fbf-asa1 {
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.7rem;
+  border: 2px solid #b91c1c;
+  border-radius: 999px;
+  background: #fff;
+  color: #b91c1c;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
 /* The wizard's finished screen offers the road back to question one. */
 .fbf-restart {
   margin-top: 0.5rem;
