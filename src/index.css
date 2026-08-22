@@ -3170,7 +3170,8 @@ button.po-priw.on {
   border-radius: 12px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
   padding: 6px;
-  width: 240px;
+  width: 300px; /* a quarter bigger — fat-finger-proof keys */
+  max-width: 96vw;
   user-select: none;
   /* touch-action: none lives on the drag handle only. On the whole pad it
      swallowed every swipe that started over it — on a phone the pad covers
@@ -3218,9 +3219,9 @@ button.po-priw.on {
 
 .np-key {
   font: inherit;
-  font-size: 1.25rem;
+  font-size: 1.55rem;
   padding: 0;
-  height: 48px;
+  height: 60px;
   border: 1px solid #b6bec9;
   border-radius: 8px;
   background: #fff;
@@ -3233,11 +3234,11 @@ button.po-priw.on {
 
 .np-fn {
   background: #e6e9ee;
-  font-size: 1.05rem;
+  font-size: 1.3rem;
 }
 
 .np-small {
-  font-size: 0.85rem;
+  font-size: 1.05rem;
 }
 
 .np-bottom {
@@ -3248,7 +3249,7 @@ button.po-priw.on {
 }
 
 .np-bottom .np-key {
-  height: 42px;
+  height: 52px;
 }
 
 .np-done {
@@ -4574,7 +4575,7 @@ input.pan-stampval {
 }
 
 .np-bottom4 .np-key {
-  font-size: 0.85rem;
+  font-size: 1.05rem;
   padding: 0 0.2rem;
 }
 

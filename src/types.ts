@@ -133,7 +133,7 @@ export const emptyPreopEval: PreopEval = {
   age: '',
   sex: '',
   height: '',
-  heightUnit: '',
+  heightUnit: 'in',
   weight: '',
   weightUnit: '',
   proposedProcedure: '',
