@@ -2429,6 +2429,21 @@ input[type='checkbox']:checked::after {
 .nx-billing { background: var(--c-billing) !important; }
 .nx-print { background: var(--c-print) !important; }
 
+/* One tap turns a browser tab into the installed offline app. */
+.home-install {
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 2px solid #15803d;
+  border-radius: 12px;
+  background: #dcfce7;
+  color: #14532d;
+  cursor: pointer;
+  text-align: left;
+}
+
 /* ---- Home: the front door. Big type, few choices. ---- */
 .home {
   max-width: 44rem;

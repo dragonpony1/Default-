@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { loadProviders, type ProviderProfile } from './providers';
 import { useSigner } from './signer';
+import { canInstall, isStandalone, promptInstall, subscribeInstall } from './installPrompt';
 import { ANES_KEY, BILLING_KEY, BLOCK_KEY, PACU_KEY, readSheet } from './drafts';
 import { useCaseData, setCaseField } from './caseData';
 import type { PreopEval } from './types';
@@ -85,8 +86,23 @@ export default function Home({ d, endoDay, setEndoDay, onClickIn, onGo }: Props)
       </button>
     );
 
+  const installReady = useSyncExternalStore(subscribeInstall, canInstall, canInstall);
+
   return (
     <section className="home screen-only">
+      {/* Running in a browser tab on a device that can hold the real app:
+          one tap installs the standalone offline version with its own icon.
+          "Add to Home screen" sometimes only makes a browser shortcut — this
+          button is the sure way. Hidden once installed or already standalone. */}
+      {installReady && !isStandalone() && (
+        <button
+          type="button"
+          className="home-install"
+          onClick={() => { void promptInstall(); }}
+        >
+          📲 Install the app on this tablet — the full offline version with its own icon. Tap here.
+        </button>
+      )}
       <div className="home-block">
         <h2>Who are you?</h2>
         <p className="home-hint">
