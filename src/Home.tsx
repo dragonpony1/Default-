@@ -12,6 +12,18 @@ import type { PreopEval } from './types';
 
 export type HomeTarget = 'fields' | 'anes' | 'block' | 'proc' | 'pacu' | 'billing' | 'print';
 
+// One color per sheet, used the same way everywhere — tab, checklist row,
+// and the next-step buttons — so "the blue one" always means the pre-op.
+export const SHEET_CLASS: Record<HomeTarget, string> = {
+  fields: 'preop',
+  anes: 'record',
+  block: 'block',
+  proc: 'proc',
+  pacu: 'pacu',
+  billing: 'billing',
+  print: 'print',
+};
+
 interface Props {
   d: PreopEval;
   endoDay: boolean;
@@ -57,7 +69,12 @@ export default function Home({ d, endoDay, setEndoDay, onClickIn, onGo }: Props)
 
   const row = (label: string, done: boolean | null, target: HomeTarget) =>
     done === null ? null : (
-      <button type="button" className="home-row" key={label} onClick={() => onGo(target)}>
+      <button
+        type="button"
+        className={`home-row hr-${SHEET_CLASS[target]}`}
+        key={label}
+        onClick={() => onGo(target)}
+      >
         <span className={`home-tick${done ? ' on' : ''}`}>{done ? '✓' : '○'}</span>
         <span>{label}</span>
         <span className="home-go">{done ? 'done' : 'open ›'}</span>
@@ -133,7 +150,11 @@ export default function Home({ d, endoDay, setEndoDay, onClickIn, onGo }: Props)
           {row('PACU orders', s.pacu, 'pacu')}
           {row('Billing sheet', s.billing, 'billing')}
         </div>
-        <button type="button" className="home-next" onClick={() => onGo(next.target)}>
+        <button
+          type="button"
+          className={`home-next nx-${SHEET_CLASS[next.target]}`}
+          onClick={() => onGo(next.target)}
+        >
           {next.label}
         </button>
       </div>
