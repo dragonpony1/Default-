@@ -284,10 +284,73 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
       ),
       summary: () => (d.weight ? `${d.weight} ${d.weightUnit}`.trim() : ''),
     },
-    numStep('Blood pressure', 'bp', 'Pre-procedure vital signs'),
-    numStep('Pulse', 'p', 'Pre-procedure vital signs'),
-    numStep('Respirations', 'r', 'Pre-procedure vital signs'),
-    { title: 'Temperature', hint: 'Pre-procedure vital signs', render: () => tempInput('t'), summary: () => d.t },
+    {
+      // One screen, one tap: the pad hops BP-sys → dia → pulse → resps by
+      // itself; the temp box pops its slider. These same numbers become the
+      // record's pre-anesthesia (first-column) vitals — entered once, ever.
+      title: 'Vital signs',
+      hint: 'Tap the first box and just type — it hops from BP to pulse to resps on its own. Tap the temp box for the slider.',
+      render: () => {
+        const [sys = '', dia = ''] = d.bp.split('/');
+        const writeBp = (s: string, dv: string) => set('bp', dv ? `${s}/${dv}` : s);
+        return (
+          <div className="irow fbf-vitals">
+            <label className="ifield">
+              <span>BP sys</span>
+              <input
+                {...numPad}
+                className="fbf-input"
+                data-vseq="preBpSys"
+                data-vnext="preBpDia"
+                value={sys}
+                placeholder="120"
+                onChange={(e) => writeBp(e.target.value.replace(/[^0-9]/g, ''), dia)}
+              />
+            </label>
+            <label className="ifield">
+              <span>dia</span>
+              <input
+                {...numPad}
+                className="fbf-input"
+                data-vseq="preBpDia"
+                data-vnext="preP"
+                value={dia}
+                placeholder="80"
+                onChange={(e) => writeBp(sys, e.target.value.replace(/[^0-9]/g, ''))}
+              />
+            </label>
+            <label className="ifield">
+              <span>Pulse</span>
+              <input
+                {...numPad}
+                className="fbf-input"
+                data-vseq="preP"
+                data-vnext="preR"
+                value={d.p}
+                onChange={(e) => set('p', e.target.value)}
+              />
+            </label>
+            <label className="ifield">
+              <span>Resp</span>
+              <input
+                {...numPad}
+                className="fbf-input"
+                data-vseq="preR"
+                data-vnext=""
+                value={d.r}
+                onChange={(e) => set('r', e.target.value)}
+              />
+            </label>
+            <label className="ifield">
+              <span>Temp</span>
+              {tempInput('t')}
+            </label>
+          </div>
+        );
+      },
+      summary: () =>
+        [d.bp, d.p && `P ${d.p}`, d.r && `R ${d.r}`, d.t && `T ${d.t}`].filter(Boolean).join(', '),
+    },
     {
       title: 'NPO since',
       render: () => (
