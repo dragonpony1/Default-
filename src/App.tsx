@@ -23,9 +23,10 @@ import ProcNote, { clearProcDraft } from './ProcNote';
 import { ANES_KEY, writeSheetTx } from './drafts';
 import { decodeChoices, loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 import { setCaseField, clearCase, getCase, useCaseData } from './caseData';
-import { useSigner, nowStamp } from './signer';
+import Home, { nextStep, type HomeTarget } from './Home';
+import { setSigner, useSigner, nowStamp } from './signer';
 import ProviderBar from './ProviderBar';
-import { applyProviderToDrafts, nameForSignature, type ProviderPrefs } from './providers';
+import { applyProviderToDrafts, nameForSignature, variantPrefs, type ProviderPrefs, type ProviderProfile } from './providers';
 
 // The packet, in the order it prints.
 const PACKET_SHEETS = ['Pre-Op', 'Record', 'Block', 'PACU Orders', 'Billing'];
@@ -35,7 +36,7 @@ type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : nev
 
 export default function App() {
   const [d, setD] = useState<PreopEval>(loadDraft);
-  const [view, setView] = useState<'fields' | 'form' | 'anes' | 'block' | 'proc' | 'pacu' | 'billing' | 'choices' | 'packet'>('fields');
+  const [view, setView] = useState<'home' | 'fields' | 'form' | 'anes' | 'block' | 'proc' | 'pacu' | 'billing' | 'choices' | 'packet'>('home');
   const [anesReset, setAnesReset] = useState(0);
   // The Print Packet tab holds all four sheets at once, mounted and laid out
   // like any other tab, so printing it is an ordinary print of what is on the
@@ -335,6 +336,24 @@ export default function App() {
   // runner ran the pre-op, the next provider picks it up for the record — an
   // exam already answered for this patient is never rewritten by the next
   // provider's defaults.
+  // Clicking in from the Home screen: same act as tapping initials on the
+  // provider bar — become the signer, blank-fill your defaults.
+  const clickInFromHome = (p: ProviderProfile) => {
+    setSigner({ initials: p.initials, name: p.prefs.providerName ?? '', signature: p.signature ?? '' });
+    applyProvider(variantPrefs(p, 'general') ?? p.prefs);
+  };
+
+  // Home's navigation: every target is an existing screen.
+  const goFromHome = (t: HomeTarget) => {
+    if (t === 'print') {
+      setSolo(null);
+      setView('packet');
+      setReview(true);
+      return;
+    }
+    setView(t);
+  };
+
   const applyProvider = (prefs: ProviderPrefs, opts?: { overwrite?: boolean }) => {
     const patch = applyProviderToDrafts(prefs, opts);
     if (Object.keys(patch.preop).length) {
@@ -620,6 +639,9 @@ export default function App() {
       <header className="toolbar screen-only">
         <h1>Pre-Anesthesia Evaluation</h1>
         <div className="tabs">
+          <button className={view === 'home' ? 'on' : ''} onClick={() => setView('home')}>
+            🏠 Home
+          </button>
           <button className={view === 'fields' ? 'on' : ''} onClick={() => setView('fields')}>
             Pre-Op Wizard
           </button>
@@ -661,7 +683,8 @@ export default function App() {
           </button>
         </div>
         <div className="toolbar-actions">
-          <button onClick={() => window.print()}>Print</button>
+          {/* On Home there is no sheet on screen — Print means the packet. */}
+          <button onClick={() => (view === 'home' ? goFromHome('print') : window.print())}>Print</button>
           <button className="ghost" onClick={forceUpdate} title="Fetch the newest version">↻ Update</button>
           <button className="ghost" onClick={() => setShareOpen(true)} title="QR and link for another provider's phone or tablet">📤 Share app</button>
           {pageClear && (
@@ -816,6 +839,32 @@ export default function App() {
         </section>
       )}
 
+      {view === 'home' && (
+        <Home
+          d={d}
+          endoDay={endoDay}
+          setEndoDay={setEndoDay}
+          onClickIn={clickInFromHome}
+          onGo={goFromHome}
+        />
+      )}
+      {/* The guiding rail: one small bar naming the next thing to do, on every
+          form tab except the one it already points at. Reads the same status
+          the Home checklist does. */}
+      {['fields', 'form', 'anes', 'block', 'proc', 'pacu', 'billing'].includes(view) && (() => {
+        const next = nextStep(d, endoDay, caseData.blockCase, !!signer.initials);
+        const targetView = next.target === 'fields' ? ['fields', 'form'] : [next.target];
+        if (next.target !== 'print' && targetView.includes(view)) return null;
+        return (
+          <div className="next-bar screen-only">
+            <span className="next-lbl">Next:</span>
+            <button type="button" className="next-btn" onClick={() => goFromHome(next.target)}>
+              {next.label}
+            </button>
+            <button type="button" className="chip" onClick={() => setView('home')}>🏠</button>
+          </div>
+        );
+      })()}
       {view === 'fields' && (
         <FieldByField d={d} set={set} customChoices={choices} onFinish={() => setView('form')} />
       )}
@@ -843,7 +892,7 @@ export default function App() {
       {view === 'billing' && <BillingSheet resetSignal={anesReset} />}
 
 
-      {view !== 'anes' && view !== 'pacu' && view !== 'billing' && view !== 'block' && view !== 'proc' && (
+      {view !== 'home' && view !== 'anes' && view !== 'pacu' && view !== 'billing' && view !== 'block' && view !== 'proc' && (
       <div className={`page preop-page${view === 'form' || packet ? '' : ' print-only-block'}${packet ? soloCls(0) : ''}`}>
         <div className="page-top">
           <div className="bc-wrap">

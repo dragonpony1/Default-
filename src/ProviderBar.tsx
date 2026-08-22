@@ -9,7 +9,7 @@ import {
   type ProviderPrefs,
   type TechniqueKey,
 } from './providers';
-import { getSigner, setSigner } from './signer';
+import { setSigner, useSigner } from './signer';
 import SignaturePad from './SignaturePad';
 
 // A row of provider buttons (by initials) on the front GUI. Tap a provider to
@@ -33,12 +33,13 @@ function newId(existing: ProviderProfile[]): string {
 
 export default function ProviderBar({ onApply }: Props) {
   const [list, setList] = useState<ProviderProfile[]>(loadProviders);
-  // Being clicked in survives a relaunch, so the bar comes back showing who
-  // is in — their Save / Load / signature buttons ready without a re-tap.
-  const [activeId, setActiveId] = useState<string | null>(() => {
-    const s = getSigner();
-    return s.initials ? loadProviders().find((p) => p.initials === s.initials)?.id ?? null : null;
-  });
+  // Who is clicked in lives on the shared signer — so clicking in from the
+  // Home screen (or anywhere else) lights this bar up too, and it survives a
+  // relaunch with the Save / Load / signature buttons ready without a re-tap.
+  const signerNow = useSigner();
+  const activeId = signerNow.initials
+    ? list.find((p) => p.initials === signerNow.initials)?.id ?? null
+    : null;
   const [padOpen, setPadOpen] = useState(false);
   // Save / Load opens a quick technique pick — General, LMA, or Regional —
   // because a provider's usual setup differs by how the case is done.
@@ -62,7 +63,6 @@ export default function ProviderBar({ onApply }: Props) {
       prefs: { ...captureCurrentPrefs(initials), providerName: name || initials },
     };
     persist([...list, profile]);
-    setActiveId(profile.id);
     // Adding yourself is also clicking in — otherwise the signature lines stay
     // blank until you tap your own chip again.
     setSigner({ initials, name: name || initials, signature: '' });
@@ -70,7 +70,6 @@ export default function ProviderBar({ onApply }: Props) {
   };
 
   const clickIn = (p: ProviderProfile) => {
-    setActiveId(p.id);
     setPickFor(null);
     setSigner({ initials: p.initials, name: p.prefs.providerName ?? '', signature: p.signature ?? '' });
     // Clicking in applies the General defaults (a saved-before-flavors profile
@@ -138,7 +137,9 @@ export default function ProviderBar({ onApply }: Props) {
     if (!p) return;
     if (!window.confirm(`Remove provider ${p.initials}? Their saved defaults are deleted.`)) return;
     persist(list.filter((x) => x.id !== p.id));
-    setActiveId(null);
+    // Removing yourself signs you out; removing anyone else leaves the
+    // signer untouched.
+    if (signerNow.initials === p.initials) setSigner({ initials: '', name: '', signature: '' });
   };
 
   const active = list.find((x) => x.id === activeId) ?? null;

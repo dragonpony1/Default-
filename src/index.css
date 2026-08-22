@@ -2368,6 +2368,167 @@ input[type='checkbox']:checked::after {
   margin-bottom: 0.4rem;
 }
 
+/* ---- Home: the front door. Big type, few choices. ---- */
+.home {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 0.5rem 0.75rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.home-block h2 {
+  font-size: 1.25rem;
+  margin: 0 0 0.35rem;
+}
+
+.home-hint {
+  margin: 0.25rem 0 0.5rem;
+  color: #555;
+}
+
+.home-provs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.home-prov {
+  font: inherit;
+  font-size: 1.35rem;
+  font-weight: 700;
+  padding: 0.7rem 1.1rem;
+  border: 2px solid #94a3b8;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.home-prov.on {
+  border-color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.home-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+.home-card {
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 700;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  padding: 0.8rem 1rem;
+  border: 2px solid #94a3b8;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  flex: 1 1 12rem;
+}
+
+.home-card small {
+  font-weight: 400;
+  color: #555;
+}
+
+.home-card.on {
+  border-color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.home-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.home-row {
+  font: inherit;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.home-row .home-go {
+  margin-left: auto;
+  color: #64748b;
+}
+
+.home-tick {
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.home-tick.on {
+  color: #15803d;
+}
+
+.home-next {
+  font: inherit;
+  font-size: 1.2rem;
+  font-weight: 700;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: none;
+  border-radius: 12px;
+  background: #1d4ed8;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* The guiding rail on the form tabs: what to do next, and a way home. */
+.next-bar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0.6rem;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 0.3rem 0.5rem 0.3rem 0.9rem;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+  max-width: 94vw;
+}
+
+.next-lbl {
+  font-weight: 700;
+  color: #64748b;
+}
+
+.next-btn {
+  font: inherit;
+  font-weight: 700;
+  border: none;
+  border-radius: 999px;
+  background: #1d4ed8;
+  color: #fff;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Endo-day reminder: loud, on every tab, one tap to stand down. */
 .endo-banner {
   display: block;
