@@ -11,6 +11,7 @@ import SignaturePad from './SignaturePad';
 import LearnedInput from './LearnedInput';
 import QuickDrug from './QuickDrug';
 import ScanVial, { type VialScan } from './ScanVial';
+import { loadDraft as loadPreop } from './storage';
 import { remember } from './learned';
 import { nameForSignature } from './providers';
 import { CARRY_ROWS, STEP_SPECS, carriedInto as carriedFrom } from './chartRows';
@@ -145,6 +146,32 @@ export default function AnesRecord({ resetSignal = 0, onLand }: { resetSignal?: 
       return changed ? { ...p, tx: txn } : p;
     });
   }, [caseData.caseDate, d.tx.anesStart, d.tx.date, d.tx.remarkTime]);
+
+  // The pre-op's vitals ARE the pre-anesthesia vitals: the chart's first
+  // column fills itself from the pre-op sheet whenever the record opens, so
+  // nobody types the same numbers twice. Blank-only per series — a graph with
+  // any readings already on it is never touched.
+  useEffect(() => {
+    const pre = loadPreop();
+    const [sysS = '', diaS = ''] = (pre.bp ?? '').split('/');
+    const nums: Array<[Series, number]> = [
+      ['sys', Math.round(Number(sysS))],
+      ['dia', Math.round(Number(diaS))],
+      ['hr', Math.round(Number(pre.p ?? ''))],
+    ];
+    setD((p) => {
+      const v = { ...p.vitals };
+      let changed = false;
+      for (const [s, n] of nums) {
+        if (Number.isFinite(n) && n > 0 && Object.keys(v[s]).length === 0) {
+          v[s] = { 0: n };
+          changed = true;
+        }
+      }
+      return changed ? { ...p, vitals: v } : p;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetSignal]);
 
   // Clear form bumps resetSignal — reload from the (now-cleared) storage
   // directly so the mounted record can't autosave stale data back.
