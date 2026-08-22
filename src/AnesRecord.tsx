@@ -159,6 +159,15 @@ export default function AnesRecord({ resetSignal = 0, onLand }: { resetSignal?: 
       ['dia', Math.round(Number(diaS))],
       ['hr', Math.round(Number(pre.p ?? ''))],
     ];
+    // And at the other end of the case: the Recovery box and the pre-op's
+    // Post-Anesthesia Note are the SAME vitals — whichever was filled first
+    // fills the other, so they are only ever entered once.
+    const panFlow: Array<[string, string]> = [
+      ['panBp', 'recBp'],
+      ['panP', 'recP'],
+      ['panR', 'recR'],
+      ['panO2', 'recO2'],
+    ];
     setD((p) => {
       const v = { ...p.vitals };
       let changed = false;
@@ -168,7 +177,26 @@ export default function AnesRecord({ resetSignal = 0, onLand }: { resetSignal?: 
           changed = true;
         }
       }
-      return changed ? { ...p, vitals: v } : p;
+      const tx = { ...p.tx };
+      for (const [from, to] of panFlow) {
+        const val = String((pre as unknown as Record<string, unknown>)[from] ?? '').trim();
+        if (val && !(tx[to] ?? '').trim()) {
+          tx[to] = val;
+          changed = true;
+        }
+      }
+      // H&P, op permit, anesthesia consent, chart reviewed: true for every
+      // case, so a fresh record starts with them checked instead of making
+      // them four taps someone forgets. Un-checking one sticks — only a
+      // cleared form re-arms the defaults.
+      const ckn = { ...p.ck };
+      for (const k of ['hp', 'opPermit', 'consent', 'chartReviewed']) {
+        if (ckn[k] === undefined) {
+          ckn[k] = true;
+          changed = true;
+        }
+      }
+      return changed ? { ...p, vitals: v, tx, ck: ckn } : p;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetSignal]);

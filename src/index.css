@@ -923,6 +923,17 @@ input[type='checkbox']:checked::after {
     line-height: 1.15;
   }
 
+  /* Meds, allergies and previous-anesthesia entries print as flowing text
+     instead of one line each — ten medications wrap into three lines, so a
+     real med list can't push the bottom of the form onto a second page. */
+  .pair-main .detline {
+    display: inline;
+  }
+
+  .pair-main .detline:not(:last-of-type)::after {
+    content: ';  ';
+  }
+
   .sigcell.tall {
     min-height: 20px;
   }
@@ -4153,6 +4164,21 @@ input.pan-stampval {
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* The way OUT of the check — unmissable at the top and again at the bottom,
+   so nobody ever feels printing is the only door. */
+.pr-exit {
+  font: inherit;
+  font-weight: 700;
+  padding: 0.45rem 0.8rem;
+  border: 2px solid #b91c1c;
+  border-radius: 999px;
+  background: #fff;
+  color: #b91c1c;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .pr-head h2 {

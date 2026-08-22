@@ -651,9 +651,33 @@ export default function AnesWizard(api: WizardApi) {
     {
       phase: 'End of case',
       title: 'Recovery & handoff',
-      hint: 'Vitals the easy way: tap the systolic box and just type — it hops to diastolic, then O₂, pulse and resps by itself. The time box pops its pad with a Now key; temp pops the slider.',
-      render: () => (
+      hint: 'Vitals the easy way: one tap takes the last set charted in the OR (change anything after), or tap the systolic box and just type — it hops to diastolic, then O₂, pulse and resps by itself.',
+      render: () => {
+        // The last reading charted on the graph, offered as the PACU set.
+        const lastOf = (s: Series): number | null => {
+          const cols = Object.keys(api.vitals[s]).map(Number).filter((n) => Number.isFinite(n));
+          return cols.length ? api.vitals[s][Math.max(...cols)] : null;
+        };
+        const ls = lastOf('sys');
+        const ld = lastOf('dia');
+        const lh = lastOf('hr');
+        const offer = (ls && ld) || lh;
+        return (
         <>
+          {offer && (
+            <div className="chips" key="lastor">
+              <button
+                type="button"
+                className="chip"
+                onClick={() => {
+                  if (ls && ld) api.setTx('recBp', `${ls}/${ld}`);
+                  if (lh) api.setTx('recP', String(lh));
+                }}
+              >
+                ⬇ Same as last OR vitals{ls && ld ? ` — ${ls}/${ld}` : ''}{lh ? ` · P ${lh}` : ''}
+              </button>
+            </div>
+          )}
           {pick('To', 'recLocation', ['PACU', 'Unit'], true, 'other')}
           {api.tx.recLocation === 'Unit' && (
             <label className="ifield" key="recRoom">
@@ -674,7 +698,8 @@ export default function AnesWizard(api: WizardApi) {
           {group('Handoff', <>{ckChip('reportToRn', 'Report to RN')}{ckChip('recDentition', 'Dentition unchanged')}</>)}
           {field('Transfer care (time)', 'transferCare', 'HHMM')}
         </>
-      ),
+        );
+      },
     },
     {
       phase: 'End of case',

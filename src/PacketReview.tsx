@@ -91,6 +91,11 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
       const v = (rec.tx[from] ?? '').trim();
       if (v && !String(d[to] ?? '').trim()) set(to, v);
     }
+    // The landing wizard's crystalloid total IS the note's hydration answer.
+    const cry = (rec.tx.crystalloid ?? '').trim();
+    if (cry && !String(d.panHydration ?? '').trim()) {
+      set('panHydration', /^[\d.]+$/.test(cry) ? `${cry} mL` : cry);
+    }
     // Mount-only: the copy happens when the check opens, never underneath it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -470,7 +475,16 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
   }
 
   // ---- Post-anesthesia note (prints on the pre-op sheet, filled in PACU) ----
-  const pan = (id: keyof PreopEval, label: string, kind: Kind = 'num', options?: string[]) =>
+  // A note vital already sitting on the record's Recovery box (or, for
+  // hydration, the fluid totals) counts as answered — the same numbers are
+  // never asked for twice. Answering here writes both places.
+  const pan = (
+    id: keyof PreopEval,
+    label: string,
+    kind: Kind = 'num',
+    options?: string[],
+    rec?: { key: string; write?: boolean },
+  ) =>
     need(
       {
         id: String(id),
@@ -480,18 +494,26 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
         kind,
         options,
         value: String(d[id] ?? ''),
-        set: (v) => set(id, v as PreopEval[typeof id]),
+        set: (v) => {
+          set(id, v as PreopEval[typeof id]);
+          if (rec && rec.write !== false) {
+            writeSheetTx(ANES_KEY, rec.key, v);
+            touched();
+          }
+        },
       },
-      filled(String(d[id] ?? '')),
+      filled(String(d[id] ?? '')) || (rec ? filled(anes.tx[rec.key]) : false),
     );
-  pan('panBp', 'Post-anesthesia BP');
-  pan('panP', 'Post-anesthesia pulse');
-  pan('panR', 'Post-anesthesia respirations');
-  pan('panO2', 'Post-anesthesia O₂ sat');
+  pan('panBp', 'Post-anesthesia BP', 'num', undefined, { key: 'recBp' });
+  pan('panP', 'Post-anesthesia pulse', 'num', undefined, { key: 'recP' });
+  pan('panR', 'Post-anesthesia respirations', 'num', undefined, { key: 'recR' });
+  pan('panO2', 'Post-anesthesia O₂ sat', 'num', undefined, { key: 'recO2' });
   pan('panMental', 'Mental status', 'choice', ['Alert', 'Drowsy', 'Somnolent', 'Unresponsive']);
   pan('panAirway', 'Airway patency', 'choice', ['Patent', 'Oral airway', 'Nasal airway', 'Intubated']);
   pan('panNV', 'Nausea / vomiting', 'choice', ['None', 'Nausea', 'Vomiting']);
-  pan('panHydration', 'Hydration', 'text');
+  // Hydration is answered by the crystalloid total; typing here stays on the
+  // note only (the record's fluid box keeps its plain number).
+  pan('panHydration', 'Hydration', 'text', undefined, { key: 'crystalloid', write: false });
   need(
     {
       id: 'panSig',
@@ -710,7 +732,7 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
       )}
       <div className="pr-head">
         <h2>{remaining ? `${remaining} blank${remaining === 1 ? '' : 's'} before printing` : 'Nothing left blank'}</h2>
-        <button type="button" className="chip" onClick={onClose}>✕ Close</button>
+        <button type="button" className="pr-exit" onClick={onClose}>✕ Don&rsquo;t print — back to the forms</button>
       </div>
 
       {gaps.length === 0 ? (
@@ -752,7 +774,7 @@ export default function PacketReview({ d, set, onGo, onPrint, onClose, onDraftsC
         <button type="button" className="pk-big" onClick={onPrint}>
           {remaining ? `🖨 Print anyway (${remaining} blank)` : `🖨 Print all ${(endo ? 3 : 4) + (block ? 1 : 0)} pages`}
         </button>
-        <button type="button" className="chip" onClick={onClose}>Back to the packet</button>
+        <button type="button" className="pr-exit" onClick={onClose}>✕ Don&rsquo;t print — back to the forms</button>
       </div>
     </section>
   );
