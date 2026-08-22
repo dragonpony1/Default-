@@ -916,7 +916,7 @@ export default function App() {
             </div>
             <div className="cell w15">
               <span className="lbl">Height</span>{txn('height', 'xshort')}
-              <span className="opts">{xbx('heightUnit', 'in', 'in')}{xbx('heightUnit', 'cm', 'cm')}</span>
+              <span className="opts">{xbx('heightUnit', 'in', 'in')}</span>
             </div>
             <div className="cell w15">
               <span className="lbl">Weight</span>{txn('weight', 'xshort')}

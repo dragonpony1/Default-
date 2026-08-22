@@ -266,13 +266,26 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     { title: 'Sex', render: () => oneOf('sex', ['M', 'F']), summary: () => d.sex },
     {
       title: 'Height',
+      hint: 'Inches — tap it, or type an unusual one.',
       render: () => (
         <>
+          <div className="chips wrap">
+            {[62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75].map((n) =>
+              chip(
+                d.height === String(n),
+                () => {
+                  set('height', d.height === String(n) ? '' : String(n));
+                  set('heightUnit', 'in');
+                },
+                `${n}″`,
+                `h${n}`,
+              ),
+            )}
+          </div>
           {numInput('height')}
-          {oneOf('heightUnit', ['in', 'cm'])}
         </>
       ),
-      summary: () => (d.height ? `${d.height} ${d.heightUnit}`.trim() : ''),
+      summary: () => (d.height ? `${d.height} in` : ''),
     },
     {
       title: 'Weight',
