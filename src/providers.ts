@@ -27,23 +27,29 @@ export interface ProviderPrefs {
   providerName?: string; // stamped on record / PACU / billing signature lines
 }
 
-// A provider's defaults come in flavors — the setup for a general with a tube
-// is not the setup for an LMA case or a spinal. Legacy profiles saved before
-// flavors existed live in `prefs`, which doubles as the General slot.
+// A provider's defaults come in flavors. Two built-ins — General and MAC —
+// plus any number of KITS the provider names themselves ("LMA lap chole",
+// "Spinal TKA", "Peds ENT"). Legacy profiles saved before flavors existed
+// live in `prefs`, which doubles as the General slot; LMA/Regional slots
+// saved under the old four-way picker migrate into named kits on load.
 export type TechniqueKey = 'general' | 'lma' | 'regional' | 'mac';
 
 export const TECHNIQUES: Array<{ key: TechniqueKey; label: string }> = [
   { key: 'general', label: 'General' },
-  { key: 'lma', label: 'LMA' },
-  { key: 'regional', label: 'Regional' },
   { key: 'mac', label: 'MAC' },
 ];
+
+export interface ProviderKit {
+  name: string;
+  prefs: ProviderPrefs;
+}
 
 export interface ProviderProfile {
   id: string;
   initials: string;
   prefs: ProviderPrefs;
   variants?: Partial<Record<TechniqueKey, ProviderPrefs>>;
+  kits?: ProviderKit[];
   signature?: string; // saved signature image (data URL PNG), stamped with date/time
 }
 
@@ -154,6 +160,26 @@ function lastDoseForRow(cells: Record<string, string>, row: string): string {
   return val;
 }
 
+// The vent settings block rides the grid too — rate, volume, FiO₂,
+// inspiratory pressure. The EARLIEST charted value of each row is the
+// provider's usual setup; it saves (and later lands) at the first column.
+const VENT_ROWS = ['vent0', 'vent1', 'vent2', 'vent3'];
+
+function firstCellForRow(cells: Record<string, string>, row: string): string {
+  let bestCol = Infinity;
+  let val = '';
+  for (const [k, v] of Object.entries(cells)) {
+    if (k.startsWith(`${row}:`) && v) {
+      const col = Number(k.slice(row.length + 1));
+      if (Number.isFinite(col) && col < bestCol) {
+        bestCol = col;
+        val = v;
+      }
+    }
+  }
+  return val;
+}
+
 function pick(src: Record<string, string>, keys: string[]): Record<string, string> {
   const out: Record<string, string> = {};
   for (const k of keys) if (src[k]) out[k] = src[k];
@@ -258,6 +284,24 @@ export function loadProviders(): ProviderProfile[] {
         changed = true;
         next = { ...next, prefs: { ...next.prefs, providerName: seed } };
       }
+
+      // The picker slimmed to General + MAC: LMA and Regional defaults saved
+      // under the old four-way picker become named kits, so no device loses
+      // a saved setup.
+      if (next.variants?.lma || next.variants?.regional) {
+        const kits = [...(next.kits ?? [])];
+        for (const [key, kitName] of [['lma', 'LMA'], ['regional', 'Regional']] as const) {
+          const v = next.variants?.[key];
+          if (v && !kits.some((x) => x.name.toLowerCase() === kitName.toLowerCase())) {
+            kits.push({ name: kitName, prefs: v });
+          }
+        }
+        const variants = { ...next.variants };
+        delete variants.lma;
+        delete variants.regional;
+        changed = true;
+        next = { ...next, kits, variants };
+      }
       return next;
     });
     if (changed) saveProviders(named);
@@ -313,7 +357,13 @@ export function captureCurrentPrefs(initials: string): ProviderPrefs {
   return {
     pacu: { ck: pacu?.ck ?? {}, tx: stripKeys(pacu?.tx ?? {}, PACU_PERCASE) },
     recordCk,
-    inductionCells: pick(recCells, INDUCTION_CELLS),
+    inductionCells: {
+      ...pick(recCells, INDUCTION_CELLS),
+      // Vent settings save with the induction cells and land the same way.
+      ...Object.fromEntries(
+        VENT_ROWS.map((r) => [`${r}:0`, firstCellForRow(recCells, r)]).filter(([, v]) => v),
+      ),
+    },
     airwayTx: pick(recTx, AIRWAY_TX),
     conductionTx: pick(recTx, CONDUCTION_TX),
     block: {

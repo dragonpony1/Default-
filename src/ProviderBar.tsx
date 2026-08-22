@@ -109,6 +109,56 @@ export default function ProviderBar({ onApply }: Props) {
     setPickFor(null);
   };
 
+  // Custom kits: the provider's own named setups beyond General and MAC —
+  // "LMA lap chole", "Spinal TKA", whatever their practice calls for.
+  const saveKit = (name: string) => {
+    const p = list.find((x) => x.id === activeId);
+    if (!p) return;
+    const captured = captureCurrentPrefs(p.initials);
+    const kits = [...(p.kits ?? [])];
+    const i = kits.findIndex((k) => k.name.toLowerCase() === name.toLowerCase());
+    if (i >= 0) kits[i] = { name: kits[i].name, prefs: captured };
+    else kits.push({ name, prefs: captured });
+    persist(list.map((x) => (x.id === p.id ? { ...x, kits } : x)));
+    window.alert(`Saved the current forms as ${p.initials}'s “${name}” kit.`);
+    setPickFor(null);
+  };
+
+  const loadKit = (name: string) => {
+    const p = list.find((x) => x.id === activeId);
+    const kit = p?.kits?.find((k) => k.name === name);
+    if (!p || !kit) return;
+    onApply(kit.prefs, { overwrite: true });
+    window.alert(`${p.initials}'s “${name}” kit is on the forms.`);
+    setPickFor(null);
+  };
+
+  const addKit = () => {
+    const raw = window.prompt('Name the new kit (e.g. LMA lap chole, Spinal TKA, Peds ENT):');
+    const name = (raw ?? '').trim();
+    if (!name) return;
+    if (['general', 'mac'].includes(name.toLowerCase())) {
+      window.alert('That name is taken by a built-in — pick another.');
+      return;
+    }
+    saveKit(name);
+  };
+
+  const removeKit = () => {
+    const p = list.find((x) => x.id === activeId);
+    const kits = p?.kits ?? [];
+    if (!p || !kits.length) return;
+    const raw = window.prompt(`Remove which kit? (${kits.map((k) => k.name).join(', ')})`);
+    const name = (raw ?? '').trim().toLowerCase();
+    if (!name) return;
+    const next = kits.filter((k) => k.name.toLowerCase() !== name);
+    if (next.length === kits.length) {
+      window.alert('No kit by that name.');
+      return;
+    }
+    persist(list.map((x) => (x.id === p.id ? { ...x, kits: next } : x)));
+  };
+
   const saveSignature = (dataUrl: string) => {
     const p = list.find((x) => x.id === activeId);
     if (!p) return;
@@ -191,6 +241,31 @@ export default function ProviderBar({ onApply }: Props) {
                   {label}
                 </button>
               ))}
+              {(active.kits ?? []).map((k) => (
+                <button
+                  key={`kit-${k.name}`}
+                  type="button"
+                  className="chip prov-pick-chip"
+                  onClick={() => (pickFor === 'save' ? saveKit(k.name) : loadKit(k.name))}
+                >
+                  {k.name}
+                </button>
+              ))}
+              {pickFor === 'save' && (
+                <button type="button" className="chip prov-pick-chip" onClick={addKit}>
+                  ＋ New kit…
+                </button>
+              )}
+              {pickFor === 'save' && (active.kits ?? []).length > 0 && (
+                <button
+                  type="button"
+                  className="chip prov-pick-chip"
+                  title="Delete one of your kits"
+                  onClick={removeKit}
+                >
+                  🗑
+                </button>
+              )}
               <button type="button" className="chip" onClick={() => setPickFor(null)}>✕</button>
             </span>
           )}
