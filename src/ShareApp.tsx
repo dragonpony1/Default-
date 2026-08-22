@@ -28,6 +28,13 @@ export default function ShareApp({ onClose }: { onClose: () => void }) {
           Scan with a phone camera, or send the link. The first open needs internet — after
           that it works fully offline. Free, no login, and no patient data ever leaves the device.
         </p>
+        <p className="ihint share-hint">
+          <b>To install the real app on a new tablet:</b> open the link in <b>Chrome</b> (not the
+          camera&rsquo;s built-in viewer), give it a minute to finish loading, then tap the big
+          &ldquo;📲 Install the app&rdquo; button that appears on the Home screen. That installs the
+          standalone offline version with its own icon &mdash; &ldquo;Add to Home screen&rdquo; from the
+          browser menu can leave you with just a browser shortcut.
+        </p>
         <code className="share-url">{url}</code>
         <div className="qd-actions">
           {canShare && (
