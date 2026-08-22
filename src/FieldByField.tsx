@@ -745,11 +745,49 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
     else sections.push({ label, indices: [i] });
   });
 
+  // The healthy-patient button: one tap charts an ASA 1 by exception —
+  // normal vitals, normal airway, no habits, every None box, ASA 1 — filling
+  // BLANK answers only, so anything already charted for this patient stands
+  // and the provider then edits just the exceptions. (The system boxes are
+  // already WNL until something is ticked, so they need no writing.)
+  const asaOne = () => {
+    if (!window.confirm(
+      'Fill this pre-op as a healthy ASA 1?\n\n'
+      + 'Normal vitals (120/80, P 72, R 16, T 98.6), airway normal, no tobacco/alcohol/drugs, '
+      + 'None for meds, allergies, previous anesthesia and family history, ASA 1. '
+      + 'Anything already entered is kept — then chart only the exceptions.',
+    )) return;
+    const blank = (k: StringKeys) => !(d[k] ?? '').trim();
+    if (blank('bp')) set('bp', '120/80');
+    if (blank('p')) set('p', '72');
+    if (blank('r')) set('r', '16');
+    if (blank('t')) set('t', '98.6');
+    if (!d.physicalStatus) set('physicalStatus', '1');
+    if (blank('mallampati')) set('mallampati', 'I');
+    if (blank('tmd')) set('tmd', '3');
+    if (blank('rom')) set('rom', 'Full');
+    if (!d.tobacco) set('tobacco', 'no');
+    if (!d.ethanol) set('ethanol', 'no');
+    if (!d.streetDrug) set('streetDrug', 'no');
+    if (!d.meds.length && blank('currentMedications')) set('currentMedicationsNone', true);
+    if (!d.allergyList.length && blank('allergies')) set('allergiesNone', true);
+    if (!d.prevHxList.length && blank('previousAnesthesia')) set('previousAnesthesiaNone', true);
+    if (blank('familyHistory')) set('familyHistoryNone', true);
+  };
+
   return (
     <div className="fbf screen-only">
       {/* Skip strip, condensed: the steps in section-sized bites — solid green
           underline when a section is fully answered, faint when partly. */}
       <div className="awiz-secnav fbf-secnav">
+        <button
+          type="button"
+          className="fbf-asa1"
+          title="Healthy patient: fill everything normal in one tap, then chart only the exceptions"
+          onClick={asaOne}
+        >
+          ASA 1
+        </button>
         {sections.map((sec) => {
           // Quiet, like the record's: the label alone, a green underline once
           // the whole section is answered.
