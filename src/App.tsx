@@ -23,7 +23,7 @@ import ProcNote, { clearProcDraft } from './ProcNote';
 import { ANES_KEY, writeSheetTx } from './drafts';
 import { decodeChoices, loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 import { setCaseField, clearCase, getCase, useCaseData } from './caseData';
-import Home, { nextStep, type HomeTarget } from './Home';
+import Home, { nextStep, SHEET_CLASS, type HomeTarget } from './Home';
 import { setSigner, useSigner, nowStamp } from './signer';
 import ProviderBar from './ProviderBar';
 import { applyProviderToDrafts, nameForSignature, variantPrefs, type ProviderPrefs, type ProviderProfile } from './providers';
@@ -642,28 +642,28 @@ export default function App() {
           <button className={view === 'home' ? 'on' : ''} onClick={() => setView('home')}>
             🏠 Home
           </button>
-          <button className={view === 'fields' ? 'on' : ''} onClick={() => setView('fields')}>
+          <button className={`tab-preop${view === 'fields' ? ' on' : ''}`} onClick={() => setView('fields')}>
             Pre-Op Wizard
           </button>
-          <button className={view === 'form' ? 'on' : ''} onClick={() => setView('form')}>
+          <button className={`tab-preop${view === 'form' ? ' on' : ''}`} onClick={() => setView('form')}>
             Paper Form
           </button>
-          <button className={view === 'anes' ? 'on' : ''} onClick={() => setView('anes')}>
+          <button className={`tab-record${view === 'anes' ? ' on' : ''}`} onClick={() => setView('anes')}>
             Anesthesia Record
           </button>
-          <button className={view === 'block' ? 'on' : ''} onClick={() => setView('block')}>
+          <button className={`tab-block${view === 'block' ? ' on' : ''}`} onClick={() => setView('block')}>
             Block
           </button>
-          <button className={view === 'proc' ? 'on' : ''} onClick={() => setView('proc')}>
+          <button className={`tab-proc${view === 'proc' ? ' on' : ''}`} onClick={() => setView('proc')}>
             Proc Note
           </button>
-          <button className={view === 'pacu' ? 'on' : ''} onClick={() => setView('pacu')}>
+          <button className={`tab-pacu${view === 'pacu' ? ' on' : ''}`} onClick={() => setView('pacu')}>
             PACU Orders
           </button>
-          <button className={view === 'billing' ? 'on' : ''} onClick={() => setView('billing')}>
+          <button className={`tab-billing${view === 'billing' ? ' on' : ''}`} onClick={() => setView('billing')}>
             Billing
           </button>
-          <button className={view === 'packet' ? 'on' : ''} onClick={() => setView('packet')}>
+          <button className={`tab-print${view === 'packet' ? ' on' : ''}`} onClick={() => setView('packet')}>
             🖨 Print Packet
           </button>
           {/* A toggle: duck in to add or drop a choice, tap again and you are
@@ -858,7 +858,11 @@ export default function App() {
         return (
           <div className="next-bar screen-only">
             <span className="next-lbl">Next:</span>
-            <button type="button" className="next-btn" onClick={() => goFromHome(next.target)}>
+            <button
+              type="button"
+              className={`next-btn nx-${SHEET_CLASS[next.target]}`}
+              onClick={() => goFromHome(next.target)}
+            >
               {next.label}
             </button>
             <button type="button" className="chip" onClick={() => setView('home')}>🏠</button>

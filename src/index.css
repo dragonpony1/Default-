@@ -2368,6 +2368,56 @@ input[type='checkbox']:checked::after {
   margin-bottom: 0.4rem;
 }
 
+/* The wizard's finished screen offers the road back to question one. */
+.fbf-restart {
+  margin-top: 0.5rem;
+}
+
+/* ---- Sheet identity colors ----
+   One color per sheet, used identically on its tab, its Home checklist row,
+   and any next-step button pointing at it: pre-op blue, record green, block
+   purple, proc note teal, PACU orange, billing rose, print slate. */
+:root {
+  --c-preop: #1d4ed8;
+  --c-record: #15803d;
+  --c-block: #7c3aed;
+  --c-proc: #0f766e;
+  --c-pacu: #c2410c;
+  --c-billing: #be123c;
+  --c-print: #334155;
+}
+
+.tabs .tab-preop { box-shadow: inset 0 -3px 0 var(--c-preop); }
+.tabs .tab-record { box-shadow: inset 0 -3px 0 var(--c-record); }
+.tabs .tab-block { box-shadow: inset 0 -3px 0 var(--c-block); }
+.tabs .tab-proc { box-shadow: inset 0 -3px 0 var(--c-proc); }
+.tabs .tab-pacu { box-shadow: inset 0 -3px 0 var(--c-pacu); }
+.tabs .tab-billing { box-shadow: inset 0 -3px 0 var(--c-billing); }
+.tabs .tab-print { box-shadow: inset 0 -3px 0 var(--c-print); }
+
+.tabs button.tab-preop.on { background: var(--c-preop); color: #fff; }
+.tabs button.tab-record.on { background: var(--c-record); color: #fff; }
+.tabs button.tab-block.on { background: var(--c-block); color: #fff; }
+.tabs button.tab-proc.on { background: var(--c-proc); color: #fff; }
+.tabs button.tab-pacu.on { background: var(--c-pacu); color: #fff; }
+.tabs button.tab-billing.on { background: var(--c-billing); color: #fff; }
+.tabs button.tab-print.on { background: var(--c-print); color: #fff; }
+
+.home-row.hr-preop { border-left: 6px solid var(--c-preop); }
+.home-row.hr-record { border-left: 6px solid var(--c-record); }
+.home-row.hr-block { border-left: 6px solid var(--c-block); }
+.home-row.hr-proc { border-left: 6px solid var(--c-proc); }
+.home-row.hr-pacu { border-left: 6px solid var(--c-pacu); }
+.home-row.hr-billing { border-left: 6px solid var(--c-billing); }
+
+.nx-preop { background: var(--c-preop) !important; }
+.nx-record { background: var(--c-record) !important; }
+.nx-block { background: var(--c-block) !important; }
+.nx-proc { background: var(--c-proc) !important; }
+.nx-pacu { background: var(--c-pacu) !important; }
+.nx-billing { background: var(--c-billing) !important; }
+.nx-print { background: var(--c-print) !important; }
+
 /* ---- Home: the front door. Big type, few choices. ---- */
 .home {
   max-width: 44rem;

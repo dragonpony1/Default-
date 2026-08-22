@@ -806,6 +806,9 @@ export default function FieldByField({ d, set, customChoices, onFinish }: Props)
           <button type="button" className="fbf-next" onClick={onFinish}>
             View paper form
           </button>
+          <button type="button" className="fbf-back fbf-restart" onClick={() => go(0)}>
+            ↺ Start over from the first question
+          </button>
         </section>
       )}
 
