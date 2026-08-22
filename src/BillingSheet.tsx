@@ -7,6 +7,8 @@ import { useCaseData, setCaseField } from './caseData';
 import { loadProviders, nameForSignature } from './providers';
 import SignaturePad from './SignaturePad';
 import LearnedInput from './LearnedInput';
+import { ANES_KEY, BLOCK_KEY, PACU_KEY, readSheet } from './drafts';
+import { loadDraft as loadPreop } from './storage';
 
 // Deseret Peak Anesthesia Billing Information sheet, built from a flat scan
 // of the original. Tap the box beside a CPT code to mark it; header fields
@@ -164,6 +166,38 @@ export default function BillingSheet({ resetSignal = 0 }: { resetSignal?: number
       setD(loadBilling());
       setMode('form');
     }
+  }, [resetSignal]);
+
+  // Billing with no date borrows one. Every stamp on the case happened on the
+  // case's date — the record's date or signature, the pre-op's evaluation or
+  // post-anesthesia stamp, the PACU sign-off, the block sheet, the proc note —
+  // so when the shared caseDate is still blank, the first date found among
+  // them fills it. Blank-only: a date anyone typed anywhere always stands.
+  // (The anesthesia start/stop TIMES are never borrowed from signature stamps
+  // — those minutes are what gets billed, and only the record supplies them.)
+  useEffect(() => {
+    if (caseData.caseDate) return;
+    const rec = readSheet(ANES_KEY);
+    const pacu = readSheet(PACU_KEY);
+    const block = readSheet(BLOCK_KEY);
+    const proc = readSheet('proc-note-draft-v1');
+    const pre = loadPreop();
+    const datePart = (s: unknown) => String(s ?? '').trim().split(/\s+/)[0];
+    const found = [
+      rec.tx.date,
+      rec.tx.sigDate,
+      pre.evalDateTime,
+      pre.panDateTime,
+      pacu.tx.date,
+      block.tx.date,
+      block.tx.sigDate,
+      proc.tx.date,
+    ]
+      .map(datePart)
+      .find((s) => s.includes('/'));
+    if (found) setCaseField('caseDate', found);
+    // Mount / clear only — a date arriving later flows through the case anyway.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetSignal]);
 
   const setCkVal = (k: string, v: boolean) => setD((p) => ({ ...p, ck: { ...p.ck, [k]: v } }));
