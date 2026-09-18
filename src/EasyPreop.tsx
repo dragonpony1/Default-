@@ -129,6 +129,37 @@ export default function EasyPreop({ d, set, customChoices, onExit, onDone }: Pro
   const [sys = '', dia = ''] = d.bp.split('/');
   const writeBp = (s: string, dv: string) => set('bp', dv ? `${s}/${dv}` : s);
 
+  // Color carries the story: blue while gathering the patient's facts, purple
+  // through the history, green for the home stretch — the bar, the question,
+  // and the Next button all wear the phase.
+  const phase = idx <= SCREENS.indexOf('npo') ? 'facts' : idx <= SCREENS.indexOf('asa') ? 'history' : 'finish';
+
+  // The Next button stays quiet grey until this screen has its answer, then
+  // lights up in the phase color — done here, keep moving. Never blocked:
+  // a grey Next still works, it just isn't pulling you yet.
+  const answered = ((): boolean => {
+    switch (id) {
+      case 'hist':
+      case 'sys':
+      case 'review':
+        return true;
+      case 'sign':
+        return !!d.evalSig;
+      case 'who':
+        return !!d.age.trim() && !!d.sex;
+      case 'body':
+        return !!d.height.trim() && !!d.weight.trim();
+      case 'vitals':
+        return !!d.bp.trim() && !!d.p.trim();
+      case 'airway':
+        return !!d.mallampati && !!d.tmd && !!d.rom;
+      case 'habits':
+        return !!d.tobacco && !!d.ethanol && !!d.streetDrug;
+      default:
+        return !!(summaryOf[id] ?? '').trim();
+    }
+  })();
+
   const screen = (): React.ReactNode => {
     switch (id) {
       case 'op':
@@ -337,7 +368,9 @@ export default function EasyPreop({ d, set, customChoices, onExit, onDone }: Pro
                 const v = summaryOf[rid] ?? '';
                 return (
                   <button key={rid} type="button" className="ez-revrow" onClick={() => go(rid)}>
-                    <span className="ez-revlabel">{label}</span>
+                    <span className="ez-revlabel">
+                      <span className={`ez-revtick${v ? ' on' : ''}`}>{v ? '✓' : '○'}</span> {label}
+                    </span>
                     <span className={`ez-revvalue${v ? '' : ' empty'}`}>{v || '— blank —'}</span>
                   </button>
                 );
@@ -374,16 +407,19 @@ export default function EasyPreop({ d, set, customChoices, onExit, onDone }: Pro
 
   const last = id === 'sign';
   return (
-    <div className="ez screen-only">
+    <div className={`ez ez-${phase} screen-only`}>
       <div className="ez-head">
         <button type="button" className="chip" onClick={back} disabled={idx === 0}>← Back</button>
         <span className="ez-count">{idx + 1} of {SCREENS.length}</span>
         <button type="button" className="chip" onClick={onExit}>✕ Exit</button>
       </div>
+      <div className="ez-bar">
+        <div className="ez-barfill" style={{ width: `${((idx + 1) / SCREENS.length) * 100}%` }} />
+      </div>
       <div className="ez-card">{screen()}</div>
       <button
         type="button"
-        className="ez-next"
+        className={`ez-next${answered ? ' ready' : ''}`}
         onClick={() => {
           if (last) onDone();
           else next();
