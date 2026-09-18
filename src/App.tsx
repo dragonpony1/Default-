@@ -24,6 +24,7 @@ import { ANES_KEY, writeSheetTx } from './drafts';
 import { decodeChoices, loadCustomChoices, saveCustomChoices, type CustomChoices } from './choices';
 import { setCaseField, clearCase, getCase, useCaseData } from './caseData';
 import Home, { nextStep, SHEET_CLASS, type HomeTarget } from './Home';
+import EasyPreop from './EasyPreop';
 import { setSigner, useSigner, nowStamp } from './signer';
 import ProviderBar from './ProviderBar';
 import { applyProviderToDrafts, nameForSignature, variantPrefs, type ProviderPrefs, type ProviderProfile } from './providers';
@@ -36,7 +37,7 @@ type BoolKeys = { [K in keyof PreopEval]: PreopEval[K] extends boolean ? K : nev
 
 export default function App() {
   const [d, setD] = useState<PreopEval>(loadDraft);
-  const [view, setView] = useState<'home' | 'fields' | 'form' | 'anes' | 'block' | 'proc' | 'pacu' | 'billing' | 'choices' | 'packet'>('home');
+  const [view, setView] = useState<'home' | 'easy' | 'fields' | 'form' | 'anes' | 'block' | 'proc' | 'pacu' | 'billing' | 'choices' | 'packet'>('home');
   const [anesReset, setAnesReset] = useState(0);
   // The Print Packet tab holds all four sheets at once, mounted and laid out
   // like any other tab, so printing it is an ordinary print of what is on the
@@ -72,6 +73,14 @@ export default function App() {
       setAnesReset((n) => n + 1);
     }
   }, [endoDay]);
+
+  // Easy Mode for the pre-op: the interview skin instead of the full wizard.
+  // Per-device, like a text-size preference; on by default so a partner's
+  // first pre-op is the gentle one. The classic wizard stays on its tab.
+  const [easyPre, setEasyPre] = useState(() => localStorage.getItem('easy-preop-v1') !== '0');
+  useEffect(() => {
+    localStorage.setItem('easy-preop-v1', easyPre ? '1' : '0');
+  }, [easyPre]);
 
   const setChoices = (c: CustomChoices) => {
     saveCustomChoices(c);
@@ -343,8 +352,13 @@ export default function App() {
     applyProvider(variantPrefs(p, 'general') ?? p.prefs);
   };
 
-  // Home's navigation: every target is an existing screen.
+  // Home's navigation: every target is an existing screen. With Easy Mode
+  // on, the pre-op lands on the interview instead of the full wizard.
   const goFromHome = (t: HomeTarget) => {
+    if (t === 'fields' && easyPre) {
+      setView('easy');
+      return;
+    }
     if (t === 'print') {
       setSolo(null);
       setView('packet');
@@ -636,6 +650,7 @@ export default function App() {
           onCancel={() => setSignTarget(null)}
         />
       )}
+      {view !== 'easy' && (
       <header className="toolbar screen-only">
         <h1>Pre-Anesthesia Evaluation</h1>
         <div className="tabs">
@@ -707,6 +722,7 @@ export default function App() {
           <span className="build-stamp">Version: {__BUILD_DATE__}</span>
         </p>
       </header>
+      )}
 
       {/* Endo day survives Clear form on purpose — so it must never be a
           surprise. One loud banner on every tab; tapping it turns it off. */}
@@ -839,11 +855,22 @@ export default function App() {
         </section>
       )}
 
+      {view === 'easy' && (
+        <EasyPreop
+          d={d}
+          set={set}
+          customChoices={choices}
+          onExit={() => setView('home')}
+          onDone={() => setView('home')}
+        />
+      )}
       {view === 'home' && (
         <Home
           d={d}
           endoDay={endoDay}
           setEndoDay={setEndoDay}
+          easyPre={easyPre}
+          setEasyPre={setEasyPre}
           onClickIn={clickInFromHome}
           onGo={goFromHome}
         />
