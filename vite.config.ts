@@ -8,6 +8,9 @@ export default defineConfig({
   // whether it has picked up the latest deploy.
   define: {
     __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC'),
+    // The deploy run number, handed in by the Pages workflow — the app's
+    // real version count. A local build says 'dev'.
+    __APP_VERSION__: JSON.stringify(process.env.APP_VERSION ?? 'dev'),
   },
   plugins: [
     react(),

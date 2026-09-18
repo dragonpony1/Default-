@@ -2725,6 +2725,13 @@ input[type='checkbox']:checked::after {
   margin-top: 0.5rem;
 }
 
+.home-version {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
 /* One tap turns a browser tab into the installed offline app. */
 .home-install {
   font: inherit;

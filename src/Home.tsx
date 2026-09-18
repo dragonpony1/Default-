@@ -184,6 +184,10 @@ export default function Home({ d, endoDay, setEndoDay, easyPre, setEasyPre, onCl
           🌱 Easy pre-op interview{easyPre ? ' — on' : ' — off'}
         </button>
       </div>
+
+      {/* The real version count — compare two tablets at a glance, and know
+          the ↻ Update actually took. */}
+      <p className="home-version">v{__APP_VERSION__} · built {__BUILD_DATE__}</p>
     </section>
   );
 }
