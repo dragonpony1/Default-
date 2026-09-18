@@ -2924,6 +2924,15 @@ input[type='checkbox']:checked::after {
   text-align: left;
 }
 
+/* The routine-recovery one-tap: green, like every chart-by-exception fast
+   lane in the app. */
+.chip.routine-go {
+  border: 2px solid #15803d;
+  background: #dcfce7;
+  color: #14532d;
+  font-weight: 700;
+}
+
 /* Drug name + its 1st/2nd/3rd rank chips share one line in the wizard. */
 .awiz-priline {
   display: flex;

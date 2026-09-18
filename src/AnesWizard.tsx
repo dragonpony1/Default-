@@ -3,6 +3,7 @@ import { composeNarrative } from './narrative';
 import ScanVial, { type VialScan } from './ScanVial';
 import type { VitalsData, Series } from './VitalsGraph';
 import { noAuto, numPad, tempPad, timePad } from './inputProps';
+import { nowStamp } from './signer';
 
 // "0730"/"7:30"/"730" → minutes since midnight, or null.
 function parseHHMM(s: string): number | null {
@@ -664,6 +665,25 @@ export default function AnesWizard(api: WizardApi) {
         const offer = (ls && ld) || lh;
         return (
         <>
+          {/* Chart by exception, end-of-case edition: the routine handoff in
+              one green tap — status, airway, report, times — then fix only
+              what was different about this one. Checks only add; times and
+              destination fill blanks only. */}
+          <div className="chips" key="routine">
+            <button
+              type="button"
+              className="chip routine-go"
+              onClick={() => {
+                for (const k of ['awake', 'stable', 'recNasalO2', 'reportToRn', 'recDentition']) api.setCk(k, true);
+                if (!(api.tx.recLocation ?? '').trim()) api.setTx('recLocation', 'PACU');
+                const now = nowStamp().time;
+                if (!(api.tx.recTime ?? '').trim()) api.setTx('recTime', now);
+                if (!(api.tx.transferCare ?? '').trim()) api.setTx('transferCare', now);
+              }}
+            >
+              🟢 Routine recovery — to PACU awake &amp; stable, nasal O₂, report to RN, dentition unchanged, times now
+            </button>
+          </div>
           {offer && (
             <div className="chips" key="lastor">
               <button
