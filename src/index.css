@@ -2444,6 +2444,232 @@ input[type='checkbox']:checked::after {
 .nx-billing { background: var(--c-billing) !important; }
 .nx-print { background: var(--c-print) !important; }
 
+/* ---- Easy Mode pre-op: the interview. One question, giant type. ---- */
+.ez {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 0.5rem 0.9rem 5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  font-size: 17px;
+}
+
+.ez-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.ez-count {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.ez-card {
+  background: #fff;
+  border: 1px solid #dbe2ec;
+  border-radius: 14px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.ez-q {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.ez-hint {
+  margin: 0;
+  color: #555;
+}
+
+.ez-input {
+  font: inherit;
+  font-size: 1.25rem;
+  padding: 0.55rem 0.7rem;
+  border: 2px solid #94a3b8;
+  border-radius: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ez-short {
+  width: 7.5rem;
+}
+
+.ez-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.ez-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ez-choice {
+  font: inherit;
+  font-size: 1.2rem;
+  font-weight: 700;
+  padding: 0.75rem 1.1rem;
+  border: 2px solid #94a3b8;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ez-choice small {
+  font-weight: 400;
+  color: #555;
+}
+
+.ez-choice.on {
+  border-color: #1d4ed8;
+  background: #dbeafe;
+}
+
+.ez-healthy {
+  border-color: #15803d;
+  background: #dcfce7;
+}
+
+.ez-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ez-ynrow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.ez-ynlabel {
+  font-weight: 700;
+  min-width: 7rem;
+}
+
+.ez-detail {
+  font: inherit;
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  padding: 0.3rem 0.5rem;
+}
+
+.ez-vrow {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.ez-vrow .ez-short {
+  width: 5.5rem;
+}
+
+.ez-sys {
+  border: 1px solid #dbe2ec;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.ez-sysrow {
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.8rem;
+  border: none;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ez-sysrow.has {
+  background: #fff7ed;
+}
+
+.ez-sysstate {
+  font-weight: 700;
+  color: #c2410c;
+}
+
+.ez-sysstate.ok {
+  color: #15803d;
+}
+
+.ez-syschips {
+  padding: 0.5rem 0.8rem 0.8rem;
+  border-top: 1px solid #eef1f6;
+}
+
+.ez-revrow {
+  font: inherit;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid #dbe2ec;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ez-revlabel {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ez-revvalue {
+  color: #1e293b;
+  text-align: right;
+}
+
+.ez-revvalue.empty {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.ez-signed {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.ez-next {
+  font: inherit;
+  font-size: 1.3rem;
+  font-weight: 700;
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border: none;
+  border-radius: 14px;
+  background: #1d4ed8;
+  color: #fff;
+  cursor: pointer;
+}
+
+.home-easy {
+  margin-top: 0.5rem;
+}
+
 /* One tap turns a browser tab into the installed offline app. */
 .home-install {
   font: inherit;

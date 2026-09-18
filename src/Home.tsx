@@ -29,6 +29,8 @@ interface Props {
   d: PreopEval;
   endoDay: boolean;
   setEndoDay: (v: boolean) => void;
+  easyPre: boolean;
+  setEasyPre: (v: boolean) => void;
   onClickIn: (p: ProviderProfile) => void;
   onGo: (t: HomeTarget) => void;
 }
@@ -65,7 +67,7 @@ export function nextStep(d: PreopEval, endoDay: boolean, blockCase: boolean, sig
   return { label: '🖨 Check for blanks and print', target: 'print' };
 }
 
-export default function Home({ d, endoDay, setEndoDay, onClickIn, onGo }: Props) {
+export default function Home({ d, endoDay, setEndoDay, easyPre, setEasyPre, onClickIn, onGo }: Props) {
   const signer = useSigner();
   const caseData = useCaseData();
   const [list] = useState<ProviderProfile[]>(loadProviders);
@@ -170,12 +172,16 @@ export default function Home({ d, endoDay, setEndoDay, onClickIn, onGo }: Props)
           {row('PACU orders', s.pacu, 'pacu')}
           {row('Billing sheet', s.billing, 'billing')}
         </div>
+        <button type="button" className={`home-next nx-${SHEET_CLASS[next.target]}`} onClick={() => onGo(next.target)}>
+          {next.label}
+        </button>
         <button
           type="button"
-          className={`home-next nx-${SHEET_CLASS[next.target]}`}
-          onClick={() => onGo(next.target)}
+          className={`chip home-easy${easyPre ? ' on' : ''}`}
+          title="The pre-op as a short interview — one big question at a time, chart by exception. Off = the full wizard."
+          onClick={() => setEasyPre(!easyPre)}
         >
-          {next.label}
+          🌱 Easy pre-op interview{easyPre ? ' — on' : ' — off'}
         </button>
       </div>
     </section>
