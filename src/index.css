@@ -2444,8 +2444,13 @@ input[type='checkbox']:checked::after {
 .nx-billing { background: var(--c-billing) !important; }
 .nx-print { background: var(--c-print) !important; }
 
-/* ---- Easy Mode pre-op: the interview. One question, giant type. ---- */
+/* ---- Easy Mode pre-op: the interview. One question, giant type. ----
+   Color carries the story: blue while gathering facts, purple through the
+   history, green for the home stretch. The bar, the question and the Next
+   button all wear the current phase, so the screen itself says "keep going". */
 .ez {
+  --ez-accent: #1d4ed8;
+  --ez-soft: #dbeafe;
   max-width: 42rem;
   margin: 0 auto;
   padding: 0.5rem 0.9rem 5rem;
@@ -2453,6 +2458,30 @@ input[type='checkbox']:checked::after {
   flex-direction: column;
   gap: 0.9rem;
   font-size: 17px;
+}
+
+.ez-history {
+  --ez-accent: #7c3aed;
+  --ez-soft: #ede9fe;
+}
+
+.ez-finish {
+  --ez-accent: #15803d;
+  --ez-soft: #dcfce7;
+}
+
+.ez-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: #e5e9f0;
+  overflow: hidden;
+}
+
+.ez-barfill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ez-accent);
+  transition: width 0.25s ease, background 0.25s ease;
 }
 
 .ez-head {
@@ -2470,6 +2499,7 @@ input[type='checkbox']:checked::after {
 .ez-card {
   background: #fff;
   border: 1px solid #dbe2ec;
+  border-top: 5px solid var(--ez-accent);
   border-radius: 14px;
   padding: 1rem;
   display: flex;
@@ -2479,7 +2509,9 @@ input[type='checkbox']:checked::after {
 
 .ez-q {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.65rem;
+  color: var(--ez-accent);
+  letter-spacing: -0.01em;
 }
 
 .ez-hint {
@@ -2535,8 +2567,15 @@ input[type='checkbox']:checked::after {
 }
 
 .ez-choice.on {
-  border-color: #1d4ed8;
-  background: #dbeafe;
+  border-color: var(--ez-accent);
+  background: var(--ez-soft);
+}
+
+/* Chips inside the interview follow the phase color too. */
+.ez .chip.on {
+  border-color: var(--ez-accent);
+  background: var(--ez-soft);
+  color: inherit;
 }
 
 .ez-healthy {
@@ -2653,6 +2692,8 @@ input[type='checkbox']:checked::after {
   gap: 0.6rem;
 }
 
+/* Quiet grey until this screen is answered, then it lights up in the
+   phase color — done here, keep moving. Never blocked, only muted. */
 .ez-next {
   font: inherit;
   font-size: 1.3rem;
@@ -2661,9 +2702,23 @@ input[type='checkbox']:checked::after {
   padding: 0.95rem 1rem;
   border: none;
   border-radius: 14px;
-  background: #1d4ed8;
+  background: #94a3b8;
   color: #fff;
   cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.ez-next.ready {
+  background: var(--ez-accent);
+}
+
+.ez-revtick {
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.ez-revtick.on {
+  color: #15803d;
 }
 
 .home-easy {
